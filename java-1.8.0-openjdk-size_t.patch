@@ -1,0 +1,179 @@
+diff --git a/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp b/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
+@@ -2677,7 +2677,7 @@
+   if (ResizeOldPLAB && CMSOldPLABResizeQuicker) {
+     size_t multiple = _num_blocks[word_sz]/(CMSOldPLABToleranceFactor*CMSOldPLABNumRefills*n_blks);
+     n_blks +=  CMSOldPLABReactivityFactor*multiple*n_blks;
+-    n_blks = MIN2(n_blks, CMSOldPLABMax);
++    n_blks = MIN2(n_blks, (size_t)CMSOldPLABMax);
+   }
+   assert(n_blks > 0, "Error");
+   _cfls->par_get_chunk_of_blocks(word_sz, n_blks, fl);
+diff --git a/src/share/vm/gc_implementation/g1/concurrentMark.cpp b/src/share/vm/gc_implementation/g1/concurrentMark.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
+@@ -3538,7 +3538,7 @@
+   // of things to do) or totally (at the very end).
+   size_t target_size;
+   if (partially) {
+-    target_size = MIN2((size_t)_task_queue->max_elems()/3, GCDrainStackTargetSize);
++    target_size = MIN2((size_t)(_task_queue->max_elems()/3), (size_t) GCDrainStackTargetSize);
+   } else {
+     target_size = 0;
+   }
+@@ -4318,7 +4318,7 @@
+   // The > 0 check is to deal with the prev and next live bytes which
+   // could be 0.
+   if (*hum_bytes > 0) {
+-    bytes = MIN2(HeapRegion::GrainBytes, *hum_bytes);
++    bytes = MIN2(HeapRegion::GrainBytes, (size_t)*hum_bytes);
+     *hum_bytes -= bytes;
+   }
+   return bytes;
+diff --git a/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp b/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
+@@ -1700,7 +1700,7 @@
+ 
+   verify_region_sets_optional();
+ 
+-  size_t expand_bytes = MAX2(word_size * HeapWordSize, MinHeapDeltaBytes);
++  size_t expand_bytes = MAX2(word_size * HeapWordSize, (size_t)MinHeapDeltaBytes);
+   ergo_verbose1(ErgoHeapSizing,
+                 "attempt heap expansion",
+                 ergo_format_reason("allocation request failed")
+diff --git a/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp b/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
+@@ -840,7 +840,7 @@
+ // This can be done by either mutator threads together with the
+ // concurrent refinement threads or GC threads.
+ int HeapRegionRemSet::num_par_rem_sets() {
+-  return (int)MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), ParallelGCThreads);
++  return (int)MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), (size_t)ParallelGCThreads);
+ }
+ 
+ HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
+diff --git a/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp b/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
+@@ -188,7 +188,7 @@
+   const size_t num_overflow_elems = of_stack->size();
+   const size_t space_available = queue->max_elems() - queue->size();
+   const size_t num_take_elems = MIN3(space_available / 4,
+-                                     ParGCDesiredObjsFromOverflowList,
++                                     (size_t)ParGCDesiredObjsFromOverflowList,
+                                      num_overflow_elems);
+   // Transfer the most recent num_take_elems from the overflow
+   // stack to our work queue.
+diff --git a/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp b/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
++++ jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
+@@ -69,7 +69,7 @@
+   if (_virtual_space != NULL && _virtual_space->expand_by(bytes)) {
+     _region_start = covered_region.start();
+     _region_size = covered_region.word_size();
+-    idx_t* map = (idx_t*)_virtual_space->reserved_low_addr();
++    BitMap::bm_word_t* map = (BitMap::bm_word_t*)_virtual_space->reserved_low_addr();
+     _beg_bits.set_map(map);
+     _beg_bits.set_size(bits / 2);
+     _end_bits.set_map(map + words / 2);
+diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/collectorPolicy.cpp
+--- jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
++++ jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
+@@ -357,7 +357,7 @@
+       // generally small compared to the NewRatio calculation.
+       _min_gen0_size = NewSize;
+       desired_new_size = NewSize;
+-      max_new_size = MAX2(max_new_size, NewSize);
++      max_new_size = MAX2(max_new_size, (size_t)NewSize);
+     } else {
+       // For the case where NewSize is the default, use NewRatio
+       // to size the minimum and initial generation sizes.
+@@ -365,10 +365,10 @@
+       // NewRatio is overly large, the resulting sizes can be too
+       // small.
+       _min_gen0_size = MAX2(scale_by_NewRatio_aligned(min_heap_byte_size()),
+-                          NewSize);
++                          (size_t)NewSize);
+       desired_new_size =
+         MAX2(scale_by_NewRatio_aligned(initial_heap_byte_size()),
+-             NewSize);
++             (size_t)NewSize);
+     }
+ 
+     assert(_min_gen0_size > 0, "Sanity check");
+@@ -423,14 +423,14 @@
+       // Adjust gen0 down to accomodate OldSize
+       *gen0_size_ptr = heap_size - min_gen0_size;
+       *gen0_size_ptr =
+-        MAX2((uintx)align_size_down(*gen0_size_ptr, min_alignment()),
++        MAX2((size_t)align_size_down(*gen0_size_ptr, min_alignment()),
+              min_alignment());
+       assert(*gen0_size_ptr > 0, "Min gen0 is too large");
+       result = true;
+     } else {
+       *gen1_size_ptr = heap_size - *gen0_size_ptr;
+       *gen1_size_ptr =
+-        MAX2((uintx)align_size_down(*gen1_size_ptr, min_alignment()),
++        MAX2((size_t)align_size_down(*gen1_size_ptr, min_alignment()),
+                        min_alignment());
+     }
+   }
+@@ -454,7 +454,7 @@
+   // for setting the gen1 maximum.
+   _max_gen1_size = max_heap_byte_size() - _max_gen0_size;
+   _max_gen1_size =
+-    MAX2((uintx)align_size_down(_max_gen1_size, min_alignment()),
++    MAX2((size_t)align_size_down(_max_gen1_size, min_alignment()),
+          min_alignment());
+   // If no explicit command line flag has been set for the
+   // gen1 size, use what is left for gen1.
+@@ -468,11 +468,11 @@
+       "gen0 has an unexpected minimum size");
+     set_min_gen1_size(min_heap_byte_size() - min_gen0_size());
+     set_min_gen1_size(
+-      MAX2((uintx)align_size_down(_min_gen1_size, min_alignment()),
++      MAX2((size_t)align_size_down(_min_gen1_size, min_alignment()),
+            min_alignment()));
+     set_initial_gen1_size(initial_heap_byte_size() - initial_gen0_size());
+     set_initial_gen1_size(
+-      MAX2((uintx)align_size_down(_initial_gen1_size, min_alignment()),
++      MAX2((size_t)align_size_down(_initial_gen1_size, min_alignment()),
+            min_alignment()));
+ 
+   } else {
+diff --git a/src/share/vm/oops/objArrayKlass.inline.hpp b/src/share/vm/oops/objArrayKlass.inline.hpp
+--- jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp
++++ jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp
+@@ -46,7 +46,7 @@
+   const size_t beg_index = size_t(index);
+   assert(beg_index < len || len == 0, "index too large");
+ 
+-  const size_t stride = MIN2(len - beg_index, ObjArrayMarkingStride);
++  const size_t stride = MIN2(len - beg_index, (size_t)ObjArrayMarkingStride);
+   const size_t end_index = beg_index + stride;
+   T* const base = (T*)a->base();
+   T* const beg = base + beg_index;
+@@ -80,7 +80,7 @@
+   const size_t beg_index = size_t(index);
+   assert(beg_index < len || len == 0, "index too large");
+ 
+-  const size_t stride = MIN2(len - beg_index, ObjArrayMarkingStride);
++  const size_t stride = MIN2(len - beg_index, (size_t)ObjArrayMarkingStride);
+   const size_t end_index = beg_index + stride;
+   T* const base = (T*)a->base();
+   T* const beg = base + beg_index;
+diff --git a/src/share/vm/runtime/arguments.cpp b/src/share/vm/runtime/arguments.cpp
+--- jdk8/hotspot/src/share/vm/runtime/arguments.cpp
++++ jdk8/hotspot/src/share/vm/runtime/arguments.cpp
+@@ -1209,7 +1209,7 @@
+       // so it's NewRatio x of NewSize.
+       if (FLAG_IS_DEFAULT(OldSize)) {
+         if (max_heap > NewSize) {
+-          FLAG_SET_ERGO(uintx, OldSize, MIN2(NewRatio*NewSize, max_heap - NewSize));
++          FLAG_SET_ERGO(uintx, OldSize, MIN2((size_t)(NewRatio*NewSize), max_heap - NewSize));
+           if (PrintGCDetails && Verbose) {
+             // Too early to use gclog_or_tty
+             tty->print_cr("CMS ergo set OldSize: " SIZE_FORMAT, OldSize);

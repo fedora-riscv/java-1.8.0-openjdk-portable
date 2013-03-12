@@ -1,0 +1,27 @@
+diff --git jdk8/hotspot/make/linux/makefiles/gcc.make jdk8/hotspot/make/linux/makefiles/gcc.make
+--- jdk8/hotspot/make/linux/makefiles/gcc.make
++++ jdk8/hotspot/make/linux/makefiles/gcc.make
+@@ -234,6 +234,7 @@
+   # (warning: that could easily inflate libjvm.so to 150M!)
+   # Note: The Itanium gcc compiler crashes when using -gstabs.
+   DEBUG_CFLAGS/ia64  = -g
++  DEBUG_CFLAGS/i486  = -g
+   DEBUG_CFLAGS/amd64 = -g
+   DEBUG_CFLAGS/arm   = -g
+   DEBUG_CFLAGS/ppc   = -g
+@@ -244,6 +245,7 @@
+   
+   ifeq ($(ENABLE_FULL_DEBUG_SYMBOLS),1)
+     FASTDEBUG_CFLAGS/ia64  = -g
++    FASTDEBUG_CFLAGS/i486  = -g
+     FASTDEBUG_CFLAGS/amd64 = -g
+     FASTDEBUG_CFLAGS/arm   = -g
+     FASTDEBUG_CFLAGS/ppc   = -g
+@@ -253,6 +255,7 @@
+     endif
+   
+     OPT_CFLAGS/ia64  = -g
++    OPT_CFLAGS/i486  = -g
+     OPT_CFLAGS/amd64 = -g
+     OPT_CFLAGS/arm   = -g
+     OPT_CFLAGS/ppc   = -g

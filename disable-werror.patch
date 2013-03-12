@@ -1,0 +1,15 @@
+diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibraries.gmk
+--- jdk8/jdk/makefiles/CompileNativeLibraries.gmk
++++ jdk8/jdk/makefiles/CompileNativeLibraries.gmk
+@@ -1980,10 +1980,7 @@
+ 
+   ifneq ($(OPENJDK_TARGET_OS),macosx)
+ 
+-    SCTP_WERROR := -Werror
+-    ifeq ($(OPENJDK_TARGET_CPU_ARCH), ppc)
+-      SCTP_WERROR :=
+-    endif
++    SCTP_WERROR :=
+ 
+     $(eval $(call SetupNativeCompilation,BUILD_LIBSCTP,\
+                 LIBRARY:=sctp,\
