@@ -94,8 +94,8 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global buildver        0
-# Keep priority on 5digits in case buildver>9
-%global priority        1800%{buildver}
+# priority must be 6 digits in total
+%global priority        18000%{buildver}
 %global javaver         1.8.0
 
 # Standard JPackage directories and symbolic links.
@@ -961,6 +961,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Wed Mar 13 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.2.b79
+- Fix alternatives priority
+
 * Tue Mar 12 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.1.b79.f19
 - Update to jdk8-b79
 - Initial version for Fedora 19
