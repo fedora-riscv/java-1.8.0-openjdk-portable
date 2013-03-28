@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.1.%{jdk8_version}%{?dist}
+Release: 0.3.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -205,13 +205,13 @@ Patch105: %{name}-ppc-zero-hotspot.patch
 Patch106: %{name}-ppc-zero-corba.patch
 
 Patch107: %{name}-freetype-check-fix.patch
-Patch108: dont-use-gstabs.patch
 Patch109: disable-werror.patch
 
 Patch200: system-giflib.patch
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
+Patch204: fix-zero-build.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -358,7 +358,6 @@ The OpenJDK API documentation.
 cp %{SOURCE2} .
 
 # OpenJDK patches
-%patch108
 %patch109
 
 # Rhino patch
@@ -372,6 +371,7 @@ sh %{SOURCE12}
 %patch201
 %patch202
 %patch203
+%patch204
 
 %patch4
 
@@ -475,6 +475,9 @@ mkdir -p %{buildoutputdir}
 pushd %{buildoutputdir}
 
 bash ../../configure \
+%ifnarch %{jit_arches}
+    --with-jvm-variants=zero \
+%endif
     --with-build-number=%{buildver} \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=%{debugbuild} \
@@ -486,7 +489,7 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-num-cores="$NUM_PROC"
 
-make DISABLE_INTREE_EC=true LOG=trace all
+make DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
 
 popd >& /dev/null
 
@@ -921,9 +924,7 @@ exit 0
 %{_mandir}/man1/javah-%{name}.1*
 %{_mandir}/man1/javap-%{name}.1*
 %{_mandir}/man1/jconsole-%{name}.1*
-%ifarch %{jit_arches} # Only in u4+
 %{_mandir}/man1/jcmd-%{name}.1*
-%endif
 %{_mandir}/man1/jdb-%{name}.1*
 %{_mandir}/man1/jhat-%{name}.1*
 %{_mandir}/man1/jinfo-%{name}.1*
@@ -961,6 +962,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Thu Mar 28 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.3.b79
+- Add build fix for zero
+- Drop gstabs fixes; enable full debug info instead
+
 * Wed Mar 13 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.2.b79
 - Fix alternatives priority
 
