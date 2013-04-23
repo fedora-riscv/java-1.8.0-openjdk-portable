@@ -4,7 +4,7 @@
 %global jdk8_version b79
 %global hg_tag jdk8-%{jdk8_version}
 
-%global multilib_arches ppc64 sparc64 x86_64
+%global multilib_arches %{power64} sparc64 x86_64
 
 %global jit_arches %{ix86} x86_64 sparcv9 sparc64
 
@@ -17,7 +17,7 @@
 %global archinstall ppc
 %global archdef PPC
 %endif
-%ifarch ppc64
+%ifarch %{power64}
 %global archbuild ppc64
 %global archinstall ppc64
 %global archdef PPC
@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.3.%{jdk8_version}%{?dist}
+Release: 0.4.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -388,7 +388,7 @@ sh %{SOURCE12}
 
 %patch107
 
-%ifarch ppc ppc64
+%ifarch ppc %{power64}
 # PPC fixes
 %patch104
 %patch105
@@ -428,7 +428,7 @@ export NUM_PROC=`/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :`
 export NUM_PROC=${NUM_PROC:-1}
 
 # Build IcedTea and OpenJDK.
-%ifarch s390x sparc64 alpha ppc64
+%ifarch s390x sparc64 alpha %{power64}
 export ARCH_DATA_MODEL=64
 %endif
 %ifarch alpha
@@ -962,6 +962,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Apr 23 2013 Karsten Hopp <karsten@redhat.com> 1:1.8.0.0-0.4.b79
+- update java-1.8.0-openjdk-ppc-zero-hotspot patch
+- use power64 macro
+
 * Thu Mar 28 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.3.b79
 - Add build fix for zero
 - Drop gstabs fixes; enable full debug info instead
