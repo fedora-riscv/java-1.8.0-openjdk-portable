@@ -16,7 +16,7 @@ mv jdk8-${VERSION} jdk8
 rm -f jdk8/.hg*
 pushd jdk8
 
-for repos in corba jaxp jaxws langtools hotspot jdk
+for repos in corba jaxp jaxws langtools hotspot jdk nashorn
 do
     wget -O $repos.tar.gz ${JDK8_URL}/${repos}/archive/${VERSION}.tar.gz
     tar xzf $repos.tar.gz

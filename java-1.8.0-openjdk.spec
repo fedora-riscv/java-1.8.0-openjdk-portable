@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b79
+%global jdk8_version b87
 %global hg_tag jdk8-%{jdk8_version}
 
 %global multilib_arches %{power64} sparc64 x86_64
@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.4.%{jdk8_version}%{?dist}
+Release: 0.5.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -164,8 +164,6 @@ Source2:  README.src
 # Use 'generate_tarballs.sh' to generate the following tarballs
 # They are based on code contained in the IcedTea7 project.
 
-# Class rewrite to rewrite rhino hierarchy
-Source7: class-rewriter.tar.gz
 # Systemtap tapsets. Zipped up to keep it small.
 Source8: systemtap-tapset.tar.gz
 # .desktop files. Zipped up to keep it small.
@@ -183,14 +181,11 @@ Source13: TestCryptoLevel.java
 # RPM/distribution specific patches
 
 # Ignore AWTError when assistive technologies are loaded 
-Patch4:   %{name}-accessible-toolkit.patch
+Patch1:   %{name}-accessible-toolkit.patch
 
 #
 # OpenJDK specific patches
 #
-
-# Add rhino support
-Patch100: rhino.patch
 
 # Type fixing for s390
 Patch101: %{name}-bitmap.patch
@@ -199,11 +194,12 @@ Patch102: %{name}-size_t.patch
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
 
-Patch200: system-giflib.patch
+# Patch for arm
+Patch104: fix-zero-build-on-arm.patch
+
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
-Patch204: fix-zero-build.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -226,7 +222,6 @@ BuildRequires: libXtst-devel
 BuildRequires: pkgconfig
 BuildRequires: wget
 BuildRequires: xorg-x11-proto-devel
-BuildRequires: rhino
 #BuildRequires: redhat-lsb
 BuildRequires: zip
 # OpenJDK X officially requires OpenJDK (X-1) to build
@@ -248,7 +243,6 @@ BuildRequires: prelink
 BuildRequires: systemtap-sdt-devel
 %endif
 
-Requires: rhino
 # Require /etc/pki/java/cacerts.
 Requires: ca-certificates
 # Require jpackage-utils for ownership of /usr/lib/jvm/
@@ -351,20 +345,15 @@ cp %{SOURCE2} .
 
 # OpenJDK patches
 
-# Rhino patch
-%patch100
-
 # Remove libraries that are linked
 # disabled until 8 has all system library fixes upstream
 sh %{SOURCE12}
 
-%patch200
 %patch201
 %patch202
 %patch203
-%patch204
 
-%patch4
+%patch1
 
 # Type fixes for s390
 %ifarch s390 s390x
@@ -377,12 +366,7 @@ sh %{SOURCE12}
 %patch103
 %endif
 
-
-# Copy jaxp, jaf and jaxws drops
-mkdir drops/
-
-# Extract the rewriter (to rewrite rhino classes)
-tar xzf %{SOURCE7}
+%patch104
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -416,37 +400,6 @@ export ARCH_DATA_MODEL=64
 %ifarch alpha
 export CFLAGS="$CFLAGS -mieee"
 %endif
-# Build the re-written rhino jar
-mkdir -p rhino/{old,new}
-
-# Compile the rewriter
-(cd rewriter 
- javac com/redhat/rewriter/ClassRewriter.java
-)
-
-# Extract rhino.jar contents and rewrite
-(cd rhino/old 
- jar xf /usr/share/java/rhino.jar
-)
-
-java -cp rewriter com.redhat.rewriter.ClassRewriter \
-    $PWD/rhino/old \
-    $PWD/rhino/new \
-    org.mozilla \
-    sun.org.mozilla
-
-(cd rhino/old
- for file in `find -type f -not -name '*.class'` ; do
-     new_file=../new/`echo $file | sed -e 's#org#sun/org#'`
-     mkdir -pv `dirname $new_file`
-     cp -v $file $new_file
-     sed -ie 's#org\.mozilla#sun.org.mozilla#g' $new_file
- done
-)
-
-(cd rhino/new
-   jar cfm ../rhino.jar META-INF/MANIFEST.MF sun
-)
 
 (cd jdk8/common/autoconf
  bash ./autogen.sh
@@ -944,6 +897,11 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Apr 30 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.5.b87
+- Update to b87
+- Remove all rhino support; use nashorn instead
+- Remove upstreamed/unapplied patches
+
 * Tue Apr 23 2013 Karsten Hopp <karsten@redhat.com> 1:1.8.0.0-0.4.b79
 - update java-1.8.0-openjdk-ppc-zero-hotspot patch
 - use power64 macro

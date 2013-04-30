@@ -48,12 +48,12 @@ diff --git a/common/autoconf/libraries.m4 b/common/autoconf/libraries.m4
  # Check for the zlib library
  #
  
-diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibraries.gmk
+diff --git jdk8/jdk/makefiles/CompileNativeLibraries.gmk jdk8/jdk/makefiles/CompileNativeLibraries.gmk
 --- jdk8/jdk/makefiles/CompileNativeLibraries.gmk
 +++ jdk8/jdk/makefiles/CompileNativeLibraries.gmk
-@@ -1213,8 +1213,8 @@
+@@ -1214,8 +1214,8 @@
+ ##########################################################################################
  
- ifdef OPENJDK
      # TODO: Update awt lib path when awt is converted
 -    $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS,\
 -                LIBRARY:=lcms,\
@@ -62,7 +62,7 @@ diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibra
                  OUTPUT_DIR:=$(INSTALL_LIBRARIES_HERE),\
                  SRC:=$(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms,\
  		LANG:=C,\
-@@ -1232,18 +1232,18 @@
+@@ -1233,18 +1233,18 @@
  		LDFLAGS_windows:=$(WIN_AWT_LIB) $(WIN_JAVA_LIB),\
  		LDFLAGS_SUFFIX_solaris:=-lawt -ljava -ljvm -lc,\
  		LDFLAGS_SUFFIX_macosx:=$(LIBM) -lawt -ljava -ljvm,\
@@ -73,7 +73,7 @@ diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibra
 -			  -D "JDK_FNAME=lcms.dll" \
 -			  -D "JDK_INTERNAL_NAME=lcms" \
 +			  -D "JDK_FNAME=javalcms.dll" \
-+			  -D "JDK_INTERNAL_NAME=javalcms" \
++			  -D "JDK_INTERNAL_NAME=libjavalcms" \
  			  -D "JDK_FTYPE=0x2L",\
  		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/liblcms,\
  		DEBUG_SYMBOLS:=$(WINDOWS_ONLY)))
@@ -84,18 +84,18 @@ diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibra
 +    BUILD_LIBRARIES += $(BUILD_LIBJAVALCMS)
 +
 +    $(BUILD_LIBJAVALCMS) : $(BUILD_LIBAWT)
- endif
  
  ##########################################################################################
-diff --git a/src/share/classes/sun/java2d/cmm/lcms/LCMS.java b/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
+ 
+diff --git jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
 --- jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
 +++ jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
-@@ -95,7 +95,7 @@
-                      * disposer frameworks
-                      */
-                     System.loadLibrary("awt");
--                    System.loadLibrary("lcms");
-+                    System.loadLibrary("javalcms");
-                     return null;
-                 }
-             }
+@@ -164,7 +164,7 @@
+                          * disposer frameworks
+                          */
+                         System.loadLibrary("awt");
+-                        System.loadLibrary("lcms");
++                        System.loadLibrary("javalcms");
+                         return null;
+                     }
+                 });

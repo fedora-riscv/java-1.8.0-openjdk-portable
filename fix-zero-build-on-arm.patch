@@ -1,0 +1,113 @@
+# HG changeset patch
+# User omajid
+# Date 1367253270 14400
+# Node ID 1dfcc874461e8348a1066c360d1c33db72cebf55
+# Parent b9415faa7066a4d3b16d466556d5428446918d95
+8013480: fix zero build on arm
+Reviewed-by: erikj
+
+--- jdk8/common/autoconf/platform.m4	Tue Apr 23 09:26:43 2013 -0700
++++ jdk8/common/autoconf/platform.m4	Mon Apr 29 12:34:30 2013 -0400
+@@ -342,6 +342,7 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS],
+       *)
+         ZERO_ARCHFLAG="-m${OPENJDK_TARGET_CPU_BITS}"
+     esac
++    PLATFORM_COMPILER_CHECK_ARGUMENTS([$ZERO_ARCHFLAG], [], [ZERO_ARCHFLAG=""])
+     AC_SUBST(ZERO_ARCHFLAG)
+ 
+     # ZERO_ARCHDEF is used to enable architecture-specific code
+@@ -417,6 +418,51 @@ AC_SUBST(OS_VERSION_MICRO)
+ AC_SUBST(OS_VERSION_MICRO)
+ ])
+ 
++# PLATFORM_COMPILER_CHECK_ARGUMENTS([ARGUMENT], [RUN-IF-TRUE],
++#                                   [RUN-IF-FALSE])
++# ------------------------------------------------------------
++# Check that the c and c++ compilers support an argument
++AC_DEFUN([PLATFORM_COMPILER_CHECK_ARGUMENTS],
++[
++  AC_MSG_CHECKING([if compiler supports "$1"])
++  supports=yes
++
++  saved_cflags="$CFLAGS"
++  CFLAGS="$CFLAGS $1"
++  AC_LANG_PUSH([C])
++  AC_COMPILE_IFELSE([
++    AC_LANG_SOURCE([[int i;]])
++  ], [], [supports=no])
++  AC_LANG_POP([C])
++  CFLAGS="$saved_cflags"
++
++  saved_cxxflags="$CXXFLAGS"
++  CXXFLAGS="$CXXFLAG $1"
++  AC_LANG_PUSH([C++])
++  AC_COMPILE_IFELSE([
++    AC_LANG_SOURCE([[int i;]])
++  ], [], [supports=no])
++  AC_LANG_POP([C++])
++  CXXFLAGS="$saved_cxxflags"
++
++  AC_MSG_RESULT([$supports])
++  if test "x$supports" = "xyes" ; then
++    m4_ifval([$2], [$2], [:])
++  else
++    m4_ifval([$3], [$3], [:])
++  fi
++])
++
++# Check that the compiler supports -mX flags
++# Set COMPILER_SUPPORTS_TARGET_BITS_FLAG to 'true' if it does
++AC_DEFUN([PLATFORM_CHECK_COMPILER_TARGET_BITS_FLAGS],
++[
++  PLATFORM_COMPILER_CHECK_ARGUMENTS([-m${OPENJDK_TARGET_CPU_BITS}],
++    [COMPILER_SUPPORTS_TARGET_BITS_FLAG=true],
++    [COMPILER_SUPPORTS_TARGET_BITS_FLAG=false])
++  AC_SUBST(COMPILER_SUPPORTS_TARGET_BITS_FLAG)
++])
++
+ # Support macro for PLATFORM_SETUP_OPENJDK_TARGET_BITS.
+ # Add -mX to various FLAGS variables.
+ AC_DEFUN([PLATFORM_SET_COMPILER_TARGET_BITS_FLAGS],
+@@ -444,6 +490,9 @@ AC_DEFUN_ONCE([PLATFORM_SETUP_OPENJDK_TA
+ # (The JVM can use 32 or 64 bit Java pointers but that decision
+ # is made at runtime.)
+ #
++
++PLATFORM_CHECK_COMPILER_TARGET_BITS_FLAGS
++
+ if test "x$OPENJDK_TARGET_OS" = xsolaris; then
+   # Always specify -m flags on Solaris
+   PLATFORM_SET_COMPILER_TARGET_BITS_FLAGS
+--- jdk8/common/autoconf/spec.gmk.in	Tue Apr 23 09:26:43 2013 -0700
++++ jdk8/common/autoconf/spec.gmk.in	Mon Apr 29 12:34:30 2013 -0400
+@@ -300,6 +300,8 @@ MACOSX_VERSION_MIN=@MACOSX_VERSION_MIN@
+ # CC is gcc and others behaving reasonably similar.
+ # CL is cl.exe only.
+ COMPILER_TYPE:=@COMPILER_TYPE@
++
++COMPILER_SUPPORTS_TARGET_BITS_FLAG=@COMPILER_SUPPORTS_TARGET_BITS_FLAG@
+ 
+ CC_OUT_OPTION:=@CC_OUT_OPTION@
+ EXE_OUT_OPTION:=@EXE_OUT_OPTION@
+
+
+--- jdk8/jdk/makefiles/GensrcX11Wrappers.gmk	Tue Apr 23 18:25:52 2013 -0700
++++ jdk8/jdk/makefiles/GensrcX11Wrappers.gmk	Mon Apr 29 12:34:53 2013 -0400
+@@ -86,10 +86,15 @@ ifneq ($(COMPILE_TYPE),cross)
+ 	$(MKDIR) -p $(@D)
+ 	$(TOOL_WRAPPERGENERATOR) $(@D) $(GENSRC_SIZER_DIR)/xlibtypes.txt "sizer" $*
+ 
++    # use -m32/-m64 only if the compiler supports it
++    ifeq ($(COMPILER_SUPPORTS_TARGET_BITS_FLAG),true)
++    MEMORY_MODEL_FLAG="-m$*"
++    endif
++
+     # Compile the C code into an executable.
+     $(GENSRC_X11WRAPPERS_TMP)/sizer.%.exe : $(GENSRC_X11WRAPPERS_TMP)/sizer.%.c
+ 	$(MKDIR) -p $(@D)
+-	(cd $(@D) && $(CC) -m$* -o $@ $< \
++	(cd $(@D) && $(CC) $(MEMORY_MODEL_FLAG) -o $@ $< \
+               $(X_CFLAGS) \
+               $(X_LIBS) \
+               -I$(JDK_OUTPUTDIR)/include \
+
