@@ -199,8 +199,6 @@ Patch102: %{name}-size_t.patch
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
 
-Patch104: disable-werror.patch
-
 Patch200: system-giflib.patch
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
@@ -352,7 +350,6 @@ The OpenJDK API documentation.
 cp %{SOURCE2} .
 
 # OpenJDK patches
-%patch104
 
 # Rhino patch
 %patch100
@@ -474,7 +471,7 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-num-cores="$NUM_PROC"
 
-make DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
+make SCTP_WERROR= DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
 
 popd >& /dev/null
 
