@@ -196,16 +196,10 @@ Patch100: rhino.patch
 Patch101: %{name}-bitmap.patch
 Patch102: %{name}-size_t.patch
 
-# Patches for Arm
-Patch103: %{name}-arm-fixes.patch
-
 # Patch for PPC/PPC64
-Patch104: %{name}-ppc-zero-jdk.patch
-Patch105: %{name}-ppc-zero-hotspot.patch
-Patch106: %{name}-ppc-zero-corba.patch
+Patch103: %{name}-ppc-zero-hotspot.patch
 
-Patch107: %{name}-freetype-check-fix.patch
-Patch109: disable-werror.patch
+Patch104: disable-werror.patch
 
 Patch200: system-giflib.patch
 Patch201: system-libjpeg.patch
@@ -358,7 +352,7 @@ The OpenJDK API documentation.
 cp %{SOURCE2} .
 
 # OpenJDK patches
-%patch109
+%patch104
 
 # Rhino patch
 %patch100
@@ -381,18 +375,9 @@ sh %{SOURCE12}
 %patch102
 %endif
 
-# Arm fixes
-%ifarch %{arm}
-%patch103
-%endif
-
-%patch107
-
 %ifarch ppc %{power64}
 # PPC fixes
-%patch104
-%patch105
-%patch106
+%patch103
 %endif
 
 
