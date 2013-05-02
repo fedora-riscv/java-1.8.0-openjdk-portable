@@ -1,7 +1,7 @@
-diff --git a/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp b/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
-@@ -2677,7 +2677,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeListSpace.cpp	2013-04-30 06:14:21.908623274 -0400
+@@ -2667,7 +2667,7 @@ void CFLS_LAB::get_from_global_pool(size
    if (ResizeOldPLAB && CMSOldPLABResizeQuicker) {
      size_t multiple = _num_blocks[word_sz]/(CMSOldPLABToleranceFactor*CMSOldPLABNumRefills*n_blks);
      n_blks +=  CMSOldPLABReactivityFactor*multiple*n_blks;
@@ -10,10 +10,10 @@ diff --git a/src/share/vm/gc_implementation/concurrentMarkSweep/compactibleFreeL
    }
    assert(n_blks > 0, "Error");
    _cfls->par_get_chunk_of_blocks(word_sz, n_blks, fl);
-diff --git a/src/share/vm/gc_implementation/g1/concurrentMark.cpp b/src/share/vm/gc_implementation/g1/concurrentMark.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
-@@ -3538,7 +3538,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/concurrentMark.cpp	2013-04-30 06:14:21.918623275 -0400
+@@ -3735,7 +3735,7 @@ void CMTask::drain_local_queue(bool part
    // of things to do) or totally (at the very end).
    size_t target_size;
    if (partially) {
@@ -22,7 +22,7 @@ diff --git a/src/share/vm/gc_implementation/g1/concurrentMark.cpp b/src/share/vm
    } else {
      target_size = 0;
    }
-@@ -4318,7 +4318,7 @@
+@@ -4566,7 +4566,7 @@ size_t G1PrintRegionLivenessInfoClosure:
    // The > 0 check is to deal with the prev and next live bytes which
    // could be 0.
    if (*hum_bytes > 0) {
@@ -31,10 +31,10 @@ diff --git a/src/share/vm/gc_implementation/g1/concurrentMark.cpp b/src/share/vm
      *hum_bytes -= bytes;
    }
    return bytes;
-diff --git a/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp b/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
-@@ -1700,7 +1700,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp	2013-04-30 06:14:21.918623275 -0400
+@@ -1735,7 +1735,7 @@ HeapWord* G1CollectedHeap::expand_and_al
  
    verify_region_sets_optional();
  
@@ -43,10 +43,10 @@ diff --git a/src/share/vm/gc_implementation/g1/g1CollectedHeap.cpp b/src/share/v
    ergo_verbose1(ErgoHeapSizing,
                  "attempt heap expansion",
                  ergo_format_reason("allocation request failed")
-diff --git a/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp b/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
-@@ -840,7 +840,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp	2013-04-30 06:14:21.928623276 -0400
+@@ -840,7 +840,7 @@ OtherRegionsTable::do_cleanup_work(HRRSC
  // This can be done by either mutator threads together with the
  // concurrent refinement threads or GC threads.
  int HeapRegionRemSet::num_par_rem_sets() {
@@ -55,22 +55,10 @@ diff --git a/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp b/src/share/
  }
  
  HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
-diff --git a/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp b/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
-@@ -188,7 +188,7 @@
-   const size_t num_overflow_elems = of_stack->size();
-   const size_t space_available = queue->max_elems() - queue->size();
-   const size_t num_take_elems = MIN3(space_available / 4,
--                                     ParGCDesiredObjsFromOverflowList,
-+                                     (size_t)ParGCDesiredObjsFromOverflowList,
-                                      num_overflow_elems);
-   // Transfer the most recent num_take_elems from the overflow
-   // stack to our work queue.
-diff --git a/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp b/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
-+++ jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
-@@ -69,7 +69,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp	2013-04-30 06:14:21.928623276 -0400
+@@ -69,7 +69,7 @@ ParMarkBitMap::initialize(MemRegion cove
    if (_virtual_space != NULL && _virtual_space->expand_by(bytes)) {
      _region_start = covered_region.start();
      _region_size = covered_region.word_size();
@@ -79,10 +67,22 @@ diff --git a/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp b
      _beg_bits.set_map(map);
      _beg_bits.set_size(bits / 2);
      _end_bits.set_map(map + words / 2);
-diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/collectorPolicy.cpp
---- jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
-+++ jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
-@@ -357,7 +357,7 @@
+diff -up jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
+--- jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp	2013-04-30 06:14:21.928623276 -0400
+@@ -188,7 +188,7 @@ bool ParScanThreadState::take_from_overf
+   const size_t num_overflow_elems = of_stack->size();
+   const size_t space_available = queue->max_elems() - queue->size();
+   const size_t num_take_elems = MIN3(space_available / 4,
+-                                     ParGCDesiredObjsFromOverflowList,
++                                     (size_t)ParGCDesiredObjsFromOverflowList,
+                                      num_overflow_elems);
+   // Transfer the most recent num_take_elems from the overflow
+   // stack to our work queue.
+diff -up jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
+--- jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp	2013-04-30 06:17:08.068624622 -0400
+@@ -340,7 +340,7 @@ void GenCollectorPolicy::initialize_size
        // generally small compared to the NewRatio calculation.
        _min_gen0_size = NewSize;
        desired_new_size = NewSize;
@@ -91,7 +91,7 @@ diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/colle
      } else {
        // For the case where NewSize is the default, use NewRatio
        // to size the minimum and initial generation sizes.
-@@ -365,10 +365,10 @@
+@@ -348,10 +348,10 @@ void GenCollectorPolicy::initialize_size
        // NewRatio is overly large, the resulting sizes can be too
        // small.
        _min_gen0_size = MAX2(scale_by_NewRatio_aligned(min_heap_byte_size()),
@@ -104,9 +104,9 @@ diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/colle
      }
  
      assert(_min_gen0_size > 0, "Sanity check");
-@@ -423,14 +423,14 @@
-       // Adjust gen0 down to accomodate OldSize
-       *gen0_size_ptr = heap_size - min_gen0_size;
+@@ -407,14 +407,14 @@ bool TwoGenerationCollectorPolicy::adjus
+       // Adjust gen0 down to accommodate min_gen1_size
+       *gen0_size_ptr = heap_size - min_gen1_size;
        *gen0_size_ptr =
 -        MAX2((uintx)align_size_down(*gen0_size_ptr, min_alignment()),
 +        MAX2((size_t)align_size_down(*gen0_size_ptr, min_alignment()),
@@ -121,7 +121,7 @@ diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/colle
                         min_alignment());
      }
    }
-@@ -454,7 +454,7 @@
+@@ -438,7 +438,7 @@ void TwoGenerationCollectorPolicy::initi
    // for setting the gen1 maximum.
    _max_gen1_size = max_heap_byte_size() - _max_gen0_size;
    _max_gen1_size =
@@ -130,7 +130,7 @@ diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/colle
           min_alignment());
    // If no explicit command line flag has been set for the
    // gen1 size, use what is left for gen1.
-@@ -468,11 +468,11 @@
+@@ -452,11 +452,11 @@ void TwoGenerationCollectorPolicy::initi
        "gen0 has an unexpected minimum size");
      set_min_gen1_size(min_heap_byte_size() - min_gen0_size());
      set_min_gen1_size(
@@ -144,10 +144,10 @@ diff --git a/src/share/vm/memory/collectorPolicy.cpp b/src/share/vm/memory/colle
             min_alignment()));
  
    } else {
-diff --git a/src/share/vm/oops/objArrayKlass.inline.hpp b/src/share/vm/oops/objArrayKlass.inline.hpp
---- jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp
-+++ jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp
-@@ -46,7 +46,7 @@
+diff -up jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp.size_t jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp
+--- jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/oops/objArrayKlass.inline.hpp	2013-04-30 06:14:21.928623276 -0400
+@@ -48,7 +48,7 @@ void ObjArrayKlass::objarray_follow_cont
    const size_t beg_index = size_t(index);
    assert(beg_index < len || len == 0, "index too large");
  
@@ -156,7 +156,7 @@ diff --git a/src/share/vm/oops/objArrayKlass.inline.hpp b/src/share/vm/oops/objA
    const size_t end_index = beg_index + stride;
    T* const base = (T*)a->base();
    T* const beg = base + beg_index;
-@@ -80,7 +80,7 @@
+@@ -82,7 +82,7 @@ void ObjArrayKlass::objarray_follow_cont
    const size_t beg_index = size_t(index);
    assert(beg_index < len || len == 0, "index too large");
  
@@ -165,10 +165,10 @@ diff --git a/src/share/vm/oops/objArrayKlass.inline.hpp b/src/share/vm/oops/objA
    const size_t end_index = beg_index + stride;
    T* const base = (T*)a->base();
    T* const beg = base + beg_index;
-diff --git a/src/share/vm/runtime/arguments.cpp b/src/share/vm/runtime/arguments.cpp
---- jdk8/hotspot/src/share/vm/runtime/arguments.cpp
-+++ jdk8/hotspot/src/share/vm/runtime/arguments.cpp
-@@ -1209,7 +1209,7 @@
+diff -up jdk8/hotspot/src/share/vm/runtime/arguments.cpp.size_t jdk8/hotspot/src/share/vm/runtime/arguments.cpp
+--- jdk8/hotspot/src/share/vm/runtime/arguments.cpp.size_t	2013-04-23 12:27:07.000000000 -0400
++++ jdk8/hotspot/src/share/vm/runtime/arguments.cpp	2013-04-30 06:14:21.938623277 -0400
+@@ -1233,7 +1233,7 @@ void Arguments::set_cms_and_parnew_gc_fl
        // so it's NewRatio x of NewSize.
        if (FLAG_IS_DEFAULT(OldSize)) {
          if (max_heap > NewSize) {

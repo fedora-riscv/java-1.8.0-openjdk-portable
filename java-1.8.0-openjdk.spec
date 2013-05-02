@@ -187,6 +187,8 @@ Patch1:   %{name}-accessible-toolkit.patch
 # OpenJDK specific patches
 #
 
+# Recognize s390/s390x
+Patch100: %{name}-s390.patch
 # Type fixing for s390
 Patch101: %{name}-bitmap.patch
 Patch102: %{name}-size_t.patch
@@ -357,6 +359,7 @@ sh %{SOURCE12}
 
 # Type fixes for s390
 %ifarch s390 s390x
+%patch100
 %patch101
 %patch102
 %endif
