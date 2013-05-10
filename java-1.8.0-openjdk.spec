@@ -644,10 +644,7 @@ alternatives \
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 
-touch --no-create %{_datadir}/icons/hicolor
-if [ -x %{_bindir}/gtk-update-icon-cache ] ; then
-  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
-fi
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
 
 exit 0
 
@@ -661,12 +658,15 @@ fi
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 
-touch --no-create %{_datadir}/icons/hicolor
-if [ -x %{_bindir}/gtk-update-icon-cache ] ; then
-  %{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor
+if [ $1 -eq 0 ] ; then
+    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 fi
 
 exit 0
+
+%posttrans
+/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %post devel
 ext=.gz
@@ -900,6 +900,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Fri May 10 2013 Adam Williamson <awilliam@redhat.com>
+- update scriptlets to follow current guidelines for updating icon cache
+
 * Tue Apr 30 2013 Omair Majid <omajid@redhat.com> 1:1.8.0.0-0.5.b87
 - Update to b87
 - Remove all rhino support; use nashorn instead
