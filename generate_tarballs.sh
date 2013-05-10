@@ -8,10 +8,6 @@ tar xzf icedtea7.tar.gz
 rm -f icedtea7.tar.gz
 pushd icedtea7-${VERSION}
 
-# rewriter
-tar cvzf class-rewriter.tar.gz rewriter
-mv class-rewriter.tar.gz ../
-
 # desktop files
 tar cvzf desktop-files.tar.gz jconsole.desktop policytool.desktop
 mv desktop-files.tar.gz ../
