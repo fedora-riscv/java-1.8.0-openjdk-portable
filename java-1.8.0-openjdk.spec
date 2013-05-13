@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b87
+%global jdk8_version b89
 %global hg_tag jdk8-%{jdk8_version}
 
 %global multilib_arches %{power64} sparc64 x86_64
@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.5.%{jdk8_version}%{?dist}
+Release: 0.6.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -195,9 +195,6 @@ Patch102: %{name}-size_t.patch
 
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
-
-# Patch for arm
-Patch104: fix-zero-build-on-arm.patch
 
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
@@ -368,8 +365,6 @@ sh %{SOURCE12}
 # PPC fixes
 %patch103
 %endif
-
-%patch104
 
 # Extract systemtap tapsets
 %if %{with_systemtap}

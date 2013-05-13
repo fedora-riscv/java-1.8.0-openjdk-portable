@@ -115,7 +115,7 @@ diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibra
 -		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjpeg,\
 +		REORDER:=$(BUILD_LIBJAVAJPEG_REORDER),\
 +		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/libjavajpeg,\
- 		DEBUG_SYMBOLS:=$(WINDOWS_ONLY)))
+ 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
  
 -$(BUILD_LIBJPEG) : $(BUILD_LIBJAVA)
 -

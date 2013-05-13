@@ -76,7 +76,7 @@ diff --git jdk8/jdk/makefiles/CompileNativeLibraries.gmk jdk8/jdk/makefiles/Comp
 +			  -D "JDK_INTERNAL_NAME=libjavalcms" \
  			  -D "JDK_FTYPE=0x2L",\
  		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/liblcms,\
- 		DEBUG_SYMBOLS:=$(WINDOWS_ONLY)))
+ 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
  
 -    BUILD_LIBRARIES += $(BUILD_LIBLCMS)
 -
