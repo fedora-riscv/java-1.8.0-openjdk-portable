@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.6.%{jdk8_version}%{?dist}
+Release: 0.7.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -423,6 +423,9 @@ bash ../../configure \
     --with-num-cores="$NUM_PROC"
 
 make SCTP_WERROR= DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
+
+# the build (erroneously) removes read permissions from some jars
+find images/j2sdk-image -iname '*.jar' -exec chmod ugo+r {} \;
 
 popd >& /dev/null
 
@@ -895,6 +898,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon May 20 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.7.b89
+- Fix incorrect permissions on jars
+
 * Fri May 10 2013 Adam Williamson <awilliam@redhat.com>
 - update scriptlets to follow current guidelines for updating icon cache
 
