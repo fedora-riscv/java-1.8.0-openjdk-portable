@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.7.%{jdk8_version}%{?dist}
+Release: 0.8.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -425,7 +425,10 @@ bash ../../configure \
 make SCTP_WERROR= DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
 
 # the build (erroneously) removes read permissions from some jars
+# this is a regression in OpenJDK 7 (our compiler):
+# http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
 find images/j2sdk-image -iname '*.jar' -exec chmod ugo+r {} \;
+chmod ugo+r images/j2sdk-image/lib/ct.sym
 
 popd >& /dev/null
 
@@ -898,6 +901,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Jun 3 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.8.b89
+- Fix incorrect permissions on ct.sym
+
 * Mon May 20 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.7.b89
 - Fix incorrect permissions on jars
 
