@@ -95,7 +95,7 @@
 %global origin          openjdk
 %global buildver        0
 # priority must be 6 digits in total
-%global priority        18000%{buildver}
+%global priority        00000%{buildver}
 %global javaver         1.8.0
 
 # Standard JPackage directories and symbolic links.
@@ -136,7 +136,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.8.%{jdk8_version}%{?dist}
+Release: 0.9.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -901,6 +901,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Jul 15 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.9.b89
+- Priority should be 0 until openjdk8 is released by upstream
+- Fixes RHBZ#964409
+
 * Mon Jun 3 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.8.b89
 - Fix incorrect permissions on ct.sym
 
