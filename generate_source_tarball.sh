@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 VERSION=$1
 REV=$2
 JDK8_URL=http://hg.openjdk.java.net/jdk8/jdk8
@@ -28,4 +30,4 @@ done
 rm -rvf jdk/src/share//native/sun/security/ec/impl
 
 popd
-tar czf ${VERSION}.tar.gz jdk8
+tar cJf ${VERSION}.tar.xz jdk8

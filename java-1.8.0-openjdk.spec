@@ -156,7 +156,7 @@ URL:      http://openjdk.java.net/
 # Source from upstrem OpenJDK8 project. Use
 # './generate_source_tarball.sh %{hg_tag}' to generate. The script merges
 # multiple tarballs into one and removes code not allowed in Fedora.
-Source0:  jdk8-%{jdk8_version}.tar.gz
+Source0:  jdk8-%{jdk8_version}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -901,6 +901,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Jul 15 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.9.b89
+- Switch to xz for compression
+- Fixes RHBZ#979823
+
 * Mon Jul 15 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.9.b89
 - Priority should be 0 until openjdk8 is released by upstream
 - Fixes RHBZ#964409
