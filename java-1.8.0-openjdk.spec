@@ -1,12 +1,14 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b89
+%global jdk8_build b01
+%global jdk8_version %{jdk8_build}-internal
 %global hg_tag jdk8-%{jdk8_version}
 
 %global multilib_arches %{power64} sparc64 x86_64
 
 %global jit_arches %{ix86} x86_64 sparcv9 sparc64
+%global aarch64 aarch64
 
 %ifarch x86_64
 %global archbuild amd64
@@ -44,6 +46,11 @@
 %global archbuild arm
 %global archinstall arm
 %global archdef ARM
+%endif
+%ifarch %{aarch64}
+%global archbuild aarch64
+%global archinstall aarch64
+%global archdef AARCH64
 %endif
 # 32 bit sparc, optimized for v9
 %ifarch sparcv9
@@ -136,7 +143,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.9.%{jdk8_version}%{?dist}
+Release: 0.10.%{jdk8_build}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -154,9 +161,10 @@ License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and L
 URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. Use
-# './generate_source_tarball.sh %{hg_tag}' to generate. The script merges
-# multiple tarballs into one and removes code not allowed in Fedora.
-Source0:  jdk8-%{jdk8_version}.tar.xz
+# './generate_source_tarball.sh %{jdk8_version}' to generate. The script clone
+# repositories of jdk8 and aarch64-port and removes code not allowed in Fedora.
+Source0:  java-1.8.0-openjdk-jdk8-%{jdk8_version}.tar.xz
+Source1:  java-1.8.0-openjdk-aarch64-port-%{jdk8_version}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -338,8 +346,13 @@ Provides: java8-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
 The OpenJDK API documentation.
 
 %prep
+%ifarch %{arm64}
+%global source_num 1
+%else
+%global source_num 0
+%endif
 
-%setup -q -c -n %{name} -T -a 0
+%setup -q -c -n %{name} -T -a %{source_num}
 cp %{SOURCE2} .
 
 # OpenJDK patches
