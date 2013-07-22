@@ -8,8 +8,8 @@
 %global multilib_arches %{power64} sparc64 x86_64
 
 %global jit_arches %{ix86} x86_64 sparcv9 sparc64
-%global aarch64 aarch64
-
+%global aarch64 aarch64 arm64 armv8
+8
 %ifarch x86_64
 %global archbuild amd64
 %global archinstall amd64
@@ -27,7 +27,7 @@
 %ifarch %{ix86}
 %global archbuild i586
 %global archinstall i386
-%endif
+%endifbzz
 %ifarch ia64
 %global archbuild ia64
 %global archinstall ia64
