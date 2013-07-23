@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b89
+%global jdk8_version b89x
 %global hg_tag jdk8-%{jdk8_version}
 
 %global multilib_arches %{power64} sparc64 x86_64
@@ -913,6 +913,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.10.b89
+- moved to latest working osurces
+
 * Tue Jul 23 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.10.b89
 - Moved  to hg clone for generating sources.
 

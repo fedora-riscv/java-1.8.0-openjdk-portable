@@ -26,7 +26,10 @@ do
     fi
     pushd jdk8
 
-    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn common
+#    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn common
+#    it looks like commons have been added as separate repo for jdk8
+#    but not yet for aarch64-port
+    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn
     do
         if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
             # aarch64-port does not tag trees
