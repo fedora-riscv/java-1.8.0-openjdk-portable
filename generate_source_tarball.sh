@@ -26,7 +26,7 @@ do
     fi
     pushd jdk8
 
-    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn
+    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn common
     do
         if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
             # aarch64-port does not tag trees

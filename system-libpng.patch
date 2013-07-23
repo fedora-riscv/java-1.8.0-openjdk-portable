@@ -1,0 +1,83 @@
+diff --git a/common/autoconf/libraries.m4 b/common/autoconf/libraries.m4
+--- jdk8/common/autoconf/libraries.m4
++++ jdk8/common/autoconf/libraries.m4
+@@ -566,6 +566,47 @@
+ 
+ ###############################################################################
+ #
++# Check for the png library
++#
++
++AC_ARG_WITH(libpng, [AS_HELP_STRING([--with-libpng],
++	[use libpng from build system or OpenJDK source (system, bundled) @<:@bundled@:>@])])
++
++AC_CHECK_LIB(png, png_sig_cmp,
++             [ LIBPNG_FOUND=yes ],
++             [ LIBPNG_FOUND=no ])
++
++AC_MSG_CHECKING([for which libpng to use])
++
++# default is bundled
++DEFAULT_LIBPNG=bundled
++
++#
++# if user didn't specify, use DEFAULT_LIBPNG
++#
++if test "x${with_libpng}" = "x"; then
++    with_libpng=${DEFAULT_libpng}
++fi
++
++
++if test "x${with_libpng}" = "xbundled"; then
++    USE_EXTERNAL_LIBPNG=false
++    AC_MSG_RESULT([bundled])
++elif test "x${with_libpng}" = "xsystem"; then
++    if test "x${LIBPNG_FOUND}" = "xyes"; then
++        USE_EXTERNAL_LIBPNG=true
++        AC_MSG_RESULT([system])
++    else
++        AC_MSG_RESULT([system not found])
++        AC_MSG_ERROR([--with-libpng=system specified, but no libpng found!])
++    fi
++else
++    AC_MSG_ERROR([Invalid value of --with-libpng: ${with_libpng}, use 'system' or 'bundled'])
++fi
++AC_SUBST(USE_EXTERNAL_LIBPNG)
++
++###############################################################################
++#
+ # Check for the zlib library
+ #
+ 
+diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibraries.gmk
+--- jdk8/jdk/makefiles/CompileNativeLibraries.gmk
++++ jdk8/jdk/makefiles/CompileNativeLibraries.gmk
+@@ -2386,7 +2386,6 @@
+ ifndef BUILD_HEADLESS_ONLY
+ LIBSPLASHSCREEN_DIRS:=\
+ 	$(JDK_TOPDIR)/src/share/native/sun/awt/image/jpeg \
+-	$(JDK_TOPDIR)/src/share/native/sun/awt/libpng \
+ 	$(JDK_TOPDIR)/src/share/native/sun/awt/splashscreen
+ 
+ ifeq ($(USE_EXTERNAL_LIBGIF),true)
+@@ -2457,7 +2456,7 @@
+ 		MAPFILE:=$(JDK_TOPDIR)/makefiles/mapfiles/libsplashscreen/mapfile-vers, \
+ 		LDFLAGS:=$(LDFLAGS_JDKLIB) \
+ 			 $(call SET_SHARED_LIBRARY_ORIGIN),\
+-		LDFLAGS_SUFFIX:=$(LIBSPLASHSCREEN_LDFLAGS_SUFFIX) $(LIBZ) $(GIFLIB_LDFLAGS) -ljpeg,\
++		LDFLAGS_SUFFIX:=$(LIBSPLASHSCREEN_LDFLAGS_SUFFIX) $(LIBZ) $(GIFLIB_LDFLAGS) -ljpeg -lpng,\
+ 		LDFLAGS_SUFFIX_solaris:=-lc,\
+ 		VERSIONINFO_RESOURCE:=$(JDK_TOPDIR)/src/windows/resource/version.rc,\
+ 		RC_FLAGS:=$(RC_FLAGS)\
+diff --git a/src/share/native/sun/awt/splashscreen/splashscreen_png.c b/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+--- jdk8/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
++++ jdk8/jdk/src/share/native/sun/awt/splashscreen/splashscreen_png.c
+@@ -25,7 +25,7 @@
+ 
+ #include "splashscreen_impl.h"
+ 
+-#include "../libpng/png.h"
++#include <png.h>
+ 
+ #include <setjmp.h>
+ 
