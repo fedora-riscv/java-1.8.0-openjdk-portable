@@ -203,10 +203,6 @@ Patch102: %{name}-size_t.patch
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
 
-Patch201: system-libjpeg.patch
-Patch202: system-libpng.patch
-Patch203: system-lcms.patch
-
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
@@ -359,10 +355,6 @@ cp %{SOURCE2} .
 # Remove libraries that are linked
 # disabled until 8 has all system library fixes upstream
 sh %{SOURCE12}
-
-%patch201
-%patch202
-%patch203
 
 %patch1
 
@@ -913,6 +905,13 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.10.b89
+- removed upstreamed :
+ - patch201 system-libjpeg.patch
+ - patch202 system-libpng.patch
+ - patch203 system-lcms.patch
+
+
 * Tue Jul 23 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.10.b89
 - Moved  to hg clone for generating sources.
 
