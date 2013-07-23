@@ -241,7 +241,7 @@ BuildRequires: libffi-devel
 BuildRequires: openssl
 # execstack build requirement.
 # no prelink on ARM yet
-%ifnarch %{arm}
+%ifnarch %{arm} %{aarch64}
 BuildRequires: prelink
 %endif
 %ifarch %{jit_arches}
@@ -913,6 +913,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.11.b89
+- prelink dependence excluded also for aaech64
+
 * Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.10.b89
 - moved to latest working osurces
 
