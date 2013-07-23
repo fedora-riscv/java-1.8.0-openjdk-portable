@@ -1,14 +1,13 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_build b01
-%global jdk8_version %{jdk8_build}-internal
+%global jdk8_version b89
 %global hg_tag jdk8-%{jdk8_version}
 
 %global multilib_arches %{power64} sparc64 x86_64
 
 %global jit_arches %{ix86} x86_64 sparcv9 sparc64
-%global aarch64 aarch64 arm64 armv8	
+%global aarch64 aarch64 arm64 armv8
 
 %ifarch x86_64
 %global archbuild amd64
@@ -143,7 +142,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.10.%{jdk8_build}%{?dist}
+Release: 0.10.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -161,10 +160,10 @@ License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and L
 URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. Use
-# './generate_source_tarball.sh %{jdk8_version}' to generate. The script clone
+# './generate_source_tarball.sh %{hg_tag}' to generate. The script clones
 # repositories of jdk8 and aarch64-port and removes code not allowed in Fedora.
-Source0:  java-1.8.0-openjdk-jdk8-%{jdk8_version}.tar.xz
-Source1:  java-1.8.0-openjdk-aarch64-port-%{jdk8_version}.tar.xz
+Source0:  jdk8-%{jdk8_version}.tar.xz
+Source1:  aarch64-port-%{jdk8_version}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -914,6 +913,12 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Jul 23 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.10.b89
+- Moved  to hg clone for generating sources.
+
+* Sun Jul 21 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.9.b89
+- added aarch 64 tarball, proposed usage of clone instead of tarballs
+
 * Mon Jul 15 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.9.b89
 - Switch to xz for compression
 - Fixes RHBZ#979823
