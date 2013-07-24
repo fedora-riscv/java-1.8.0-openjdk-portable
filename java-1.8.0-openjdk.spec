@@ -4,10 +4,10 @@
 %global jdk8_version b89x
 %global hg_tag jdk8-%{jdk8_version}
 
-%global multilib_arches %{power64} sparc64 x86_64
+%global aarch64			aarch64 arm64 armv8
+%global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
+%global jit_arches		%{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 
-%global jit_arches %{ix86} x86_64 sparcv9 sparc64
-%global aarch64 aarch64 arm64 armv8
 
 %ifarch x86_64
 %global archbuild amd64
@@ -142,7 +142,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.10.%{jdk8_version}%{?dist}
+Release: 0.11.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -185,6 +185,9 @@ Source12: remove-intree-libraries.sh
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
 
+Source100: config.guess
+Source101: config.sub
+
 # RPM/distribution specific patches
 
 # Ignore AWTError when assistive technologies are loaded 
@@ -204,8 +207,10 @@ Patch102: %{name}-size_t.patch
 Patch103: %{name}-ppc-zero-hotspot.patch
 
 Patch201: system-libjpeg.patch
+Patch2011: system-libjpegAARCH64.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
+Patch2031: system-lcmsAARCH64.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -215,6 +220,7 @@ BuildRequires: desktop-file-utils
 BuildRequires: fontconfig
 BuildRequires: freetype-devel
 BuildRequires: giflib-devel
+BuildRequires: gcc-c++
 BuildRequires: gtk2-devel
 BuildRequires: lcms2-devel
 BuildRequires: libjpeg-devel
@@ -345,7 +351,7 @@ Provides: java8-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
 The OpenJDK API documentation.
 
 %prep
-%ifarch %{arm64}
+%ifarch %{aarch64}
 %global source_num 1
 %else
 %global source_num 0
@@ -354,15 +360,31 @@ The OpenJDK API documentation.
 %setup -q -c -n %{name} -T -a %{source_num}
 cp %{SOURCE2} .
 
+#repalce outdated configure guess script
+cp %{SOURCE100} jdk8/common/autoconf/build-aux/
+cp %{SOURCE101} jdk8/common/autoconf/build-aux/
+
 # OpenJDK patches
 
 # Remove libraries that are linked
 # disabled until 8 has all system library fixes upstream
+
 sh %{SOURCE12}
 
+%ifarch %{aarch64}
+%patch2011
+%else
 %patch201
+%endif
+
 %patch202
+
+%ifarch %{aarch64}
+%patch2031
+%else
 %patch203
+%endif
+
 
 %patch1
 
@@ -915,6 +937,12 @@ exit 0
 %changelog
 * Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.11.b89
 - prelink dependence excluded also for aaech64
+- arm64 added to jitarches
+- added source100 config.guess to repalce the outdated one in-tree
+- added source101 config.sub  to repalce the outdated one in-tree
+- added patch2011 system-libjpegAARCH64.patch (as aarch64-port is little bit diferent)
+- added patch2031 system-lcmsAARCH64.patch (as aarch64-port is little bit diferent)
+- added gcc-c++ build depndece so builddep will  result to better situation
 
 * Tue Jul 23 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.10.b89
 - moved to latest working osurces
