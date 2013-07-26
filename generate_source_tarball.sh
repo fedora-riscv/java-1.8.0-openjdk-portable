@@ -10,7 +10,8 @@ if test "x${VERSION}" = "x"; then
     exit -1;
 fi
 
-for REPO_NAME in jdk8 aarch64-port
+#for REPO_NAME in jdk8 aarch64-port
+for REPO_NAME in aarch64-port
 do
     mkdir ${REPO_NAME}
     pushd ${REPO_NAME}
