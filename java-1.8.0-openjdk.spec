@@ -142,7 +142,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.13.%{jdk8_version}%{?dist}
+Release: 0.14.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -211,6 +211,10 @@ Patch2011: system-libjpegAARCH64.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
+
+#created by removing all -m64 switches from makefiles
+#find java-1.8.0-openjdk/jdk8/ -not -name "*.java" -type f -exec sed -i  "s/\\-m64/ /g"  '{}' \;
+Patch300: removeM64switches.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -398,6 +402,10 @@ sh %{SOURCE12}
 %ifarch ppc %{power64}
 # PPC fixes
 %patch103
+%endif
+
+%ifarch %{aarch64}
+%patch300
 %endif
 
 # Extract systemtap tapsets
@@ -938,6 +946,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Jul 29 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.14.b89
+- added patch 300 - removeM64switches.patch to attempt anbuild
+
 * Fri Jul 26 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.13.b89
 - added new aarch64 tarball
 
