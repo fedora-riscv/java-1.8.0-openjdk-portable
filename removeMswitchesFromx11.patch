@@ -1,0 +1,12 @@
+diff -r b28c6241e16e -r 3c777c472368 makefiles/GensrcX11Wrappers.gmk
+--- jdk8/jdk/makefiles/GensrcX11Wrappers.gmk	Tue Jul 09 16:04:18 2013 +0100
++++ jdk8/jdk/makefiles/GensrcX11Wrappers.gmk	Thu Jul 25 11:32:02 2013 +0100
+@@ -89,7 +89,7 @@
+     # Compile the C code into an executable.
+     $(GENSRC_X11WRAPPERS_TMP)/sizer.%.exe : $(GENSRC_X11WRAPPERS_TMP)/sizer.%.c
+ 	$(MKDIR) -p $(@D)
+-	(cd $(@D) && $(CC) -m$* -o $@ $< \
++	(cd $(@D) && $(CC) -o $@ $< \
+               $(X_CFLAGS) \
+               $(X_LIBS) \
+               -I$(JDK_OUTPUTDIR)/include \
