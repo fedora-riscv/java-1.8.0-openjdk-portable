@@ -212,9 +212,6 @@ Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
 
-#created by removing all -m64 switches from makefiles
-#find java-1.8.0-openjdk/jdk8/ -not -name "*.java" -type f -exec sed -i  "s/\\-m64/ /g"  '{}' \;
-Patch300: removeM64switches.patch
 Patch301: removeMswitchesFromx11.patch
 
 BuildRequires: autoconf
@@ -406,7 +403,6 @@ sh %{SOURCE12}
 %endif
 
 %ifarch %{aarch64}
-%patch300
 %patch301
 %endif
 
@@ -949,9 +945,7 @@ exit 0
 
 %changelog
 * Mon Jul 29 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.14.b89
-- added patch 300 - removeM64switches.patch
 - added patch 301 - removeMswitchesFromx11.patch
-
 
 * Fri Jul 26 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.13.b89
 - added new aarch64 tarball
