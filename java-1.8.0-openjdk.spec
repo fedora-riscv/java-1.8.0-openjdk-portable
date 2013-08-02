@@ -142,7 +142,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.14.%{jdk8_version}%{?dist}
+Release: 0.15.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -213,6 +213,7 @@ Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
 
 Patch301: removeMswitchesFromx11.patch
+Patch302: %{name}-arm64-missing-includes.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -404,6 +405,11 @@ sh %{SOURCE12}
 
 %ifarch %{aarch64}
 %patch301
+
+pushd jdk8/hotspot >& /dev/null
+%patch302 -p1
+popd >& /dev/null
+
 %endif
 
 # Extract systemtap tapsets
@@ -453,6 +459,7 @@ bash ../../configure \
 %endif
 %ifarch %{aarch64}
     --with-jvm-variants=client \
+    --disable-precompiled-headers \
 %endif
     --with-build-number=%{buildver} \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
@@ -944,6 +951,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Fri Aug 02 2013 Deepak Bhole <dbhole@redhat.com> - 1:1.8.0.0-0.15.b89
+- Added a missing includes patch (#302/%{name}-arm64-missing-includes.patch)
+- Added --disable-precompiled-headers for arm64 build
+
 * Mon Jul 29 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.14.b89
 - added patch 301 - removeMswitchesFromx11.patch
 
