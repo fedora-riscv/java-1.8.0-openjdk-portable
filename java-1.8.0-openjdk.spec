@@ -217,7 +217,7 @@ Patch302: %{name}-arm64-missing-includes.patch
 
 # These patches are already upstream but not included in the port yet
 # http://hg.openjdk.java.net/jdk8/build/jdk/rev/88125d32eb06
-Patch303: 8011366-root.patch
+Patch303: 8011366-jdk.patch
 # http://hg.openjdk.java.net/jdk8/build/jdk/rev/f559fadbf491
 Patch304: 8015087-jdk.patch
 # http://hg.openjdk.java.net/jdk8/build/rev/cb51fb4789ac

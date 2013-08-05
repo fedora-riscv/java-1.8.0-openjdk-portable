@@ -9,8 +9,8 @@ Summary: The build should not be turning off debugging if it has been requested.
 Reviewed-by: erikj, dholmes
 
 diff --git a/makefiles/CompileNativeLibraries.gmk b/makefiles/CompileNativeLibraries.gmk
---- openjdk/makefiles/CompileNativeLibraries.gmk
-+++ openjdk/makefiles/CompileNativeLibraries.gmk
+--- openjdk/jdk/makefiles/CompileNativeLibraries.gmk
++++ openjdk/jdk/makefiles/CompileNativeLibraries.gmk
 @@ -63,7 +63,12 @@
  # Use this variable to set DEBUG_SYMBOLS true on windows for all libraries, but
  # not on other platforms.
