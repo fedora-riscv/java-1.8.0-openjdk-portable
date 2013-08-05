@@ -215,6 +215,15 @@ Patch2031: system-lcmsAARCH64.patch
 Patch301: removeMswitchesFromx11.patch
 Patch302: %{name}-arm64-missing-includes.patch
 
+# These patches are already upstream but not included in the port yet
+# http://hg.openjdk.java.net/jdk8/build/jdk/rev/88125d32eb06
+Patch303: 8011366-root.patch
+# http://hg.openjdk.java.net/jdk8/build/jdk/rev/f559fadbf491
+Patch304: 8015087-jdk.patch
+# http://hg.openjdk.java.net/jdk8/build/rev/cb51fb4789ac
+Patch305: 8015087-root.patch
+
+
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
@@ -410,6 +419,12 @@ pushd jdk8/hotspot >& /dev/null
 %patch302 -p1
 popd >& /dev/null
 
+pushd jdk8
+%patch303 -p1
+%patch304 -p1
+%patch305 -p1
+popd
+
 %endif
 
 # Extract systemtap tapsets
@@ -461,6 +476,7 @@ bash ../../configure \
     --with-jvm-variants=client \
     --disable-precompiled-headers \
 %endif
+    --disable-zip-debug-info \
     --with-build-number=%{buildver} \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=%{debugbuild} \
@@ -951,6 +967,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Mon Aug 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
+- Added additional build fixes for aarch64
+
 * Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.0.0-0.16.b89x
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 

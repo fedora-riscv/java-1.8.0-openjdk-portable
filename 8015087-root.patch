@@ -1,0 +1,34 @@
+# HG changeset patch
+# User andrew
+# Date 1369226952 -3600
+#      Wed May 22 13:49:12 2013 +0100
+# Node ID cb51fb4789ac0b8be4056482077ddfb8f3bd3805
+# Parent  e83abb0a04ab6ad0ea32e0fcdb2d1e74df858687
+8015087: Provide debugging information for programs
+Summary: Enable debugging info on programs in OpenJDK builds
+Reviewed-by: erikj
+
+diff --git a/common/makefiles/NativeCompilation.gmk b/common/makefiles/NativeCompilation.gmk
+--- openjdk/common/makefiles/NativeCompilation.gmk
++++ openjdk/common/makefiles/NativeCompilation.gmk
+@@ -321,11 +321,17 @@
+ 
+     ifneq (,$$($1_DEBUG_SYMBOLS))	
+         ifeq ($(ENABLE_DEBUG_SYMBOLS), true)
+-            # Programs don't get the debug symbols added in the old build. It's not clear if
+-            # this is intentional.
+-            ifeq ($$($1_PROGRAM),)
++	    ifdef OPENJDK
++	        # Always add debug symbols
+                 $1_EXTRA_CFLAGS+=$(CFLAGS_DEBUG_SYMBOLS)
+                 $1_EXTRA_CXXFLAGS+=$(CXXFLAGS_DEBUG_SYMBOLS)
++	    else
++                # Programs don't get the debug symbols added in the old build. It's not clear if
++                # this is intentional.
++                ifeq ($$($1_PROGRAM),)
++                    $1_EXTRA_CFLAGS+=$(CFLAGS_DEBUG_SYMBOLS)
++                    $1_EXTRA_CXXFLAGS+=$(CXXFLAGS_DEBUG_SYMBOLS)
++                endif
+             endif
+         endif
+     endif
