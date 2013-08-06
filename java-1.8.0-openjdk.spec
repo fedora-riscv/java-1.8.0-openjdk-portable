@@ -215,13 +215,15 @@ Patch2031: system-lcmsAARCH64.patch
 Patch301: removeMswitchesFromx11.patch
 Patch302: %{name}-arm64-missing-includes.patch
 
+# To apply 8011366-jdk.patch below, aarch64-port-custom changes need to be rolled back
+Patch303: 73799ba02d7f.patch
 # These patches are already upstream but not included in the port yet
-# http://hg.openjdk.java.net/jdk8/build/jdk/rev/88125d32eb06
-Patch303: 8011366-jdk.patch
 # http://hg.openjdk.java.net/jdk8/build/jdk/rev/f559fadbf491
 Patch304: 8015087-jdk.patch
 # http://hg.openjdk.java.net/jdk8/build/rev/cb51fb4789ac
 Patch305: 8015087-root.patch
+# http://hg.openjdk.java.net/jdk8/build/jdk/rev/88125d32eb06
+Patch306: 8011366-jdk.patch
 
 
 BuildRequires: autoconf
@@ -423,6 +425,7 @@ pushd jdk8
 %patch303 -p1
 %patch304 -p1
 %patch305 -p1
+%patch306 -p1
 popd
 
 %endif
