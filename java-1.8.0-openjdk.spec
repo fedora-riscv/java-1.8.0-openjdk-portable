@@ -400,9 +400,6 @@ sh %{SOURCE12}
 %patch203
 %endif
 
-pushd jdk8
-%patch310 -p1
-popd
 
 %patch1
 
@@ -430,6 +427,12 @@ pushd jdk8
 %patch304 -p1
 %patch305 -p1
 %patch306 -p1
+popd
+
+%else
+
+pushd jdk8
+%patch310 -p1
 popd
 
 %endif
@@ -974,6 +977,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Wed Aug 07 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
+- The zero fix only applies on b89 tarball
+
 * Tue Aug 06 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
 - Add patch to fix zero on 32-bit build
 
