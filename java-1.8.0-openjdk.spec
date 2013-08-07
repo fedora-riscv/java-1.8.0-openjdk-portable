@@ -214,6 +214,7 @@ Patch2031: system-lcmsAARCH64.patch
 
 Patch301: removeMswitchesFromx11.patch
 Patch302: %{name}-arm64-missing-includes.patch
+Patch310: fix-jvm-cfg.patch
 
 # To apply 8011366-jdk.patch below, aarch64-port-custom changes need to be rolled back
 Patch303: 73799ba02d7f.patch
@@ -399,6 +400,9 @@ sh %{SOURCE12}
 %patch203
 %endif
 
+pushd jdk8
+%patch310 -p1
+popd
 
 %patch1
 
@@ -970,6 +974,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Aug 06 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
+- Add patch to fix zero on 32-bit build
+
 * Mon Aug 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
 - Added additional build fixes for aarch64
 
