@@ -3,6 +3,7 @@
 
 %global jdk8_version b89x
 %global hg_tag jdk8-%{jdk8_version}
+%global aarch64_hg_tag aarch64-20130813
 
 %global aarch64			aarch64 arm64 armv8
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
@@ -142,7 +143,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.16.%{jdk8_version}%{?dist}
+Release: 0.17.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -159,11 +160,12 @@ Group:   Development/Languages
 License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and LGPL+ and LGPLv2 and MPLv1.0 and MPLv1.1 and Public Domain and W3C
 URL:      http://openjdk.java.net/
 
-# Source from upstrem OpenJDK8 project. Use
-# './generate_source_tarball.sh %{hg_tag}' to generate. The script clones
-# repositories of jdk8 and aarch64-port and removes code not allowed in Fedora.
+# Source from upstrem OpenJDK8 project. Use 
+# './generate_source_tarball.sh %{hg_tag|aarch64_hg_tag}' to generate.
+# The script clones repositories of jdk8 and aarch64-port and removes 
+# code not allowed in Fedora.
 Source0:  jdk8-%{jdk8_version}.tar.xz
-Source1:  aarch64-port-%{jdk8_version}.tar.xz
+Source1:  aarch64-port-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -207,25 +209,11 @@ Patch102: %{name}-size_t.patch
 Patch103: %{name}-ppc-zero-hotspot.patch
 
 Patch201: system-libjpeg.patch
-Patch2011: system-libjpegAARCH64.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
 
-Patch301: removeMswitchesFromx11.patch
-Patch302: %{name}-arm64-missing-includes.patch
-Patch310: fix-jvm-cfg.patch
-
-# To apply 8011366-jdk.patch below, aarch64-port-custom changes need to be rolled back
-Patch303: 73799ba02d7f.patch
-# These patches are already upstream but not included in the port yet
-# http://hg.openjdk.java.net/jdk8/build/jdk/rev/f559fadbf491
-Patch304: 8015087-jdk.patch
-# http://hg.openjdk.java.net/jdk8/build/rev/cb51fb4789ac
-Patch305: 8015087-root.patch
-# http://hg.openjdk.java.net/jdk8/build/jdk/rev/88125d32eb06
-Patch306: 8011366-jdk.patch
-
+Patch301: fix-jvm-cfg.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -386,12 +374,7 @@ cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 
 sh %{SOURCE12}
 
-%ifarch %{aarch64}
-%patch2011
-%else
 %patch201
-%endif
-
 %patch202
 
 %ifarch %{aarch64}
@@ -415,24 +398,10 @@ sh %{SOURCE12}
 %patch103
 %endif
 
-%ifarch %{aarch64}
-%patch301
-
-pushd jdk8/hotspot >& /dev/null
-%patch302 -p1
-popd >& /dev/null
+%ifnarch %{aarch64}
 
 pushd jdk8
-%patch303 -p1
-%patch304 -p1
-%patch305 -p1
-%patch306 -p1
-popd
-
-%else
-
-pushd jdk8
-%patch310 -p1
+%patch301 -p1
 popd
 
 %endif
@@ -977,6 +946,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Aug 13 2013 Deepak Bhole <dbhole@redhat.com> - 1:1.8.0.0-0.17.b89x
+- Updated aarch64 to latest head
+- Dropped upstreamed patches
+
 * Wed Aug 07 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.16.b89x
 - The zero fix only applies on b89 tarball
 

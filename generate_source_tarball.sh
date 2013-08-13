@@ -21,7 +21,7 @@ do
     if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
         # aarch64-port does not tag trees
         # FIXME make this clone reproducible
-        hg clone ${REPO_ROOT}
+        hg clone ${REPO_ROOT} -r ${VERSION}
     else
         hg clone ${REPO_ROOT} -r ${VERSION}
     fi
@@ -45,7 +45,7 @@ do
     popd
 
     find jdk8 -type d -name ".hg" -exec rm -rf '{}' \; || echo ok
-    tar cJf ${REPO_NAME}-b${VERSION}.tar.xz jdk8
+    tar cJf ${REPO_NAME}-${VERSION}.tar.xz jdk8
 
     popd
 done

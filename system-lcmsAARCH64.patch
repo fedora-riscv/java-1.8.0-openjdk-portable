@@ -48,10 +48,10 @@ diff --git a/common/autoconf/libraries.m4 b/common/autoconf/libraries.m4
  # Check for the zlib library
  #
  
-diff --git jdk8/jdk/makefiles/CompileNativeLibraries.gmk jdk8/jdk/makefiles/CompileNativeLibraries.gmk
---- jdk8/jdk/makefiles/CompileNativeLibraries.gmk
-+++ jdk8/jdk/makefiles/CompileNativeLibraries.gmk
-@@ -1215,8 +1215,8 @@
+diff -up ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk
+--- ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav	2013-08-13 12:37:05.000000000 -0400
++++ ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk	2013-08-13 14:31:24.000000000 -0400
+@@ -1224,8 +1224,8 @@ BUILD_LIBRARIES += $(BUILD_LIBJSDT)
  
  ifdef OPENJDK
      # TODO: Update awt lib path when awt is converted
@@ -62,7 +62,7 @@ diff --git jdk8/jdk/makefiles/CompileNativeLibraries.gmk jdk8/jdk/makefiles/Comp
                  OUTPUT_DIR:=$(INSTALL_LIBRARIES_HERE),\
                  SRC:=$(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms,\
  		LANG:=C,\
-@@ -1234,18 +1234,18 @@
+@@ -1243,18 +1243,18 @@ ifdef OPENJDK
  		LDFLAGS_windows:=$(WIN_AWT_LIB) $(WIN_JAVA_LIB),\
  		LDFLAGS_SUFFIX_solaris:=-lawt -ljava -ljvm -lc,\
  		LDFLAGS_SUFFIX_macosx:=$(LIBM) -lawt -ljava -ljvm,\
@@ -73,16 +73,15 @@ diff --git jdk8/jdk/makefiles/CompileNativeLibraries.gmk jdk8/jdk/makefiles/Comp
 -			  -D "JDK_FNAME=lcms.dll" \
 -			  -D "JDK_INTERNAL_NAME=lcms" \
 +			  -D "JDK_FNAME=javalcms.dll" \
-+			  -D "JDK_INTERNAL_NAME=libjavalcms" \
++			  -D "JDK_INTERNAL_NAME=javalcms" \
  			  -D "JDK_FTYPE=0x2L",\
  		OBJECT_DIR:=$(JDK_OUTPUTDIR)/objs/liblcms,\
- 		DEBUG_SYMBOLS:=true))
+ 		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
  
 -    BUILD_LIBRARIES += $(BUILD_LIBLCMS)
--
--    $(BUILD_LIBLCMS) : $(BUILD_LIBAWT)
 +    BUILD_LIBRARIES += $(BUILD_LIBJAVALCMS)
-+
+ 
+-    $(BUILD_LIBLCMS) : $(BUILD_LIBAWT)
 +    $(BUILD_LIBJAVALCMS) : $(BUILD_LIBAWT)
  endif
  
