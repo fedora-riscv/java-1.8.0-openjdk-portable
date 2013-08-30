@@ -235,7 +235,6 @@ BuildRequires: libXinerama-devel
 BuildRequires: libXt-devel
 BuildRequires: libXtst-devel
 BuildRequires: pkgconfig
-BuildRequires: wget
 BuildRequires: xorg-x11-proto-devel
 #BuildRequires: redhat-lsb
 BuildRequires: zip
