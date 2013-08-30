@@ -125,7 +125,7 @@
 %global jvmjardir       %{_jvmjardir}/%{name}-%{version}
 %endif
 
-%ifarch %{jit_arches}
+%ifarch %{with_systemtap}
 # Where to install systemtap tapset (links)
 # We would like these to be in a package specific subdir,
 # but currently systemtap doesn't support that, so we have to
@@ -252,8 +252,7 @@ BuildRequires: openssl
 %ifnarch %{arm} %{aarch64}
 BuildRequires: prelink
 %endif
-%ifarch %{jit_arches}
-#systemtap build requirement.
+%ifarch %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
 
@@ -503,7 +502,7 @@ pushd %{buildoutputdir}/images/j2sdk-image
   install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
   cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
 
-%ifarch %{jit_arches}
+%ifarch %{with_systemtap}
   # Install systemtap support files.
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset
   cp -a $RPM_BUILD_DIR/%{name}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
@@ -884,13 +883,13 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir}/bin
 %dir %{_jvmdir}/%{sdkdir}/include
 %dir %{_jvmdir}/%{sdkdir}/lib
-%ifarch %{jit_arches}
+%ifarch %{with_systemtap}
 %dir %{_jvmdir}/%{sdkdir}/tapset
 %endif
 %{_jvmdir}/%{sdkdir}/bin/*
 %{_jvmdir}/%{sdkdir}/include/*
 %{_jvmdir}/%{sdkdir}/lib/*
-%ifarch %{jit_arches}
+%ifarch %{with_systemtap}
 %{_jvmdir}/%{sdkdir}/tapset/*.stp
 %endif
 %{_jvmdir}/%{sdklnk}
@@ -926,7 +925,7 @@ exit 0
 %{_mandir}/man1/wsgen-%{name}.1*
 %{_mandir}/man1/wsimport-%{name}.1*
 %{_mandir}/man1/xjc-%{name}.1*
-%ifarch %{jit_arches}
+%ifarch %{with_systemtap}
 %{tapsetroot}
 %endif
 
