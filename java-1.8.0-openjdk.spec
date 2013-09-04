@@ -11,59 +11,41 @@
 
 
 %ifarch x86_64
-%global archbuild amd64
 %global archinstall amd64
 %endif
 %ifarch ppc
-%global archbuild ppc
 %global archinstall ppc
-%global archdef PPC
 %endif
 %ifarch %{power64}
-%global archbuild ppc64
 %global archinstall ppc64
-%global archdef PPC
 %endif
 %ifarch %{ix86}
-%global archbuild i586
 %global archinstall i386
 %endif
 %ifarch ia64
-%global archbuild ia64
 %global archinstall ia64
 %endif
 %ifarch s390
-%global archbuild s390
 %global archinstall s390
-%global archdef S390
 %endif
 %ifarch s390x
-%global archbuild s390x
 %global archinstall s390x
-%global archdef S390
 %endif
 %ifarch %{arm}
-%global archbuild arm
 %global archinstall arm
-%global archdef ARM
 %endif
 %ifarch %{aarch64}
-%global archbuild aarch64
 %global archinstall aarch64
-%global archdef AARCH64
 %endif
 # 32 bit sparc, optimized for v9
 %ifarch sparcv9
-%global archbuild sparc
 %global archinstall sparc
 %endif
 # 64 bit sparc
 %ifarch sparc64
-%global archbuild sparcv9
 %global archinstall sparcv9
 %endif
 %ifnarch %{jit_arches}
-%global archbuild %{_arch}
 %global archinstall %{_arch}
 %endif
 
