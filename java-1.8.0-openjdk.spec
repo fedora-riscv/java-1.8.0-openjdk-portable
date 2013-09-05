@@ -59,6 +59,8 @@
 
 %ifarch %{jit_arches}
 %global with_systemtap 1
+%else
+%global with_systemtap 0
 %endif
 
 # Convert an absolute path to a relative path.  Each symbolic link is
