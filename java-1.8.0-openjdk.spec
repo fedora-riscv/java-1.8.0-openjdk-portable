@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b89x
+%global jdk8_version b106
 %global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag aarch64-20130813
 
@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.17.%{jdk8_version}%{?dist}
+Release: 0.18.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -142,11 +142,10 @@ Group:   Development/Languages
 License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and LGPL+ and LGPLv2 and MPLv1.0 and MPLv1.1 and Public Domain and W3C
 URL:      http://openjdk.java.net/
 
-# Source from upstrem OpenJDK8 project. Use 
-# './generate_source_tarball.sh %{hg_tag|aarch64_hg_tag}' to generate.
-# The script clones repositories of jdk8 and aarch64-port and removes 
-# code not allowed in Fedora.
-Source0:  jdk8-%{jdk8_version}.tar.xz
+# Source from upstrem OpenJDK8 project. To regenerate, use
+# ./generate_source_tarball.sh jdk8 %{hg_tag}
+# ./generate_source_tarball.sh aarch64-port %{aarch64_hg_tag}
+Source0:  jdk8-%{hg_tag}.tar.xz
 Source1:  aarch64-port-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
@@ -194,8 +193,6 @@ Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
-
-Patch301: fix-jvm-cfg.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -376,14 +373,6 @@ sh %{SOURCE12}
 %ifarch ppc %{power64}
 # PPC fixes
 %patch103
-%endif
-
-%ifnarch %{aarch64}
-
-pushd jdk8
-%patch301 -p1
-popd
-
 %endif
 
 # Extract systemtap tapsets
@@ -926,6 +915,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Thu Sep 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.18.b106
+- Update to jdk8-b106
+
 * Tue Aug 13 2013 Deepak Bhole <dbhole@redhat.com> - 1:1.8.0.0-0.17.b89x
 - Updated aarch64 to latest head
 - Dropped upstreamed patches

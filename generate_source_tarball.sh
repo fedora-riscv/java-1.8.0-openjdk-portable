@@ -1,51 +1,57 @@
 #!/bin/bash
 
+# Generates the 'source tarball' for JDK 8 projects.
+#
+# Usage: generate_source_tarball.sh repo_name tag
+#
+# Examples:
+#   ./generate_source_tarball.sh jdk8 jdk8-b79
+#   ./generate_source_tarball.sh aarch64-port aarch64-${DATE}
+#
+# This script creates a single source tarball out of the repository
+# based on the given tag and removes code not allowed in fedora.
+
 set -e
 
-VERSION=$1
+REPO_NAME="$1"
+VERSION="$2"
 JDK8_URL=http://hg.openjdk.java.net
 
-if test "x${VERSION}" = "x"; then
-    echo "No version specified. A version is of the form 'jdk8-bXX' (such as 'jdk8-b79')"
+if [[ "${REPO_NAME}" = "" ]] ; then
+    echo "No repository specified."
+    exit -1
+fi
+if [[ "${VERSION}" = "" ]]; then
+    echo "No version/tag specified."
     exit -1;
 fi
 
-#for REPO_NAME in jdk8 aarch64-port
-for REPO_NAME in aarch64-port
+mkdir "${REPO_NAME}"
+pushd "${REPO_NAME}"
+
+REPO_ROOT="${JDK8_URL}/${REPO_NAME}/jdk8"
+
+wget "${REPO_ROOT}/archive/${VERSION}.tar.gz"
+tar xf "${VERSION}.tar.gz"
+rm  "${VERSION}.tar.gz"
+
+mv "jdk8-${VERSION}" jdk8
+pushd jdk8
+
+for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn
 do
-    mkdir ${REPO_NAME}
-    pushd ${REPO_NAME}
-
-    REPO_ROOT=${JDK8_URL}/${REPO_NAME}/jdk8
-
-    if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
-        # aarch64-port does not tag trees
-        # FIXME make this clone reproducible
-        hg clone ${REPO_ROOT} -r ${VERSION}
-    else
-        hg clone ${REPO_ROOT} -r ${VERSION}
-    fi
-    pushd jdk8
-
-#    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn common
-#    it looks like commons have been added as separate repo for jdk8
-#    but not yet for aarch64-port
-    for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn
-    do
-        if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
-            # aarch64-port does not tag trees
-            # FIXME make this clone reproducible
-            hg clone ${REPO_ROOT}/${subrepo}
-        else
-            hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
-        fi
-    done
-    rm -rvf jdk/src/share/native/sun/security/ec/impl || echo ok
-
-    popd
-
-    find jdk8 -type d -name ".hg" -exec rm -rf '{}' \; || echo ok
-    tar cJf ${REPO_NAME}-${VERSION}.tar.xz jdk8
-
-    popd
+    wget "${REPO_ROOT}/${subrepo}/archive/${VERSION}.tar.gz"
+    tar xf "${VERSION}.tar.gz"
+    rm "${VERSION}.tar.gz"
+    mv "${subrepo}-${VERSION}" "${subrepo}"
 done
+
+rm -vr jdk/src/share/native/sun/security/ec/impl
+
+popd
+
+tar cJf ${REPO_NAME}-${VERSION}.tar.xz jdk8
+
+popd
+
+mv "${REPO_NAME}/${REPO_NAME}-${VERSION}.tar.xz" .
