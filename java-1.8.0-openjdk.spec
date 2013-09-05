@@ -59,8 +59,6 @@
 
 %ifarch %{jit_arches}
 %global with_systemtap 1
-%else
-%global with_systemtap 0
 %endif
 
 # Convert an absolute path to a relative path.  Each symbolic link is
@@ -107,7 +105,7 @@
 %global jvmjardir       %{_jvmjardir}/%{name}-%{version}
 %endif
 
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
 # Where to install systemtap tapset (links)
 # We would like these to be in a package specific subdir,
 # but currently systemtap doesn't support that, so we have to
@@ -125,7 +123,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.18.%{jdk8_version}%{?dist}
+Release: 0.19.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -231,7 +229,7 @@ BuildRequires: openssl
 %ifnarch %{arm} %{aarch64}
 BuildRequires: prelink
 %endif
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
 
@@ -473,7 +471,7 @@ pushd %{buildoutputdir}/images/j2sdk-image
   install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
   cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
 
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
   # Install systemtap support files.
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset
   cp -a $RPM_BUILD_DIR/%{name}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
@@ -854,13 +852,13 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir}/bin
 %dir %{_jvmdir}/%{sdkdir}/include
 %dir %{_jvmdir}/%{sdkdir}/lib
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
 %dir %{_jvmdir}/%{sdkdir}/tapset
 %endif
 %{_jvmdir}/%{sdkdir}/bin/*
 %{_jvmdir}/%{sdkdir}/include/*
 %{_jvmdir}/%{sdkdir}/lib/*
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
 %{_jvmdir}/%{sdkdir}/tapset/*.stp
 %endif
 %{_jvmdir}/%{sdklnk}
@@ -896,7 +894,7 @@ exit 0
 %{_mandir}/man1/wsgen-%{name}.1*
 %{_mandir}/man1/wsimport-%{name}.1*
 %{_mandir}/man1/xjc-%{name}.1*
-%ifarch %{with_systemtap}
+%if %{with_systemtap}
 %{tapsetroot}
 %endif
 
@@ -915,6 +913,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Thu Sep 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.19.b106
+- Fix with_systemtap conditionals
+
 * Thu Sep 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.18.b106
 - Update to jdk8-b106
 
