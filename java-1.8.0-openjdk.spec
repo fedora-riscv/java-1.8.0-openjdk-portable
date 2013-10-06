@@ -435,6 +435,7 @@ bash ../../configure \
     --with-debug-level=%{debugbuild} \
     --enable-unlimited-crypto \
     --with-zlib=system \
+    --with-libjpeg=system \
     --with-giflib=system \
     --with-libpng=system \
     --with-lcms=system \
@@ -922,6 +923,7 @@ exit 0
 %changelog
 * Sun Oct 06 2013 Omair Majid <omajid@redhat.com - 1:1.8.0.0-0.20.b106
 - Fix paths in tapsets to work on non-x86_64
+- Use system libjpeg
 
 * Thu Sep 05 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.19.b106
 - Fix with_systemtap conditionals
