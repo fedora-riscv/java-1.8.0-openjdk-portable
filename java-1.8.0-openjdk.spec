@@ -3,7 +3,7 @@
 
 %global jdk8_version b106
 %global hg_tag jdk8-%{jdk8_version}
-%global aarch64_hg_tag aarch64-20130813
+%global aarch64_hg_tag preview_rc2
 
 %global aarch64			aarch64 arm64 armv8
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
