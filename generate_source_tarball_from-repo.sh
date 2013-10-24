@@ -35,7 +35,7 @@ do
         if [[ "$REPO_NAME" == "aarch64-port" ]] ; then
             # aarch64-port does not tag trees
             # FIXME make this clone reproducible
-            hg clone ${REPO_ROOT}/${subrepo}
+            hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
         else
             hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
         fi
