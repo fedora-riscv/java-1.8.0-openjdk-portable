@@ -51,9 +51,9 @@ diff --git a/common/autoconf/libraries.m4 b/common/autoconf/libraries.m4
 diff -up ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk
 --- ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav	2013-08-13 12:37:05.000000000 -0400
 +++ ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk	2013-08-13 14:31:24.000000000 -0400
-@@ -1224,8 +1224,8 @@ BUILD_LIBRARIES += $(BUILD_LIBJSDT)
+@@ -1236,8 +1236,8 @@
+ ##########################################################################################
  
- ifdef OPENJDK
      # TODO: Update awt lib path when awt is converted
 -    $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS,\
 -                LIBRARY:=lcms,\
@@ -62,7 +62,7 @@ diff -up ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav ./jdk8/jdk/makefile
                  OUTPUT_DIR:=$(INSTALL_LIBRARIES_HERE),\
                  SRC:=$(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms,\
  		LANG:=C,\
-@@ -1243,18 +1243,18 @@ ifdef OPENJDK
+@@ -1255,18 +1255,18 @@
  		LDFLAGS_windows:=$(WIN_AWT_LIB) $(WIN_JAVA_LIB),\
  		LDFLAGS_SUFFIX_solaris:=-lawt -ljava -ljvm -lc,\
  		LDFLAGS_SUFFIX_macosx:=$(LIBM) -lawt -ljava -ljvm,\
@@ -79,22 +79,23 @@ diff -up ./jdk8/jdk/makefiles/CompileNativeLibraries.gmk.sav ./jdk8/jdk/makefile
  		DEBUG_SYMBOLS:=$(DEBUG_ALL_BINARIES)))
  
 -    BUILD_LIBRARIES += $(BUILD_LIBLCMS)
-+    BUILD_LIBRARIES += $(BUILD_LIBJAVALCMS)
- 
+-
 -    $(BUILD_LIBLCMS) : $(BUILD_LIBAWT)
++    BUILD_LIBRARIES += $(BUILD_LIBJAVALCMS)
++
 +    $(BUILD_LIBJAVALCMS) : $(BUILD_LIBAWT)
- endif
  
  ##########################################################################################
+ 
 diff --git jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
 --- jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
 +++ jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
-@@ -157,7 +157,7 @@
-                      * disposer frameworks
-                      */
-                     System.loadLibrary("awt");
--                    System.loadLibrary("lcms");
-+                    System.loadLibrary("javalcms");
-                     return null;
-                 }
-             }
+@@ -207,7 +207,7 @@
+                          * disposer frameworks
+                          */
+                         System.loadLibrary("awt");
+-                        System.loadLibrary("lcms");
++                        System.loadLibrary("javalcms");
+                         return null;
+                     }
+                 });
