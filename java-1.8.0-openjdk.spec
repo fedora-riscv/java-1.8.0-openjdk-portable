@@ -1,4 +1,4 @@
-r# If debug is 1, OpenJDK is built with all debug info present.
+# If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
 %global jdk8_version b106
