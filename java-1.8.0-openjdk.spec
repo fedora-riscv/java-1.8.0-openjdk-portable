@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.20.%{jdk8_version}%{?dist}
+Release: 0.21.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -837,6 +837,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/security/cacerts
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.policy
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.security
+%ifarch %{aarch64}
+%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
+%endif
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_mandir}/man1/java-%{name}.1*
 %{_mandir}/man1/keytool-%{name}.1*
@@ -921,6 +924,10 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Wed Oct 30 2013 Jiri Vanek <jvanek@redhat.com - 1:1.8.0.0-0.21.b106
+- added jre/lib/security/blacklisted.certs for aarch64
+- updated to preview_rc2 aarch64 tarball
+
 * Sun Oct 06 2013 Omair Majid <omajid@redhat.com - 1:1.8.0.0-0.20.b106
 - Fix paths in tapsets to work on non-x86_64
 - Use system libjpeg
