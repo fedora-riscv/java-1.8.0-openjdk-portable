@@ -922,14 +922,14 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
-* Tue Nov 14 2013 Omair Majid <omajid@redhat.com - 1:1.8.0.0-0.22.b115
+* Thu Nov 14 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.22.b115
 - Update to jdk8-b115
 
-* Wed Oct 30 2013 Jiri Vanek <jvanek@redhat.com - 1:1.8.0.0-0.21.b106
+* Wed Oct 30 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.21.b106
 - added jre/lib/security/blacklisted.certs for aarch64
 - updated to preview_rc2 aarch64 tarball
 
-* Sun Oct 06 2013 Omair Majid <omajid@redhat.com - 1:1.8.0.0-0.20.b106
+* Sun Oct 06 2013 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.20.b106
 - Fix paths in tapsets to work on non-x86_64
 - Use system libjpeg
 
