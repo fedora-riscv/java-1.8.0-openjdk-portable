@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b106
+%global jdk8_version b115
 %global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag preview_rc2
 
@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.21.%{jdk8_version}%{?dist}
+Release: 0.22.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -837,9 +837,7 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/security/cacerts
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.policy
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.security
-%ifarch %{aarch64}
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
-%endif
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_mandir}/man1/java-%{name}.1*
 %{_mandir}/man1/keytool-%{name}.1*
@@ -924,6 +922,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Tue Nov 14 2013 Omair Majid <omajid@redhat.com - 1:1.8.0.0-0.22.b115
+- Update to jdk8-b115
+
 * Wed Oct 30 2013 Jiri Vanek <jvanek@redhat.com - 1:1.8.0.0-0.21.b106
 - added jre/lib/security/blacklisted.certs for aarch64
 - updated to preview_rc2 aarch64 tarball
