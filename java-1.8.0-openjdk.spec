@@ -190,7 +190,9 @@ Patch102: %{name}-size_t.patch
 Patch103: %{name}-ppc-zero-hotspot.patch
 
 Patch201: system-libjpeg.patch
+Patch2011: system-libjpeg-aarch64.patch
 Patch202: system-libpng.patch
+Patch2021: system-libpng-aarch64.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
 
@@ -351,12 +353,13 @@ cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 
 sh %{SOURCE12}
 
-%patch201
-%patch202
-
 %ifarch %{aarch64}
+%patch2011
+%patch2021
 %patch2031
 %else
+%patch201
+%patch202
 %patch203
 %endif
 
