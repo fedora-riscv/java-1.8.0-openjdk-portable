@@ -48,20 +48,20 @@ diff -ruN jdk8/common/autoconf/libraries.m4 jdk8/common/autoconf/libraries.m4
    ###############################################################################
    #
    # Check for the gif library
-diff -ruN jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk
---- jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk	2013-10-31 19:44:18.000000000 -0400
-+++ jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk	2013-11-14 21:56:01.020796703 -0500
+diff -ruN jdk8/jdk/make/lib/Awt2dLibraries.gmk jdk8/jdk/make/lib/Awt2dLibraries.gmk
+--- jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-10-31 19:44:18.000000000 -0400
++++ jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 21:56:01.020796703 -0500
 @@ -696,17 +696,17 @@
  ##########################################################################################
  
  ifdef OPENJDK
--  BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/mapfile-vers
-+  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/mapfile-vers
+-  BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers
++  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers
  else
--  BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/mapfile-vers-closed
+-  BUILD_LIBJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers-closed
 -  BUILD_LIBJPEG_CLOSED_SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/awt/image/jpeg
 -  BUILD_LIBJPEG_CLOSED_INCLUDES := -I$(BUILD_LIBJPEG_CLOSED_SRC)
-+  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/mapfile-vers-closed
++  BUILD_LIBJAVAJPEG_MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libjpeg/mapfile-vers-closed
 +  BUILD_LIBJAVAJPEG_CLOSED_SRC := $(JDK_TOPDIR)/src/closed/share/native/sun/awt/image/jpeg
 +  BUILD_LIBJAVAJPEG_CLOSED_INCLUDES := -I$(BUILD_LIBJPEG_CLOSED_SRC)
  endif
@@ -70,8 +70,8 @@ diff -ruN jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk jdk8/jdk/makefiles/lib/Awt2d
 +BUILD_LIBJAVAJPEG_REORDER :=
  ifeq ($(OPENJDK_TARGET_OS), solaris)
    ifneq ($(OPENJDK_TARGET_CPU), x86_64)
--    BUILD_LIBJPEG_REORDER := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/reorder-$(OPENJDK_TARGET_CPU)
-+    BUILD_LIBJAVAJPEG_REORDER := $(JDK_TOPDIR)/makefiles/mapfiles/libjpeg/reorder-$(OPENJDK_TARGET_CPU)
+-    BUILD_LIBJPEG_REORDER := $(JDK_TOPDIR)/make/mapfiles/libjpeg/reorder-$(OPENJDK_TARGET_CPU)
++    BUILD_LIBJAVAJPEG_REORDER := $(JDK_TOPDIR)/make/mapfiles/libjpeg/reorder-$(OPENJDK_TARGET_CPU)
    endif
  endif
  
@@ -155,7 +155,7 @@ diff -ruN jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk jdk8/jdk/makefiles/lib/Awt2d
 -      CFLAGS := $(LIBSPLASHSCREEN_CFLAGS) $(CFLAGS_JDKLIB) $(GIFLIB_CFLAGS), \
 +      CFLAGS := $(LIBSPLASHSCREEN_CFLAGS) $(CFLAGS_JDKLIB) \
 +          $(GIFLIB_CFLAGS) $(LIBJPEG_CFLAGS), \
-       MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libsplashscreen/mapfile-vers, \
+       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsplashscreen/mapfile-vers, \
        LDFLAGS := $(LDFLAGS_JDKLIB) \
            $(call SET_SHARED_LIBRARY_ORIGIN), \
 -      LDFLAGS_SUFFIX := $(LIBSPLASHSCREEN_LDFLAGS_SUFFIX) $(LIBZ) $(GIFLIB_LDFLAGS), \

@@ -60,9 +60,9 @@ diff -ruN jdk8/common/autoconf/spec.gmk.in jdk8/common/autoconf/spec.gmk.in
  USE_EXTERNAL_LIBGIF:=@USE_EXTERNAL_LIBGIF@
  USE_EXTERNAL_LIBZ:=@USE_EXTERNAL_LIBZ@
  LIBZIP_CAN_USE_MMAP:=@LIBZIP_CAN_USE_MMAP@
-diff -ruN jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk
---- jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk	2013-11-14 20:08:01.845065585 -0500
-+++ jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk	2013-11-14 20:14:10.791982343 -0500
+diff -ruN jdk8/jdk/make/lib/Awt2dLibraries.gmk jdk8/jdk/make/lib/Awt2dLibraries.gmk
+--- jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 20:08:01.845065585 -0500
++++ jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 20:14:10.791982343 -0500
 @@ -1183,7 +1183,6 @@
  
  ifndef BUILD_HEADLESS_ONLY
@@ -91,7 +91,7 @@ diff -ruN jdk8/jdk/makefiles/lib/Awt2dLibraries.gmk jdk8/jdk/makefiles/lib/Awt2d
        CFLAGS := $(LIBSPLASHSCREEN_CFLAGS) $(CFLAGS_JDKLIB) \
 -          $(GIFLIB_CFLAGS) $(LIBJPEG_CFLAGS), \
 +          $(GIFLIB_CFLAGS) $(LIBJPEG_CFLAGS) $(LIBPNG_CFLAGS), \
-       MAPFILE := $(JDK_TOPDIR)/makefiles/mapfiles/libsplashscreen/mapfile-vers, \
+       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsplashscreen/mapfile-vers, \
        LDFLAGS := $(LDFLAGS_JDKLIB) \
            $(call SET_SHARED_LIBRARY_ORIGIN), \
        LDFLAGS_SUFFIX := $(LIBSPLASHSCREEN_LDFLAGS_SUFFIX) \
