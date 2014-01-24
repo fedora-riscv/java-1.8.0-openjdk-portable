@@ -188,6 +188,9 @@ Patch4: PStack-808293.patch
 # OpenJDK specific patches
 #
 
+# Allow icedtea-web to build
+Patch99: applet-hole.patch
+
 # Recognize s390/s390x
 Patch100: %{name}-s390.patch
 # Type fixing for s390
@@ -203,6 +206,7 @@ Patch202: system-libpng.patch
 Patch2021: system-libpng-aarch64.patch
 Patch203: system-lcms.patch
 Patch2031: system-lcmsAARCH64.patch
+
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -376,6 +380,8 @@ sh %{SOURCE12}
 %patch2
 %patch3
 %patch4
+
+%patch99
 
 # Type fixes for s390
 %ifarch s390 s390x
