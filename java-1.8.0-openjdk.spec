@@ -168,6 +168,7 @@ Source12: remove-intree-libraries.sh
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
 
+
 Source100: config.guess
 Source101: config.sub
 
@@ -175,6 +176,13 @@ Source101: config.sub
 
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   %{name}-accessible-toolkit.patch
+
+# RHBZ 1015432
+Patch2: 1015432.patch
+# Restrict access to java-atk-wrapper classes
+Patch3: java-atk-wrapper-security.patch
+# RHBZ 808293
+Patch4: PStack-808293.patch
 
 #
 # OpenJDK specific patches
@@ -365,6 +373,9 @@ sh %{SOURCE12}
 
 
 %patch1
+%patch2
+%patch3
+%patch4
 
 # Type fixes for s390
 %ifarch s390 s390x
