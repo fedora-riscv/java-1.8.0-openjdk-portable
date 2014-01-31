@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.23.%{jdk8_version}%{?dist}
+Release: 0.24.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -183,6 +183,8 @@ Patch2: 1015432.patch
 Patch3: java-atk-wrapper-security.patch
 # RHBZ 808293
 Patch4: PStack-808293.patch
+# Allow multiple initialization of PKCS11 libraries
+Patch5: multiple-pkcs11-library-init.patch
 
 #
 # OpenJDK specific patches
@@ -380,6 +382,7 @@ sh %{SOURCE12}
 %patch2
 %patch3
 %patch4
+%patch5
 
 %patch99
 
@@ -942,6 +945,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Fri Jan 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.24.b123
+- Forward port more patches from java-1.7.0-openjdk
+
 * Mon Jan 20 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.23.b123
 - Update to jdk8-b123
 
