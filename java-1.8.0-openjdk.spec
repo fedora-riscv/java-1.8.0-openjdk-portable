@@ -168,7 +168,7 @@ Source12: remove-intree-libraries.sh
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
 
-
+# New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
 
@@ -356,15 +356,16 @@ The OpenJDK API documentation.
 %setup -q -c -n %{name} -T -a %{source_num}
 cp %{SOURCE2} .
 
-#repalce outdated configure guess script
+# replace outdated configure guess script
+#
+# the configure macro will do this too, but it also passes a few flags not
+# supported by openjdk configure script
 cp %{SOURCE100} jdk8/common/autoconf/build-aux/
 cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 
 # OpenJDK patches
 
 # Remove libraries that are linked
-# disabled until 8 has all system library fixes upstream
-
 sh %{SOURCE12}
 
 %ifarch %{aarch64}
