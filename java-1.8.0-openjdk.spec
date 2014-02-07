@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b123
+%global jdk8_version b126
 %global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag preview_rc2
 
@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.24.%{jdk8_version}%{?dist}
+Release: 0.25.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -648,6 +648,9 @@ alternatives \
   --install %{_bindir}/java java %{jrebindir}/java %{priority} \
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jrelnk} \
   --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk} \
+%ifnarch %{aarch64}
+  --slave %{_bindir}/jjs jjs %{jrebindir}/jjs \
+%endif
   --slave %{_bindir}/keytool keytool %{jrebindir}/keytool \
   --slave %{_bindir}/orbd orbd %{jrebindir}/orbd \
   --slave %{_bindir}/pack200 pack200 %{jrebindir}/pack200 \
@@ -658,6 +661,10 @@ alternatives \
   --slave %{_bindir}/unpack200 unpack200 %{jrebindir}/unpack200 \
   --slave %{_mandir}/man1/java.1$ext java.1$ext \
   %{_mandir}/man1/java-%{name}.1$ext \
+%ifnarch %{aarch64}
+  --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \
+  %{_mandir}/man1/jjs-%{name}.1$ext \
+%endif
   --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \
   %{_mandir}/man1/keytool-%{name}.1$ext \
   --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \
@@ -730,6 +737,9 @@ alternatives \
   --slave %{_bindir}/jcmd jcmd %{sdkbindir}/jcmd \
   --slave %{_bindir}/jconsole jconsole %{sdkbindir}/jconsole \
   --slave %{_bindir}/jdb jdb %{sdkbindir}/jdb \
+%ifnarch %{aarch64}
+  --slave %{_bindir}/jdeps jdeps %{sdkbindir}/jdeps \
+%endif
   --slave %{_bindir}/jhat jhat %{sdkbindir}/jhat \
   --slave %{_bindir}/jinfo jinfo %{sdkbindir}/jinfo \
   --slave %{_bindir}/jmap jmap %{sdkbindir}/jmap \
@@ -771,6 +781,10 @@ alternatives \
   %{_mandir}/man1/jconsole-%{name}.1$ext \
   --slave %{_mandir}/man1/jdb.1$ext jdb.1$ext \
   %{_mandir}/man1/jdb-%{name}.1$ext \
+%ifnarch %{aarch64}
+  --slave %{_mandir}/man1/jdeps.1$ext jdeps.1$ext \
+  %{_mandir}/man1/jdeps-%{name}.1$ext \
+%endif
   --slave %{_mandir}/man1/jhat.1$ext jhat.1$ext \
   %{_mandir}/man1/jhat-%{name}.1$ext \
   --slave %{_mandir}/man1/jinfo.1$ext jinfo.1$ext \
@@ -864,6 +878,9 @@ exit 0
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_mandir}/man1/java-%{name}.1*
+%ifnarch %{aarch64}
+%{_mandir}/man1/jjs-%{name}.1*
+%endif
 %{_mandir}/man1/keytool-%{name}.1*
 %{_mandir}/man1/orbd-%{name}.1*
 %{_mandir}/man1/pack200-%{name}.1*
@@ -910,6 +927,9 @@ exit 0
 %{_mandir}/man1/jconsole-%{name}.1*
 %{_mandir}/man1/jcmd-%{name}.1*
 %{_mandir}/man1/jdb-%{name}.1*
+%ifnarch %{aarch64}
+%{_mandir}/man1/jdeps-%{name}.1*
+%endif
 %{_mandir}/man1/jhat-%{name}.1*
 %{_mandir}/man1/jinfo-%{name}.1*
 %{_mandir}/man1/jmap-%{name}.1*
@@ -946,6 +966,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Fri Feb 07 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.25.b126
+- Update to Reference Implement release.
+
 * Fri Jan 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.24.b123
 - Forward port more patches from java-1.7.0-openjdk
 
