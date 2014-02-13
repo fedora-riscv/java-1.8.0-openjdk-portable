@@ -372,6 +372,23 @@ Provides: java8-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
 %description javadoc
 The OpenJDK API documentation.
 
+
+%package accessibility
+Summary: OpenJDK accessibility connector
+Requires: java-atk-wrapper
+Requires: %{name} = %{epoch}:%{version}-%{release}
+
+%description accessibility
+Enables accessibility support in OpenJDK by using java-atk-wrapper. This allows
+compatible at-spi2 based accessibility programs to work for AWT and Swing-based
+programs.
+
+Please note, the java-atk-wrapper is still in beta, and OpenJDK itself is still
+being tuned to be working with accessibility features. There are known issues
+with accessibility on, so please do not install this package unless you really
+need to.
+
+
 %prep
 %ifarch %{aarch64}
 %global source_num 1
@@ -696,6 +713,22 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
   | sed 's|'$RPM_BUILD_ROOT'||' \
   | sed 's|^|%doc |' \
   >> %{name}-demo.files
+
+# intentionally after the files generation, as it goes to separate package
+# Create links which leads to separately installed java-atk-bridge and allow configuration
+# links points to java-atk-wrapper - an dependence
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/%{archinstall}
+    ln -s %{syslibdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so
+  popd
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/ext
+     ln -s %{syslibdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
+  popd
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/
+    echo "#Config file to  enable java-atk-wrapper" > accessibility.properties
+    echo "" >> accessibility.properties
+    echo "assistive_technologies=org.GNOME.Accessibility.AtkWrapper" >> accessibility.properties
+    echo "" >> accessibility.properties
+  popd
 
 %post
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -1045,10 +1078,16 @@ exit 0
 %doc %{_javadocdir}/%{name}
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
+%files accessibility
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/libatk-wrapper.so
+%{_jvmdir}/%{jredir}/lib/ext/java-atk-wrapper.jar
+%{_jvmdir}/%{jredir}/lib/accessibility.properties
+
 %changelog
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Add -headless subpackage based on java-1.7.0-openjdk
 - Add abrt connector support
+- Add -accessibility subpackage
 
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Update to b129.
