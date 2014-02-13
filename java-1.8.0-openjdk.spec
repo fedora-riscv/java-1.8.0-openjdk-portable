@@ -1,7 +1,7 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b126
+%global jdk8_version b129
 %global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag preview_rc2
 
@@ -125,7 +125,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.25.%{jdk8_version}%{?dist}
+Release: 0.26.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -966,8 +966,11 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
+- Update to b129.
+
 * Fri Feb 07 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.25.b126
-- Update to Reference Implement release.
+- Update to candidate Reference Implementation release.
 
 * Fri Jan 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.24.b123
 - Forward port more patches from java-1.7.0-openjdk
