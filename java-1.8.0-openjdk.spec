@@ -71,6 +71,8 @@
 
 # Hard-code libdir on 64-bit architectures to make the 64-bit JDK
 # simply be another alternative.
+%global LIBDIR %{_libdir}
+#backuped original one
 %ifarch %{multilib_arches}
 %global syslibdir       %{_prefix}/lib64
 %global _libdir         %{_prefix}/lib
@@ -150,6 +152,8 @@ Source1:  aarch64-port-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
+
+Source3:  java-abrt-launcher.in
 
 # Use 'generate_tarballs.sh' to generate the following tarballs
 # They are based on code contained in the IcedTea7 project.
@@ -499,6 +503,12 @@ chmod ugo+r images/j2sdk-image/lib/ct.sym
 popd >& /dev/null
 
 export JAVA_HOME=$(pwd)/%{buildoutputdir}/images/j2sdk-image
+
+# Install java-abrt-luncher
+mv $JAVA_HOME/jre/bin/java $JAVA_HOME/jre/bin/java-abrt
+cat %{SOURCE3} | sed -e s:@JAVA_PATH@:%{_jvmdir}/%{jredir}/bin/java-abrt:g -e s:@LIB_DIR@:%{LIBDIR}/libabrt-java-connector.so:g > $JAVA_HOME/jre/bin/java
+chmod 755 $JAVA_HOME/jre/bin/java
+
 
 # Copy tz.properties
 echo "sun.zoneinfo.dir=/usr/share/javazi" >> $JAVA_HOME/jre/lib/tz.properties
@@ -1038,6 +1048,7 @@ exit 0
 %changelog
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Add -headless subpackage based on java-1.7.0-openjdk
+- Add abrt connector support
 
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Update to b129.
