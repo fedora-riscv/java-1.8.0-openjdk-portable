@@ -251,6 +251,28 @@ BuildRequires: prelink
 BuildRequires: systemtap-sdt-devel
 %endif
 
+# Requires rest of java
+Requires: %{name}-headless = %{epoch}:%{version}:%{release}
+
+# Standard JPackage base provides.
+Provides: jre8-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
+Provides: jre8-%{origin} = %{epoch}:%{version}-%{release}
+Provides: jre8-%{javaver} = %{epoch}:%{version}-%{release}
+Provides: java8-%{javaver} = %{epoch}:%{version}-%{release}
+Provides: jre8 = %{javaver}
+Provides: java8-%{origin} = %{epoch}:%{version}-%{release}
+Provides: java8 = %{epoch}:%{javaver}
+# Standard JPackage extensions provides.
+Provides: java8-fonts = %{epoch}:%{version}
+
+%description
+The OpenJDK runtime environment.
+
+
+%package headless
+Summary: OpenJDK Runtime Environment
+Group:   Development/Languages
+
 # Require /etc/pki/java/cacerts.
 Requires: ca-certificates
 # Require jpackage-utils for ownership of /usr/lib/jvm/
@@ -263,13 +285,13 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage base provides.
-Provides: jre8-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre8-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre8-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: java8-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: jre8 = %{javaver}
-Provides: java8-%{origin} = %{epoch}:%{version}-%{release}
-Provides: java8 = %{epoch}:%{javaver}
+Provides: jre8-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: jre8-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: jre8-%{javaver}-headless = %{epoch}:%{version}-%{release}
+Provides: java8-%{javaver}-headless = %{epoch}:%{version}-%{release}
+Provides: jre8-headless = %{javaver}
+Provides: java8-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: java8-headless = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
 Provides: jndi8 = %{epoch}:%{version}
 Provides: jndi8-ldap = %{epoch}:%{version}
@@ -281,10 +303,10 @@ Provides: jsse8 = %{epoch}:%{version}
 Provides: jce8 = %{epoch}:%{version}
 Provides: jdbc8-stdext = 4.1
 Provides: java8-sasl = %{epoch}:%{version}
-Provides: java8-fonts = %{epoch}:%{version}
 
-%description
-The OpenJDK runtime environment.
+%description headless
+The OpenJDK runtime environment without audio and video support.
+
 
 %package devel
 Summary: OpenJDK Development Environment
@@ -609,12 +631,37 @@ done
 find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type d \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'|%dir |' \
-  > %{name}.files
+  > %{name}.files.headless
 # Find JRE files.
 find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type f -o -type l \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'||' \
-  >> %{name}.files
+  >> %{name}.files.all
+#split %{name}.files to %{name}.files-headless and %{name}.files
+#see https://bugzilla.redhat.com/show_bug.cgi?id=875408
+NOT_HEADLESS=\
+"%{_jvmdir}/%{jredir}/lib/%{archinstall}/libjsoundalsa.so
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/libpulse-java.so
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/libsplashscreen.so
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/xawt/libmawt.so"
+#filter %{name}.files from %{name}.files.all to %{name}.files-headless
+ALL=`cat %{name}.files.all`
+for file in $ALL ; do
+    INLCUDE="NO" ;
+    for blacklist in $NOT_HEADLESS ; do
+    # we can not match normally, because rpmbuild will evaluate !0 result as script failure
+    q=`expr match "$file" "$blacklist"` || :
+    l=`expr length "$blacklist"` || :
+    if [ $q -eq $l ]; then
+        INLCUDE="YES" ;
+    fi;
+done
+if [ "x$INLCUDE" = "xNO" ]; then
+    echo "$file" >> %{name}.files-headless
+else
+    echo "$file" >> %{name}.files
+fi
+done
 # Find demo directories.
 find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
   $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/sample -type d \
@@ -640,9 +687,14 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
   | sed 's|^|%doc |' \
   >> %{name}-demo.files
 
+%post
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+exit 0
+
 # FIXME: identical binaries are copied, not linked. This needs to be
 # fixed upstream.
-%post
+%post headless
 ext=.gz
 alternatives \
   --install %{_bindir}/java java %{jrebindir}/java %{priority} \
@@ -701,13 +753,6 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 exit 0
 
 %postun
-if [ $1 -eq 0 ]
-then
-  alternatives --remove java %{jrebindir}/java
-  alternatives --remove jre_%{origin} %{_jvmdir}/%{jrelnk}
-  alternatives --remove jre_%{javaver} %{_jvmdir}/%{jrelnk}
-fi
-
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 if [ $1 -eq 0 ] ; then
@@ -716,6 +761,14 @@ if [ $1 -eq 0 ] ; then
 fi
 
 exit 0
+
+%postun headless
+if [ $1 -eq 0 ]
+then
+  alternatives --remove java %{jrebindir}/java
+  alternatives --remove jre_%{origin} %{_jvmdir}/%{jrelnk}
+  alternatives --remove jre_%{javaver} %{_jvmdir}/%{jrelnk}
+fi
 
 %posttrans
 /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
@@ -832,6 +885,9 @@ alternatives \
   --slave %{_jvmjardir}/java-%{javaver} \
   java_sdk_%{javaver}_exports %{_jvmjardir}/%{sdklnk}
 
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+
 exit 0
 
 %postun devel
@@ -842,7 +898,18 @@ then
   alternatives --remove java_sdk_%{javaver} %{_jvmdir}/%{sdklnk}
 fi
 
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+
+if [ $1 -eq 0 ] ; then
+  /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+  /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+fi
+
+
 exit 0
+
+%posttrans devel
+/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %post javadoc
 alternatives \
@@ -861,6 +928,10 @@ exit 0
 
 
 %files -f %{name}.files
+%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
+
+
+%files headless -f %{name}.files-headless
 %defattr(-,root,root,-)
 %doc %{buildoutputdir}/images/j2sdk-image/jre/ASSEMBLY_EXCEPTION
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
@@ -876,7 +947,6 @@ exit 0
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.policy
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.security
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
-%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_mandir}/man1/java-%{name}.1*
 %ifnarch %{aarch64}
 %{_mandir}/man1/jjs-%{name}.1*
@@ -966,6 +1036,9 @@ exit 0
 %doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
 
 %changelog
+* Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
+- Add -headless subpackage based on java-1.7.0-openjdk
+
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Update to b129.
 
