@@ -127,7 +127,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.26.%{jdk8_version}%{?dist}
+Release: 0.27.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -670,7 +670,8 @@ NOT_HEADLESS=\
 "%{_jvmdir}/%{jredir}/lib/%{archinstall}/libjsoundalsa.so
 %{_jvmdir}/%{jredir}/lib/%{archinstall}/libpulse-java.so
 %{_jvmdir}/%{jredir}/lib/%{archinstall}/libsplashscreen.so
-%{_jvmdir}/%{jredir}/lib/%{archinstall}/xawt/libmawt.so"
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/libawt_xawt.so
+%{_jvmdir}/%{jredir}/lib/%{archinstall}/libjawt.so"
 #filter %{name}.files from %{name}.files.all to %{name}.files-headless
 ALL=`cat %{name}.files.all`
 for file in $ALL ; do
@@ -1084,6 +1085,12 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Feb 25 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.27.b129
+- Fix non-headless libraries
+
+* Tue Feb 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.26.b129
+- Fix incorrect Requires
+
 * Thu Feb 13 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.26.b129
 - Add -headless subpackage based on java-1.7.0-openjdk
 - Add abrt connector support
