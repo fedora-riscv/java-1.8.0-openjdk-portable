@@ -256,7 +256,7 @@ BuildRequires: systemtap-sdt-devel
 %endif
 
 # Requires rest of java
-Requires: %{name}-headless = %{epoch}:%{version}:%{release}
+Requires: %{name}-headless = %{epoch}:%{version}-%{release}
 
 # Standard JPackage base provides.
 Provides: jre8-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
