@@ -127,7 +127,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.27.%{jdk8_version}%{?dist}
+Release: 0.28.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -509,13 +509,29 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-num-cores="$NUM_PROC"
 
-make SCTP_WERROR= DEBUG_BINARIES=true DISABLE_INTREE_EC=true LOG=trace all
+# The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
+# disables FDS for all build configs and reverts to pre-FDS make logic.
+# STRIP_POLICY=none says don't do any stripping. DEBUG_BINARIES=true says
+# ignore all the other logic about which debug options and just do '-g'.
+
+make \
+    SCTP_WERROR= \
+    DEBUG_BINARIES=true \
+    FULL_DEBUG_SYMBOLS=0 \
+    STRIP_POLICY=non \
+    ALT_OBJCOPY=/does_not_exist \
+    LOG=trace \
+    all
 
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
 # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
 find images/j2sdk-image -iname '*.jar' -exec chmod ugo+r {} \;
 chmod ugo+r images/j2sdk-image/lib/ct.sym
+
+# remove redundant *diz and *debuginfo files
+find images/j2sdk-image -iname '*.diz' -exec rm {} \;
+find images/j2sdk-image -iname '*.debuginfo' -exec rm {} \;
 
 popd >& /dev/null
 
@@ -1085,6 +1101,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Mon Mar 03 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.28.b129
+- Remove redundant debuginfo files
+- Generate complete debug information for libjvm
+
 * Tue Feb 25 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.27.b129
 - Fix non-headless libraries
 
