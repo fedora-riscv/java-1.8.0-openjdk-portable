@@ -84,9 +84,10 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global buildver        0
+%global updatever       0
+%global buildver        %{jdk8_version}
 # priority must be 6 digits in total
-%global priority        00000%{buildver}
+%global priority        000000
 %global javaver         1.8.0
 
 # Standard JPackage directories and symbolic links.
@@ -126,8 +127,8 @@
 %global __jar_repack 0
 
 Name:    java-%{javaver}-%{origin}
-Version: %{javaver}.%{buildver}
-Release: 0.31.%{jdk8_version}%{?dist}
+Version: %{javaver}.%{updatever}
+Release: 0.32.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -487,6 +488,7 @@ bash ../../configure \
     --disable-precompiled-headers \
 %endif
     --disable-zip-debug-info \
+    --with-milestone="fcs" \
     --with-build-number=%{buildver} \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=%{debugbuild} \
@@ -1091,6 +1093,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Fri Mar 07 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.32.b132
+- Fix `java -version` output
+
 * Fri Mar 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.31.b132
 - updated to rc4 aarch64 tarball
 - outdated removed: patch2031 system-lcmsAARCH64.patch patch2011 system-libjpeg-aarch64.patch
