@@ -3,7 +3,7 @@
 
 %global jdk8_version b132
 %global hg_tag jdk8-%{jdk8_version}
-%global aarch64_hg_tag preview_rc2
+%global aarch64_hg_tag rc4
 
 %global aarch64			aarch64 arm64 armv8
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
@@ -127,7 +127,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{buildver}
-Release: 0.30.%{jdk8_version}%{?dist}
+Release: 0.31.%{jdk8_version}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -207,12 +207,8 @@ Patch102: %{name}-size_t.patch
 Patch103: %{name}-ppc-zero-hotspot.patch
 
 Patch201: system-libjpeg.patch
-Patch2011: system-libjpeg-aarch64.patch
 Patch202: system-libpng.patch
-Patch2021: system-libpng-aarch64.patch
 Patch203: system-lcms.patch
-Patch2031: system-lcmsAARCH64.patch
-
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -411,15 +407,9 @@ cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 # Remove libraries that are linked
 sh %{SOURCE12}
 
-%ifarch %{aarch64}
-%patch2011
-%patch2021
-%patch2031
-%else
 %patch201
 %patch202
 %patch203
-%endif
 
 
 %patch1
@@ -1101,6 +1091,11 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Fri Mar 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.31.b132
+- updated to rc4 aarch64 tarball
+- outdated removed: patch2031 system-lcmsAARCH64.patch patch2011 system-libjpeg-aarch64.patch
+  patch2021 system-libpng-aarch64.patch
+
 * Thu Mar 06 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.30.b132
 - Update to b132
 
