@@ -3,7 +3,7 @@
 
 %global jdk8_version b132
 %global hg_tag jdk8-%{jdk8_version}
-%global aarch64_hg_tag rc4
+%global aarch64_hg_tag  992
 
 %global aarch64			aarch64 arm64 armv8
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
@@ -86,6 +86,8 @@
 %global origin          openjdk
 %global updatever       0
 %global buildver        %{jdk8_version}
+%global aarch64_updatever 0
+%global aarch64_buildver b128
 # priority must be 6 digits in total
 %global priority        000000
 %global javaver         1.8.0
@@ -128,7 +130,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 0.32.%{buildver}%{?dist}
+Release: 0.33.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -149,7 +151,7 @@ URL:      http://openjdk.java.net/
 # ./generate_source_tarball.sh jdk8 %{hg_tag}
 # ./generate_source_tarball.sh aarch64-port %{aarch64_hg_tag}
 Source0:  jdk8-%{hg_tag}.tar.xz
-Source1:  aarch64-port-%{aarch64_hg_tag}.tar.xz
+Source1:  aarch64-port-jdk8-%{aarch64_buildver}-aarch64-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -489,7 +491,12 @@ bash ../../configure \
 %endif
     --disable-zip-debug-info \
     --with-milestone="fcs" \
+%ifnarch %{aarch64}
     --with-build-number=%{buildver} \
+%else
+    --with-build-number=%{aarch64_buildver} \
+    --with-user-release-suffix="aarch64-%{aarch64_hg_tag}" \
+%endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=%{debugbuild} \
     --enable-unlimited-crypto \
@@ -1093,6 +1100,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Mon Mar 10 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.33.b132
+- Update aarch64 tarball to the latest upstream release
+
 * Fri Mar 07 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.32.b132
 - Fix `java -version` output
 
