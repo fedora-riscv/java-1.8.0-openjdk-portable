@@ -130,7 +130,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 0.34.%{buildver}%{?dist}
+Release: 0.35.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -192,6 +192,8 @@ Patch3: java-atk-wrapper-security.patch
 Patch4: PStack-808293.patch
 # Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
+# Disable doclint for compatibility
+Patch6: disable-doclint-by-default.patch
 
 #
 # OpenJDK specific patches
@@ -420,6 +422,7 @@ sh %{SOURCE12}
 %patch3
 %patch4
 %patch5
+%patch6
 
 %patch99
 
@@ -1088,6 +1091,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Fri Mar 21 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.35.b132
+- Disable doclint for compatiblity
+- Patch contributed by Andrew John Hughes
+
 * Tue Mar 11 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.34.b132
 - Include jdeps and jjs for aarch64. These are present in b128.
 
