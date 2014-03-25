@@ -5,9 +5,9 @@
 %global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag  992
 
-%global aarch64			aarch64 arm64 armv8
+%global aarch64         aarch64 arm64 armv8
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
-%global jit_arches		%{ix86} x86_64 sparcv9 sparc64 %{aarch64}
+%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 
 
 %ifarch x86_64
@@ -89,7 +89,7 @@
 %global aarch64_updatever 0
 %global aarch64_buildver b128
 # priority must be 6 digits in total
-%global priority        000000
+%global priority        18000%{updatever}
 %global javaver         1.8.0
 
 # Standard JPackage directories and symbolic links.
@@ -130,7 +130,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 0.35.%{buildver}%{?dist}
+Release: 1.0.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -260,15 +260,15 @@ BuildRequires: systemtap-sdt-devel
 Requires: %{name}-headless = %{epoch}:%{version}-%{release}
 
 # Standard JPackage base provides.
-Provides: jre8-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre8-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre8-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: java8-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: jre8 = %{javaver}
-Provides: java8-%{origin} = %{epoch}:%{version}-%{release}
-Provides: java8 = %{epoch}:%{javaver}
+Provides: jre-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin} = %{epoch}:%{version}-%{release}
+Provides: jre-%{javaver} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver} = %{epoch}:%{version}-%{release}
+Provides: jre = %{javaver}
+Provides: java-%{origin} = %{epoch}:%{version}-%{release}
+Provides: java = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
-Provides: java8-fonts = %{epoch}:%{version}
+Provides: java-fonts = %{epoch}:%{version}
 
 %description
 The OpenJDK runtime environment.
@@ -290,24 +290,24 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage base provides.
-Provides: jre8-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: jre8-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: jre8-%{javaver}-headless = %{epoch}:%{version}-%{release}
-Provides: java8-%{javaver}-headless = %{epoch}:%{version}-%{release}
-Provides: jre8-headless = %{javaver}
-Provides: java8-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: java8-headless = %{epoch}:%{javaver}
+Provides: jre-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: jre-%{javaver}-headless = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-headless = %{epoch}:%{version}-%{release}
+Provides: jre-headless = %{javaver}
+Provides: java-%{origin}-headless = %{epoch}:%{version}-%{release}
+Provides: java-headless = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
-Provides: jndi8 = %{epoch}:%{version}
-Provides: jndi8-ldap = %{epoch}:%{version}
-Provides: jndi8-cos = %{epoch}:%{version}
-Provides: jndi8-rmi = %{epoch}:%{version}
-Provides: jndi8-dns = %{epoch}:%{version}
-Provides: jaas8 = %{epoch}:%{version}
-Provides: jsse8 = %{epoch}:%{version}
-Provides: jce8 = %{epoch}:%{version}
-Provides: jdbc8-stdext = 4.1
-Provides: java8-sasl = %{epoch}:%{version}
+Provides: jndi = %{epoch}:%{version}
+Provides: jndi-ldap = %{epoch}:%{version}
+Provides: jndi-cos = %{epoch}:%{version}
+Provides: jndi-rmi = %{epoch}:%{version}
+Provides: jndi-dns = %{epoch}:%{version}
+Provides: jaas = %{epoch}:%{version}
+Provides: jsse = %{epoch}:%{version}
+Provides: jce = %{epoch}:%{version}
+Provides: jdbc-stdext = 4.1
+Provides: java-sasl = %{epoch}:%{version}
 
 %description headless
 The OpenJDK runtime environment without audio and video support.
@@ -325,13 +325,13 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage devel provides.
-Provides: java8-sdk-%{javaver}-%{origin} = %{epoch}:%{version}
-Provides: java8-sdk-%{javaver} = %{epoch}:%{version}
-Provides: java8-sdk-%{origin} = %{epoch}:%{version}
-Provides: java8-sdk = %{epoch}:%{javaver}
-Provides: java8-%{javaver}-devel = %{epoch}:%{version}
-Provides: java8-devel-%{origin} = %{epoch}:%{version}
-Provides: java8-devel = %{epoch}:%{javaver}
+Provides: java-sdk-%{javaver}-%{origin} = %{epoch}:%{version}
+Provides: java-sdk-%{javaver} = %{epoch}:%{version}
+Provides: java-sdk-%{origin} = %{epoch}:%{version}
+Provides: java-sdk = %{epoch}:%{javaver}
+Provides: java-%{javaver}-devel = %{epoch}:%{version}
+Provides: java-devel-%{origin} = %{epoch}:%{version}
+Provides: java-devel = %{epoch}:%{javaver}
 
 
 %description devel
@@ -367,8 +367,8 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage javadoc provides.
-Provides: java8-javadoc = %{epoch}:%{version}-%{release}
-Provides: java8-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
+Provides: java-javadoc = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
 
 %description javadoc
 The OpenJDK API documentation.
@@ -1091,6 +1091,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Mar 25 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-1.0.b132
+- Switch from java8- style provides to java- style
+- Bump priority to reflect java version
+
 * Fri Mar 21 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-0.35.b132
 - Disable doclint for compatiblity
 - Patch contributed by Andrew John Hughes
