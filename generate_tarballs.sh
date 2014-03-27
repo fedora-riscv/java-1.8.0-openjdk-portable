@@ -9,8 +9,8 @@ rm -f icedtea7.tar.gz
 pushd icedtea7-${VERSION}
 
 # desktop files
-tar cvzf desktop-files.tar.gz jconsole.desktop policytool.desktop
-mv desktop-files.tar.gz ../
+mv jconsole.desktop ../jconsole.desktop.in
+mv policytool.desktop ../policytool.desktop.in
 
 # tapsets
 mv tapset/hotspot{,-1.8.0}.stp.in || exit 1

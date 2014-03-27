@@ -130,7 +130,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.0.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -163,11 +163,13 @@ Source3:  java-abrt-launcher.in
 
 # Systemtap tapsets. Zipped up to keep it small.
 Source8: systemtap-tapset.tar.gz
-# .desktop files. Zipped up to keep it small.
-Source9: desktop-files.tar.gz
+
+# Desktop files. Adapated from IcedTea.
+Source9: jconsole.desktop.in
+Source10: policytool.desktop.in
 
 # nss configuration file
-Source10: nss.cfg
+Source11: nss.cfg
 
 # Removed libraries that we link instead
 Source12: remove-intree-libraries.sh
@@ -460,8 +462,12 @@ done
 
 %endif
 
-# Extract desktop files
-tar xzf %{SOURCE9}
+# Prepare desktop files
+for file in %{SOURCE9} %{SOURCE10} ; do
+    OUTPUT_FILE=`basename $file | sed -e s:\.in$::g`
+    sed -e s:@JAVA_HOME@:%{_jvmdir}/%{sdkdir}:g $file > $OUTPUT_FILE
+    sed -i -e s:@VERSION@:%{version}-%{release}.%{_arch}:g $OUTPUT_FILE
+done
 
 %build
 # How many cpu's do we have?
@@ -651,7 +657,7 @@ popd
 
 
 # Install nss.cfg
-install -m 644 %{SOURCE10} $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/security/
+install -m 644 %{SOURCE11} $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/security/
 
 
 # Install Javadoc documentation.
@@ -1091,6 +1097,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Fri Mar 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-2.b132
+- Include version information in desktop files
+- Move desktop files from tarball to top level source
+
 * Tue Mar 25 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-1.0.b132
 - Switch from java8- style provides to java- style
 - Bump priority to reflect java version
