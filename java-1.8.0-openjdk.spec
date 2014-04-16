@@ -211,9 +211,6 @@ Patch102: %{name}-size_t.patch
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
 
-# Revert an upstream commit; possibly causes a jit crash
-Patch104: revert-8035283.patch
-
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
@@ -229,8 +226,10 @@ BuildRequires: giflib-devel
 BuildRequires: gcc-c++
 BuildRequires: gtk2-devel
 BuildRequires: lcms2-devel
+BuildRequires: libasan
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
+BuildRequires: libubsan
 BuildRequires: libxslt
 BuildRequires: libX11-devel
 BuildRequires: libXi-devel
@@ -428,7 +427,6 @@ sh %{SOURCE12}
 %patch6
 
 %patch99
-%patch104
 
 # Type fixes for s390
 %ifarch s390 s390x
@@ -503,6 +501,7 @@ bash ../../configure \
     --disable-zip-debug-info \
     --with-milestone="fcs" \
 %ifnarch %{aarch64}
+    --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
 %else
     --with-build-number=%{aarch64_buildver} \
@@ -517,7 +516,9 @@ bash ../../configure \
     --with-libpng=system \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
-    --with-num-cores="$NUM_PROC"
+    --with-num-cores="$NUM_PROC" \
+    --with-extra-cflags="-fsanitize=address -fsanitize=undefined" \
+    --with-extra-cxxflags="-fsanitize=address -fsanitize=undefined" \
 
 # The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
 # disables FDS for all build configs and reverts to pre-FDS make logic.
@@ -1100,7 +1101,7 @@ exit 0
 
 %changelog
 * Wed Apr 16 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
-- Revert upstream patch for S8035283. Possibly causes a crash on i686.
+- Instrument build with various sanitizers.
 
 * Tue Apr 15 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
 - Update to the latest security release: OpenJDK8 u5 b13
