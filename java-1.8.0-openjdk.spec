@@ -211,6 +211,9 @@ Patch102: %{name}-size_t.patch
 # Patch for PPC/PPC64
 Patch103: %{name}-ppc-zero-hotspot.patch
 
+# Revert an upstream commit; possibly causes a jit crash
+Patch104: revert-8035283.patch
+
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
@@ -425,6 +428,7 @@ sh %{SOURCE12}
 %patch6
 
 %patch99
+%patch104
 
 # Type fixes for s390
 %ifarch s390 s390x
@@ -1095,6 +1099,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed Apr 16 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
+- Revert upstream patch for S8035283. Possibly causes a crash on i686.
+
 * Tue Apr 15 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
 - Update to the latest security release: OpenJDK8 u5 b13
 
