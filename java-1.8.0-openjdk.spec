@@ -517,8 +517,8 @@ bash ../../configure \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
     --with-num-cores="$NUM_PROC" \
-    --with-extra-cflags="-fsanitize=address -fsanitize=undefined" \
-    --with-extra-cxxflags="-fsanitize=address -fsanitize=undefined" \
+    --with-extra-cflags="-fsanitize=undefined" \
+    --with-extra-cxxflags="-fsanitize=undefined"
 
 # The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
 # disables FDS for all build configs and reverts to pre-FDS make logic.
