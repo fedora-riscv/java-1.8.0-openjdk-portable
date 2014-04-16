@@ -1,8 +1,6 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global jdk8_version b132
-%global hg_tag jdk8-%{jdk8_version}
 %global aarch64_hg_tag  992
 
 %global aarch64         aarch64 arm64 armv8
@@ -84,8 +82,8 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       0
-%global buildver        %{jdk8_version}
+%global updatever       5
+%global buildver        b13
 %global aarch64_updatever 0
 %global aarch64_buildver b128
 # priority must be 6 digits in total
@@ -130,7 +128,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -148,9 +146,9 @@ License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and L
 URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. To regenerate, use
-# ./generate_source_tarball.sh jdk8 %{hg_tag}
-# ./generate_source_tarball.sh aarch64-port %{aarch64_hg_tag}
-Source0:  jdk8-%{hg_tag}.tar.xz
+# ./generate_source_tarball.sh jdk8u jdk8u jdk8u%{updatever}-%{buildver}
+# ./generate_source_tarball.sh aarch64-port jdk8 %{aarch64_hg_tag}
+Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
 Source1:  aarch64-port-jdk8-%{aarch64_buildver}-aarch64-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
@@ -1097,6 +1095,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Apr 15 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
+- Update to the latest security release: OpenJDK8 u5 b13
+
 * Fri Mar 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.0-2.b132
 - Include version information in desktop files
 - Move desktop files from tarball to top level source
