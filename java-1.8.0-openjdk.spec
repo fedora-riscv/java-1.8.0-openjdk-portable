@@ -128,7 +128,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -226,10 +226,8 @@ BuildRequires: giflib-devel
 BuildRequires: gcc-c++
 BuildRequires: gtk2-devel
 BuildRequires: lcms2-devel
-BuildRequires: libasan
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
-BuildRequires: libubsan
 BuildRequires: libxslt
 BuildRequires: libX11-devel
 BuildRequires: libXi-devel
@@ -517,8 +515,8 @@ bash ../../configure \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
     --with-num-cores="$NUM_PROC" \
-    --with-extra-cflags="-fsanitize=undefined" \
-    --with-extra-cxxflags="-fsanitize=undefined"
+    --with-extra-cflags="-fno-devirtualize" \
+    --with-extra-cxxflags="-fno-devirtualize"
 
 # The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
 # disables FDS for all build configs and reverts to pre-FDS make logic.
@@ -526,11 +524,9 @@ bash ../../configure \
 # ignore all the other logic about which debug options and just do '-g'.
 
 make \
-    SCTP_WERROR= \
     DEBUG_BINARIES=true \
-    FULL_DEBUG_SYMBOLS=0 \
-    STRIP_POLICY=none \
-    ALT_OBJCOPY=/does_not_exist \
+    STRIP_POLICY=no_strip \
+    POST_STRIP_CMD="" \
     LOG=trace \
     all
 
@@ -1100,6 +1096,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed Apr 23 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-2.b13
+- Build with -fno-devirtualize
+- Don't strip debuginfo from files
+
 * Wed Apr 16 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-1.b13
 - Instrument build with various sanitizers.
 
