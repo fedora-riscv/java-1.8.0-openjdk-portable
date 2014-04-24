@@ -7,6 +7,10 @@
 %global multilib_arches %{power64} sparc64 x86_64 %{aarch64}
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 
+# sometimes we need to distinguish big and little endian PPC64
+# taken from the openjdk-1.7 spec
+%global ppc64le                 ppc64le
+%global ppc64be                 ppc64 ppc64p7
 
 %ifarch x86_64
 %global archinstall amd64
@@ -16,6 +20,9 @@
 %endif
 %ifarch %{power64}
 %global archinstall ppc64
+%endif
+%ifarch %{ppc64le}
+%global archinstall ppc64le
 %endif
 %ifarch %{ix86}
 %global archinstall i386
@@ -128,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -215,6 +222,8 @@ Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 
+Patch999: 0001-PPC64LE-arch-support-in-openjdk-1.8.patch
+
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
@@ -249,7 +258,7 @@ BuildRequires: libffi-devel
 BuildRequires: openssl
 # execstack build requirement.
 # no prelink on ARM yet
-%ifnarch %{arm} %{aarch64}
+%ifnarch %{arm} %{aarch64} ppc64le
 BuildRequires: prelink
 %endif
 %if %{with_systemtap}
@@ -436,6 +445,7 @@ sh %{SOURCE12}
 %ifarch ppc %{power64}
 # PPC fixes
 %patch103
+%patch999 -p1
 %endif
 
 # Extract systemtap tapsets
@@ -1096,6 +1106,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Apr 24 2014 Brent Baude <baude@us.ibm.com> - 1:1.8.0.5-3.b13
+- Add ppc64le support, bz# 1088344
+
 * Wed Apr 23 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-2.b13
 - Build with -fno-devirtualize
 - Don't strip debuginfo from files
