@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -227,6 +227,7 @@ Patch999: 0001-PPC64LE-arch-support-in-openjdk-1.8.patch
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
+BuildRequires: binutils
 BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
 BuildRequires: fontconfig
@@ -566,6 +567,9 @@ echo "sun.zoneinfo.dir=/usr/share/javazi" >> $JAVA_HOME/jre/lib/tz.properties
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
 $JAVA_HOME/bin/java TestCryptoLevel
+
+# Check debug symbols are present and can identify code
+nm -aCl $JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so | grep javaCalls.cpp
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -1106,6 +1110,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Mon Apr 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-4.b13
+- Check for debug symbols in libjvm.so
+
 * Thu Apr 24 2014 Brent Baude <baude@us.ibm.com> - 1:1.8.0.5-3.b13
 - Add ppc64le support, bz# 1088344
 
