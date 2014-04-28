@@ -8,9 +8,10 @@ versions of OpenJDK.
 See: http://blog.joda.org/2014/02/turning-off-doclint-in-jdk-8-javadoc.html
 See: https://lists.fedoraproject.org/pipermail/java-devel/2014-February/005150.html
 
-diff -r 9d81ae1c417a jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocEnv.java
---- jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocEnv.java	Thu Feb 06 17:35:47 2014 -0800
-+++ jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocEnv.java	Mon Feb 24 19:44:12 2014 +0000
+Author: Andrew John Hughes <ahughes@redhat.com>
+Author: Emmanuel Bourg <ebourg@apache.org>
+--- jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocEnv.java
++++ jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocEnv.java
 @@ -811,10 +811,9 @@
              doclintOpts.add(opt == null ? DocLint.XMSGS_OPTION : DocLint.XMSGS_CUSTOM_PREFIX + opt);
          }
@@ -25,3 +26,33 @@ diff -r 9d81ae1c417a jdk8/langtools/src/share/classes/com/sun/tools/javadoc/DocE
              return;
          }
  
+--- jdk8/langtools/test/tools/javadoc/doclint/DocLintTest.java
++++ jdk8/langtools/test/tools/javadoc/doclint/DocLintTest.java
+@@ -130,12 +130,12 @@
+         };
+ 
+         test(Collections.<String>emptyList(),
+-                Main.Result.ERROR,
+-                EnumSet.of(Message.DL_ERR9A, Message.DL_WRN12A));
++                Main.Result.OK,
++                EnumSet.of(Message.JD_WRN10, Message.JD_WRN13));
+ 
+         test(Arrays.asList(rawDiags),
+-                Main.Result.ERROR,
+-                EnumSet.of(Message.DL_ERR9, Message.DL_WRN12));
++                Main.Result.OK,
++                EnumSet.of(Message.JD_WRN10, Message.JD_WRN13));
+ 
+         test(Arrays.asList("-Xdoclint:none"),
+                 Main.Result.OK,
+@@ -158,8 +158,8 @@
+                 EnumSet.of(Message.DL_WRN12));
+ 
+         test(Arrays.asList(rawDiags, "-private"),
+-                Main.Result.ERROR,
+-                EnumSet.of(Message.DL_ERR6, Message.DL_ERR9, Message.DL_WRN12));
++                Main.Result.OK,
++                EnumSet.of(Message.JD_WRN10, Message.JD_WRN13));
+ 
+         test(Arrays.asList(rawDiags, "-Xdoclint:syntax", "-private"),
+                 Main.Result.ERROR,
