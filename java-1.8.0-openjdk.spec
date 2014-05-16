@@ -201,6 +201,8 @@ Patch4: PStack-808293.patch
 Patch5: multiple-pkcs11-library-init.patch
 # Disable doclint for compatibility
 Patch6: disable-doclint-by-default.patch
+# Include all sources in src.zip
+Patch7: include-all-srcs.patch
 
 #
 # OpenJDK specific patches
@@ -430,6 +432,7 @@ sh %{SOURCE12}
 %patch4
 %patch5
 %patch6
+%patch7
 
 %patch99
 
