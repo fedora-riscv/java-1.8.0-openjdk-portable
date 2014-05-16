@@ -209,10 +209,7 @@ Patch6: disable-doclint-by-default.patch
 # Allow icedtea-web to build
 Patch99: applet-hole.patch
 
-# Recognize s390/s390x
-Patch100: %{name}-s390.patch
 # Type fixing for s390
-Patch101: %{name}-bitmap.patch
 Patch102: %{name}-size_t.patch
 
 # Patch for PPC/PPC64
@@ -438,8 +435,6 @@ sh %{SOURCE12}
 
 # Type fixes for s390
 %ifarch s390 s390x
-%patch100
-%patch101
 %patch102
 %endif
 
