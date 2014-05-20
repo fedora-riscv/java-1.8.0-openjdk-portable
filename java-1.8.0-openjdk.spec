@@ -1119,7 +1119,7 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
-* Tue May 22 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-5.b13
+* Tue May 20 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-5.b13
 - Only check for debug symbols in libjvm if it exists.
 
 * Fri May 16 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-4.b13
