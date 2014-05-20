@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -567,7 +567,18 @@ $JAVA_HOME/bin/javac -d . %{SOURCE13}
 $JAVA_HOME/bin/java TestCryptoLevel
 
 # Check debug symbols are present and can identify code
-nm -aCl $JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so | grep javaCalls.cpp
+SERVER_JVM="$JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so"
+if [ -f "$SERVER_JVM" ] ; then
+  nm -aCl "$SERVER_JVM" | grep javaCalls.cpp
+fi
+CLIENT_JVM="$JAVA_HOME/jre/lib/%{archinstall}/client/libjvm.so"
+if [ -f "$CLIENT_JVM" ] ; then
+  nm -aCl "$CLIENT_JVM" | grep javaCalls.cpp
+fi
+ZERO_JVM="$JAVA_HOME/jre/lib/%{archinstall}/zero/libjvm.so"
+if [ -f "$ZERO_JVM" ] ; then
+  nm -aCl "$ZERO_JVM" | grep javaCalls.cpp
+fi
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -1108,6 +1119,12 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue May 22 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-5.b13
+- Only check for debug symbols in libjvm if it exists.
+
+* Fri May 16 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-4.b13
+- Include all sources in src.zip
+
 * Mon Apr 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-4.b13
 - Check for debug symbols in libjvm.so
 
