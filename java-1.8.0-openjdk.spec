@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -211,6 +211,8 @@ Patch7: include-all-srcs.patch
 # Allow icedtea-web to build
 Patch99: applet-hole.patch
 
+# JVM heap size changes for s390 (thanks to aph)
+Patch100: %{name}-s390-java-opts.patch
 # Type fixing for s390
 Patch102: %{name}-size_t.patch
 
@@ -436,8 +438,9 @@ sh %{SOURCE12}
 
 %patch99
 
-# Type fixes for s390
-%ifarch s390 s390x
+# s390 build fixes
+%ifarch s390
+%patch100
 %patch102
 %endif
 
@@ -1119,6 +1122,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Fri May 23 2014 Dan Horák <dan[at]danny.cz> - 1:1.8.0.5-6.b13
+- Enable build on s390/s390x
+
 * Tue May 20 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-5.b13
 - Only check for debug symbols in libjvm if it exists.
 
