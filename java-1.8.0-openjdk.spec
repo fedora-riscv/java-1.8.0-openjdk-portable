@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 8.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -203,6 +203,8 @@ Patch5: multiple-pkcs11-library-init.patch
 Patch6: disable-doclint-by-default.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
+# Fix window activation in gnome-shell
+Patch8: set-active-window.patch
 
 #
 # OpenJDK specific patches
@@ -438,6 +440,7 @@ sh %{SOURCE12}
 %patch5
 %patch6
 %patch7
+%patch8
 
 %patch99
 
@@ -1125,6 +1128,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed May 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-8.b13
+- Backport fix for JDK-8012224
+
 * Wed May 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-7.b13
 - Require fontconfig and minimal fonts (xorg-x11-fonts-Type1) explicitly
 - Resolves rhbz#1101394
