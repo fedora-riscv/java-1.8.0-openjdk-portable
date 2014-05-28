@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -266,6 +266,9 @@ BuildRequires: prelink
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
+
+Requires: fontconfig
+Requires: xorg-x11-fonts-Type1
 
 # Requires rest of java
 Requires: %{name}-headless = %{epoch}:%{version}-%{release}
@@ -1122,6 +1125,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed May 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-7.b13
+- Require fontconfig and minimal fonts (xorg-x11-fonts-Type1) explicitly
+- Resolves rhbz#1101394
+
 * Fri May 23 2014 Dan Horák <dan[at]danny.cz> - 1:1.8.0.5-6.b13
 - Enable build on s390/s390x
 
