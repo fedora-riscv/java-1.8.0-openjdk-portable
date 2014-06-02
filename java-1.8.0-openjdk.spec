@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 8.%{buildver}%{?dist}
+Release: 9.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -251,8 +251,7 @@ BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 #BuildRequires: redhat-lsb
 BuildRequires: zip
-# OpenJDK X officially requires OpenJDK (X-1) to build
-BuildRequires: java-1.7.0-openjdk-devel
+BuildRequires: java-1.8.0-openjdk-devel
 # Zero-assembler build requirement.
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
@@ -1128,6 +1127,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Mon Jun 02 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-9.b13
+- Build with OpenJDK 8
+
 * Wed May 28 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-8.b13
 - Backport fix for JDK-8012224
 
