@@ -209,6 +209,8 @@ Patch8: set-active-window.patch
 Patch9: javadoc-error-jdk-8029145.patch
 # More javadoc. Backport from upstream.
 Patch10: javadoc-error-jdk-8037484.patch
+# Problem discovered with make 4.0
+Patch11: hotspot-build-j-directive.patch
 
 #
 # OpenJDK specific patches
@@ -446,6 +448,7 @@ sh %{SOURCE12}
 %patch8
 %patch9
 %patch10
+%patch11
 
 %patch99
 
@@ -1133,6 +1136,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Jun 12 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-11.b13
+- Add patch from IcedTea to handle -j and -I correctly
+
 * Wed Jun 11 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-11.b13
 - Backport javadoc fixes from upstream
 - Related: rhbz#1107273
