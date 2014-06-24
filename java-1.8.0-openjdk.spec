@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -291,6 +291,9 @@ Provides: java = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
 Provides: java-fonts = %{epoch}:%{version}
 
+Obsoletes: java-1.7.0-openjdk <= 1:1.7.0.60-2.5.0.2
+Provides:  java-1.7.0-openjdk = %{epoch}:%{version}-%{release}
+
 %description
 The OpenJDK runtime environment.
 
@@ -330,6 +333,9 @@ Provides: jce = %{epoch}:%{version}
 Provides: jdbc-stdext = 4.1
 Provides: java-sasl = %{epoch}:%{version}
 
+Obsoletes: java-1.7.0-openjdk-headless <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-headless = %{epoch}:%{version}-%{release}
+
 %description headless
 The OpenJDK runtime environment without audio and video support.
 
@@ -354,6 +360,8 @@ Provides: java-%{javaver}-devel = %{epoch}:%{version}
 Provides: java-devel-%{origin} = %{epoch}:%{version}
 Provides: java-devel = %{epoch}:%{javaver}
 
+Obsoletes: java-1.7.0-openjdk-devel <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-devel = %{epoch}:%{version}-%{release}
 
 %description devel
 The OpenJDK development tools.
@@ -364,6 +372,9 @@ Group:   Development/Languages
 
 Requires: %{name} = %{epoch}:%{version}-%{release}
 
+Obsoletes: java-1.7.0-openjdk-demo <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-demo = %{epoch}:%{version}-%{release}
+
 %description demo
 The OpenJDK demos.
 
@@ -372,6 +383,9 @@ Summary: OpenJDK Source Bundle
 Group:   Development/Languages
 
 Requires: %{name} = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-src <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-src = %{epoch}:%{version}-%{release}
 
 %description src
 The OpenJDK source bundle.
@@ -391,6 +405,9 @@ Requires(postun): %{_sbindir}/alternatives
 Provides: java-javadoc = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
 
+Obsoletes: java-1.7.0-openjdk-javadoc <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-javadoc = %{epoch}:%{version}-%{release}
+
 %description javadoc
 The OpenJDK API documentation.
 
@@ -399,6 +416,9 @@ The OpenJDK API documentation.
 Summary: OpenJDK accessibility connector
 Requires: java-atk-wrapper
 Requires: %{name} = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-accessibility <= 1:1.7.0.60-2.5.0.2
+Provides: java-1.7.0-openjdk-accessibility = %{epoch}:%{version}-%{release}
 
 %description accessibility
 Enables accessibility support in OpenJDK by using java-atk-wrapper. This allows
@@ -1136,6 +1156,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Jun 24 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-13.b13
+- Obsolete java-1.7.0-openjdk
+
 * Wed Jun 18 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-12.b13
 - Use system tzdata from tzdata-java
 
