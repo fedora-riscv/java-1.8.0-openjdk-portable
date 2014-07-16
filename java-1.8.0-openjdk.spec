@@ -89,8 +89,8 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       5
-%global buildver        b13
+%global updatever       11
+%global buildver        b12
 %global aarch64_updatever 0
 %global aarch64_buildver b128
 # priority must be 6 digits in total
@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1156,6 +1156,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Jul 15 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-1.b12
+- updated to security u11b12
+
 * Tue Jun 24 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.5-13.b13
 - Obsolete java-1.7.0-openjdk
 
