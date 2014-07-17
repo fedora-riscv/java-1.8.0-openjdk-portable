@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -156,7 +156,7 @@ URL:      http://openjdk.java.net/
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%{updatever}-%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %{aarch64_hg_tag}
 Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  aarch64-port-jdk8-%{aarch64_buildver}-aarch64-%{aarch64_hg_tag}.tar.xz
+Source1:  aarch64-hotspot-jdk8-%{aarch64_buildver}-aarch64-%{aarch64_hg_tag}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -432,13 +432,13 @@ need to.
 
 
 %prep
+%setup -q -c -n %{name} -T -a 0
 %ifarch %{aarch64}
-%global source_num 1
-%else
-%global source_num 0
+pushd jdk8
+rm -r hotspot
+tar xf %{SOURCE1}
+popd
 %endif
-
-%setup -q -c -n %{name} -T -a %{source_num}
 cp %{SOURCE2} .
 
 # replace outdated configure guess script
@@ -1156,6 +1156,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Jul 15 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-5.b12
+- Attempt to update aarch64 *jdk* to u11b12, by resticting aarch64 sources to hotpot only
+
 * Tue Jul 15 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-1.b12
 - updated to security u11b12
 
