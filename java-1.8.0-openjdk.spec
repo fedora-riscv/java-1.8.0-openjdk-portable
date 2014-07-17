@@ -267,7 +267,7 @@ BuildRequires: libffi-devel
 BuildRequires: openssl
 # execstack build requirement.
 # no prelink on ARM yet
-%ifnarch %{arm} %{aarch64} ppc64le
+%ifnarch %{arm} %{aarch64} %{ppc64le}
 BuildRequires: prelink
 %endif
 %if %{with_systemtap}
