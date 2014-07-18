@@ -135,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -231,7 +231,8 @@ Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 
-Patch999: 0001-PPC64LE-arch-support-in-openjdk-1.8.patch
+Patch999:  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
+Patch9999: enableArm64.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -452,6 +453,10 @@ cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 
 # Remove libraries that are linked
 sh %{SOURCE12}
+
+%ifarch %{aarch64}
+%patch9999
+%endif
 
 %patch201
 %patch202
@@ -1156,6 +1161,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Jul 15 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-6.b12
+- added patch patch9999 enableArm64.patch to enable new hotspot
+
 * Tue Jul 15 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-5.b12
 - Attempt to update aarch64 *jdk* to u11b12, by resticting aarch64 sources to hotpot only
 
