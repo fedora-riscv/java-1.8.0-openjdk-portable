@@ -1,8 +1,8 @@
 --- /dev/null
 +++ jdk8/jdk/src/solaris/bin/aarch64/jvm.cfg
 @@ -0,0 +1,2 @@
-+-client IGNORE
 +-server KNOWN
++-client IGNORE
 --- jdk8/common/autoconf/generated-configure.sh
 +++ jdk8/common/autoconf/generated-configure.sh
 @@ -6728,8 +6728,9 @@
