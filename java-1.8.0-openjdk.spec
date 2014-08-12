@@ -4,13 +4,11 @@
 %global aarch64_hg_tag  992
 
 %global aarch64         aarch64 arm64 armv8
+# sometimes we need to distinguish big and little endian PPC64
+%global ppc64le         ppc64le
+%global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
-
-# sometimes we need to distinguish big and little endian PPC64
-# taken from the openjdk-1.7 spec
-%global ppc64le                 ppc64le
-%global ppc64be                 ppc64 ppc64p7
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -606,8 +604,8 @@ install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
 
 
 # Use system-wide tzdata
-rm $JAVA_HOME/jre/lib/tzdb.dat
-ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
+#rm $JAVA_HOME/jre/lib/tzdb.dat
+#ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -652,7 +650,7 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
 %if %{with_systemtap}
   # Install systemtap support files.
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset
-  cp -a $RPM_BUILD_DIR/%{uniquesuffix}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
+  cp -a $RPM_BUILD_DIR/%{name}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
   install -d -m 755 $RPM_BUILD_ROOT%{tapsetdir}
   pushd $RPM_BUILD_ROOT%{tapsetdir}
     RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir}/tapset %{tapsetdir})
@@ -753,20 +751,20 @@ mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/.java/.systemPrefs
 find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type d \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'|%dir |' \
-  > %{name}.files.headless
+  > %{name}.files-headless
 # Find JRE files.
 find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type f -o -type l \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'||' \
-  >> %{name}.files.all
+  > %{name}.files.all
 #split %{name}.files to %{name}.files-headless and %{name}.files
 #see https://bugzilla.redhat.com/show_bug.cgi?id=875408
 NOT_HEADLESS=\
-"%{_jvmdir}/%{uniquesuffix}/lib/%{archinstall}/libjsoundalsa.so
-%{_jvmdir}/%{uniquesuffix}/lib/%{archinstall}/libpulse-java.so
-%{_jvmdir}/%{uniquesuffix}/lib/%{archinstall}/libsplashscreen.so
-%{_jvmdir}/%{uniquesuffix}/lib/%{archinstall}/libawt_xawt.so
-%{_jvmdir}/%{uniquesuffix}/lib/%{archinstall}/libjawt.so"
+"%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjsoundalsa.so
+%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libpulse-java.so
+%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libsplashscreen.so
+%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libawt_xawt.so
+%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so"
 #filter %{name}.files from %{name}.files.all to %{name}.files-headless
 ALL=`cat %{name}.files.all`
 for file in $ALL ; do 
@@ -1344,6 +1342,13 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-11.b12
+- backporting old fixes:
+- get rid of jre-abrt, uniquesuffix, parallel install, jsa files,
+  config(norepalce) bug, -fstack-protector-strong, OrderWithRequires,
+  nss config, multilib arches, provides/requires excludes
+- some additional cosmetic changes
+
 * Tue Jul 22 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.11-8.b12
 - Modify aarch64-specific jvm.cfg to list server vm first
 
