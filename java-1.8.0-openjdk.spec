@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -260,7 +260,7 @@ BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 #BuildRequires: redhat-lsb
 BuildRequires: zip
-BuildRequires: java-1.7.0-openjdk-devel
+BuildRequires: java-1.8.0-openjdk-devel
 # Zero-assembler build requirement.
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
@@ -604,8 +604,8 @@ install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
 
 
 # Use system-wide tzdata
-#rm $JAVA_HOME/jre/lib/tzdb.dat
-#ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
+rm $JAVA_HOME/jre/lib/tzdb.dat
+ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1342,6 +1342,11 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-12.b12
+- bumped release to build by previous release.
+- forcing rebuild by jdk8
+- uncommenting forgotten comment on tzdb link
+
 * Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-11.b12
 - backporting old fixes:
 - get rid of jre-abrt, uniquesuffix, parallel install, jsa files,
