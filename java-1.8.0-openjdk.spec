@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -501,7 +501,7 @@ tar xzf %{SOURCE8}
 
 for file in tapset/*.in; do
 
-    OUTPUT_FILE=`echo $file | sed -e s:\.in$::g`
+    OUTPUT_FILE=`echo $file | sed -e s:%{javaver}\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g`
     sed -e s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir}/jre/lib/%{archinstall}/server/libjvm.so:g $file > $file.1
 # TODO find out which architectures other than i686 have a client vm
 %ifarch %{ix86}
@@ -520,6 +520,7 @@ done
 for file in %{SOURCE9} %{SOURCE10} ; do
     OUTPUT_FILE=`basename $file | sed -e s:\.in$::g`
     sed -e s:#JAVA_HOME#:%{sdkbindir}:g $file > $OUTPUT_FILE
+    sed -i -e  s:#JRE_HOME#:%{jrebindir}:g $OUTPUT_FILE
     sed -i -e  s:#ARCH#:%{version}-%{release}.%{_arch}:g $OUTPUT_FILE
 done
 
@@ -650,7 +651,7 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
 %if %{with_systemtap}
   # Install systemtap support files.
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset
-  cp -a $RPM_BUILD_DIR/%{name}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
+  cp -a $RPM_BUILD_DIR/%{uniquesuffix}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
   install -d -m 755 $RPM_BUILD_ROOT%{tapsetdir}
   pushd $RPM_BUILD_ROOT%{tapsetdir}
     RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir}/tapset %{tapsetdir})
@@ -1027,6 +1028,7 @@ alternatives \
   %{_mandir}/man1/java-%{uniquesuffix}.1$ext \
   --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \
   %{_mandir}/man1/jjs-%{uniquesuffix}.1$ext \
+  --slave %{_bindir}/policytool policytool %{jrebindir}/policytool \
   --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \
   %{_mandir}/man1/keytool-%{uniquesuffix}.1$ext \
   --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \
@@ -1110,7 +1112,6 @@ alternatives \
   --slave %{_bindir}/jstat jstat %{sdkbindir}/jstat \
   --slave %{_bindir}/jstatd jstatd %{sdkbindir}/jstatd \
   --slave %{_bindir}/native2ascii native2ascii %{sdkbindir}/native2ascii \
-  --slave %{_bindir}/policytool policytool %{sdkbindir}/policytool \
   --slave %{_bindir}/rmic rmic %{sdkbindir}/rmic \
   --slave %{_bindir}/schemagen schemagen %{sdkbindir}/schemagen \
   --slave %{_bindir}/serialver serialver %{sdkbindir}/serialver \
@@ -1228,6 +1229,7 @@ exit 0
 
 %files -f %{name}.files
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
+%{_datadir}/applications/*policytool.desktop
 
 # important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 # all config/norepalce files (and more) have to be declared in pretrans. See pretrans
@@ -1243,6 +1245,8 @@ exit 0
 %{jvmjardir}
 %dir %{_jvmdir}/%{jredir}/lib/security
 %{_jvmdir}/%{jredir}/lib/security/cacerts
+%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/US_export_policy.jar
+%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/local_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.policy
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.security
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
@@ -1258,13 +1262,12 @@ exit 0
 %{_mandir}/man1/tnameserv-%{uniquesuffix}.1*
 %{_mandir}/man1/unpack200-%{uniquesuffix}.1*
 %config(noreplace) %{_jvmdir}/%{jredir}/lib/security/nss.cfg
+%{_jvmdir}/%{jredir}/lib/audio/
 %ifarch %{jit_arches}
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir}/lib/%{archinstall}/server/classes.jsa
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir}/lib/%{archinstall}/client/classes.jsa
 %endif
-%{_jvmdir}/%{jredir}/lib/audio/
-%{_jvmdir}/%{jredir}/lib/security/US_export_policy.jar
-%{_jvmdir}/%{jredir}/lib/security/local_policy.jar
+
 %{_jvmdir}/%{jredir}/lib/%{archinstall}/server/
 %{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
 
@@ -1287,7 +1290,6 @@ exit 0
 %endif
 %{_jvmjardir}/%{sdkdir}
 %{_datadir}/applications/*jconsole.desktop
-%{_datadir}/applications/*policytool.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix}.1*
 %{_mandir}/man1/extcheck-%{uniquesuffix}.1*
 %{_mandir}/man1/idlj-%{uniquesuffix}.1*
@@ -1342,6 +1344,11 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-13.b12
+- fixing tapset to support multipleinstalls
+- added more config/norepalce
+- policitool moved to jre
+
 * Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-12.b12
 - bumped release to build by previous release.
 - forcing rebuild by jdk8
