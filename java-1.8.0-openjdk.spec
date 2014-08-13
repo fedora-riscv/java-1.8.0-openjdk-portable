@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 14.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -438,7 +438,7 @@ need to.
 
 
 %prep
-%setup -q -c -n %{name} -T -a 0
+%setup -q -c -n %{uniquesuffix} -T -a 0
 %ifarch %{aarch64}
 pushd jdk8
 rm -r hotspot
@@ -766,7 +766,7 @@ NOT_HEADLESS=\
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libsplashscreen.so
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libawt_xawt.so
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so"
-#filter %{name}.files from %{name}.files.all to %{name}.files-headless
+#filter  %{name}.files from  %{name}.files.all to  %{name}.files-headless
 ALL=`cat %{name}.files.all`
 for file in $ALL ; do 
   INLCUDE="NO" ; 
@@ -1344,6 +1344,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-14.b12
+- forced to build in fully versioned dir
+
 * Tue Aug 12 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-13.b12
 - fixing tapset to support multipleinstalls
 - added more config/norepalce
