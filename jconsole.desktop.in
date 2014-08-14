@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=OpenJDK 8 Monitoring & Management Console
-Comment=Monitor and manage OpenJDK applications for @VERSION@
-Exec=@JAVA_HOME@/bin/jconsole
+Name=OpenJDK 8 Monitoring & Management Console #ARCH#
+Comment=Monitor and manage OpenJDK applications for #ARCH#
+Exec=#JAVA_HOME#/jconsole
 Icon=java
 Terminal=false
 Type=Application

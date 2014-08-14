@@ -1,7 +1,7 @@
 [Desktop Entry]
-Name=OpenJDK 8 Policy Tool
-Comment=Manage OpenJDK policy files (@VERSION@)
-Exec=@JAVA_HOME@/bin/policytool
+Name=OpenJDK 8 Policy Tool #ARCH#
+Comment=Manage OpenJDK policy files #ARCH#
+Exec=#JRE_HOME#/policytool
 Icon=java
 Terminal=false
 Type=Application
