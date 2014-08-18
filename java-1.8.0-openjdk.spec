@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 16.%{buildver}%{?dist}
+Release: 17.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -265,6 +265,7 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
+BuildRequires: %{_datadir}/javazi-1.8/tzdb.dat
 
 # cacerts build requirement.
 BuildRequires: openssl
@@ -312,6 +313,7 @@ Requires: ca-certificates
 Requires: jpackage-utils
 # Require zoneinfo data provided by tzdata-java subpackage.
 Requires: tzdata-java
+Requires: %{_datadir}/javazi-1.8/tzdb.dat
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives.
@@ -1344,6 +1346,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Aug 14 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-16.b12
+- added build requires and requires for headles  _datadir/javazi-1.8/tzdb.dat
+- restriction of tzdata provider, so we will be aware of another possible failure
+
 * Sat Aug 16 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org>
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
