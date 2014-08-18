@@ -1346,7 +1346,7 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
-* Thu Aug 14 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-16.b12
+* Mon Aug 18 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-17.b12
 - added build requires and requires for headles  _datadir/javazi-1.8/tzdb.dat
 - restriction of tzdata provider, so we will be aware of another possible failure
 
