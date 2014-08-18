@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 17.%{buildver}%{?dist}
+Release: 18.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -230,6 +230,8 @@ Patch103: %{name}-ppc-zero-hotspot.patch
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
+
+Patch300: jstack-pr1845.patch
 
 Patch999:  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
 Patch9999: enableArm64.patch
@@ -500,6 +502,8 @@ sh %{SOURCE12}
 %if %{with_systemtap}
 
 tar xzf %{SOURCE8}
+
+%patch300
 
 for file in tapset/*.in; do
 
@@ -1346,6 +1350,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Aug 14 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-18.b12
+- fixed jstack
+
 * Mon Aug 18 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-17.b12
 - added build requires and requires for headles  _datadir/javazi-1.8/tzdb.dat
 - restriction of tzdata provider, so we will be aware of another possible failure
