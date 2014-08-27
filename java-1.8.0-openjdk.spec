@@ -96,8 +96,8 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       11
-%global buildver        b12
+%global updatever       40
+%global buildver        b01
 %global aarch64_updatever 0
 %global aarch64_buildver b128
 # priority must be 6 digits in total
@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 19.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -203,12 +203,6 @@ Patch5: multiple-pkcs11-library-init.patch
 Patch6: disable-doclint-by-default.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
-# Fix window activation in gnome-shell
-Patch8: set-active-window.patch
-# Fix javadoc. Backport from upstream.
-Patch9: javadoc-error-jdk-8029145.patch
-# More javadoc. Backport from upstream.
-Patch10: javadoc-error-jdk-8037484.patch
 # Problem discovered with make 4.0
 Patch11: hotspot-build-j-directive.patch
 
@@ -216,8 +210,6 @@ Patch11: hotspot-build-j-directive.patch
 # OpenJDK specific patches
 #
 
-# Allow icedtea-web to build
-Patch99: applet-hole.patch
 
 # JVM heap size changes for s390 (thanks to aph)
 Patch100: %{name}-s390-java-opts.patch
@@ -471,7 +463,6 @@ sh %{SOURCE12}
 %patch202
 %patch203
 
-
 %patch1
 %patch2
 %patch3
@@ -479,12 +470,7 @@ sh %{SOURCE12}
 %patch5
 %patch6
 %patch7
-%patch8
-%patch9
-%patch10
 %patch11
-
-%patch99
 
 # s390 build fixes
 %ifarch s390
@@ -1350,6 +1336,15 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b01
+- updated to u40-b01
+- adapted  java-1.8.0-openjdk-accessible-toolkit.patch
+- adapted  system-lcms.patch
+- removed patch8 set-active-window.patch
+- removed patch9 javadoc-error-jdk-8029145.patch
+- removed patch10 javadoc-error-jdk-8037484.patch
+- remopved patch99 applet-hole.patch - itw 1.5.1 is able to ive without it
+
 * Tue Aug 19 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-19.b12
 - fixed desktop icons
 - Icon set to java-1.8.0

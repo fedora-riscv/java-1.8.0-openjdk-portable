@@ -9,8 +9,9 @@ rm -f icedtea7.tar.gz
 pushd icedtea7-${VERSION}
 
 # desktop files
-mv jconsole.desktop ../jconsole.desktop.in
-mv policytool.desktop ../policytool.desktop.in
+#mv jconsole.desktop ../jconsole.desktop.in
+#mv policytool.desktop ../policytool.desktop.in
+# Icons were generally cloned fromicedtea, but now are mucvh more specific
 
 # tapsets
 mv tapset/hotspot{,-1.8.0}.stp.in || exit 1
