@@ -97,18 +97,6 @@ diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.siz
  }
  
  HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
-diff -up jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp
---- jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp.size_t	2014-03-11 16:02:13.000000000 -0400
-+++ jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/parMarkBitMap.cpp	2014-05-16 13:09:21.360132543 -0400
-@@ -68,7 +68,7 @@ ParMarkBitMap::initialize(MemRegion cove
-   if (_virtual_space != NULL && _virtual_space->expand_by(_reserved_byte_size)) {
-     _region_start = covered_region.start();
-     _region_size = covered_region.word_size();
--    idx_t* map = (idx_t*)_virtual_space->reserved_low_addr();
-+    BitMap::bm_word_t* map = (BitMap::bm_word_t*)_virtual_space->reserved_low_addr();
-     _beg_bits.set_map(map);
-     _beg_bits.set_size(bits / 2);
-     _end_bits.set_map(map + words / 2);
 diff -up jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp.size_t jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp
 --- jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp.size_t	2014-03-11 16:02:13.000000000 -0400
 +++ jdk8/hotspot/src/share/vm/gc_implementation/parallelScavenge/psParallelCompact.cpp	2014-05-16 13:09:21.360132543 -0400
@@ -282,12 +270,3 @@ diff -up jdk8/hotspot/src/share/vm/runtime/arguments.cpp.size_t jdk8/hotspot/src
            if (PrintGCDetails && Verbose) {
              // Too early to use gclog_or_tty
              tty->print_cr("CMS ergo set OldSize: " SIZE_FORMAT, OldSize);
-@@ -1397,7 +1397,7 @@ bool verify_object_alignment() {
-   return true;
- }
- 
--uintx Arguments::max_heap_for_compressed_oops() {
-+size_t Arguments::max_heap_for_compressed_oops() {
-   // Avoid sign flip.
-   assert(OopEncodingHeapMax > (uint64_t)os::vm_page_size(), "Unusual page size");
-   // We need to fit both the NULL page and the heap into the memory budget, while
