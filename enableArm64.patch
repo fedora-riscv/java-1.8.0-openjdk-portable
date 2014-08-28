@@ -5,7 +5,7 @@
 +-client IGNORE
 --- jdk8/common/autoconf/generated-configure.sh
 +++ jdk8/common/autoconf/generated-configure.sh
-@@ -6728,8 +6728,9 @@
+@@ -6731,8 +6731,9 @@
  # The aliases save the names the user supplied, while $host etc.
  # will get canonicalized.
  test -n "$target_alias" &&
@@ -17,7 +17,7 @@
    program_prefix=${target_alias}-
  
    # Figure out the build and target systems. # Note that in autoconf terminology, "build" is obvious, but "target"
-@@ -6808,6 +6809,12 @@
+@@ -6816,6 +6817,12 @@
        VAR_CPU=arm
        VAR_CPU_ARCH=arm
        VAR_CPU_BITS=32
@@ -30,7 +30,7 @@
        VAR_CPU_ENDIAN=little
        ;;
      powerpc)
-@@ -6930,6 +6937,12 @@
+@@ -6949,6 +6956,12 @@
        VAR_CPU_BITS=32
        VAR_CPU_ENDIAN=little
        ;;
@@ -43,31 +43,31 @@
      powerpc)
        VAR_CPU=ppc
        VAR_CPU_ARCH=ppc
-@@ -7889,6 +7902,9 @@
-     INCLUDE_SA=false
-   fi
+@@ -7950,6 +7963,9 @@
    if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
-+    INCLUDE_SA=false
-+  fi
-+  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
      INCLUDE_SA=false
    fi
- 
-@@ -29737,6 +29753,9 @@
-   case "${OPENJDK_TARGET_CPU}" in
++  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
++     INCLUDE_SA=false
++  fi
+   if test "x$VAR_CPU" = xppc64 ; then
+     INCLUDE_SA=false
+   fi
+@@ -29957,6 +29973,9 @@
      s390)
-       ZERO_ARCHFLAG="-m31"
-+      ;;
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}31"
+       ;;
 +    aarch64)
 +      ZERO_ARCHFLAG=""
-       ;;
++       ;;
      *)
-       ZERO_ARCHFLAG="-m${OPENJDK_TARGET_CPU_BITS}"
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}${OPENJDK_TARGET_CPU_BITS}"
+   esac
 --- jdk8/common/autoconf/jdk-options.m4
 +++ jdk8/common/autoconf/jdk-options.m4
-@@ -88,11 +88,6 @@
-   JVM_VARIANT_ZERO=`$ECHO "$JVM_VARIANTS" | $SED -e '/,zero,/!s/.*/false/g' -e '/,zero,/s/.*/true/g'`
+@@ -117,11 +117,6 @@
    JVM_VARIANT_ZEROSHARK=`$ECHO "$JVM_VARIANTS" | $SED -e '/,zeroshark,/!s/.*/false/g' -e '/,zeroshark,/s/.*/true/g'`
+   JVM_VARIANT_CORE=`$ECHO "$JVM_VARIANTS" | $SED -e '/,core,/!s/.*/false/g' -e '/,core,/s/.*/true/g'`
  
 -  if test "x$JVM_VARIANT_CLIENT" = xtrue; then
 -    if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
@@ -77,17 +77,17 @@
    if test "x$JVM_VARIANT_KERNEL" = xtrue; then
      if test "x$OPENJDK_TARGET_CPU_BITS" = x64; then
        AC_MSG_ERROR([You cannot build a kernel JVM for a 64-bit machine.])
-@@ -126,6 +121,9 @@
+@@ -159,6 +154,9 @@
      INCLUDE_SA=false
    fi
-   if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
+   if test "x$VAR_CPU" = xppc64 ; then
 +    INCLUDE_SA=false
 +  fi
 +  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
      INCLUDE_SA=false
    fi
    AC_SUBST(INCLUDE_SA)
-@@ -423,12 +421,6 @@
+@@ -460,12 +458,6 @@
      AC_MSG_ERROR([Update version must have a value])
    elif test "x$with_update_version" != x; then
      JDK_UPDATE_VERSION="$with_update_version"
@@ -117,22 +117,22 @@
      powerpc)
 --- jdk8/common/autoconf/toolchain.m4
 +++ jdk8/common/autoconf/toolchain.m4
-@@ -1078,6 +1078,9 @@
+@@ -1158,6 +1158,9 @@
      s390)
-       ZERO_ARCHFLAG="-m31"
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}31"
        ;;
 +    aarch64)
 +      ZERO_ARCHFLAG=""
 +      ;;
      *)
-       ZERO_ARCHFLAG="-m${OPENJDK_TARGET_CPU_BITS}"
+       ZERO_ARCHFLAG="${COMPILER_TARGET_BITS_FLAG}${OPENJDK_TARGET_CPU_BITS}"
    esac
 --- jdk8/jdk/make/lib/SoundLibraries.gmk
 +++ jdk8/jdk/make/lib/SoundLibraries.gmk
-@@ -130,6 +130,10 @@
+@@ -138,6 +138,10 @@
  
-   ifeq ($(OPENJDK_TARGET_CPU), ppc)
-     LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC
+   ifeq ($(OPENJDK_TARGET_CPU), ppc64)
+        LIBJSOUND_CFLAGS += -DX_ARCH=X_PPC64
 +  endif
 +
 +  ifeq ($(OPENJDK_TARGET_CPU), aarch64)

@@ -91,9 +91,9 @@ diff -up jdk8/hotspot/src/share/vm/gc_implementation/g1/heapRegionRemSet.cpp.siz
 @@ -845,7 +845,7 @@ OtherRegionsTable::do_cleanup_work(HRRSC
  // This can be done by either mutator threads together with the
  // concurrent refinement threads or GC threads.
- int HeapRegionRemSet::num_par_rem_sets() {
--  return (int)MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), ParallelGCThreads);
-+  return (int)MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), (size_t)ParallelGCThreads);
+ uint HeapRegionRemSet::num_par_rem_sets() {
+-  return MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), (uint)ParallelGCThreads);
++  return MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), (size_t)ParallelGCThreads);
  }
  
  HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetSharedArray* bosa,
@@ -138,7 +138,7 @@ diff -up jdk8/hotspot/src/share/vm/gc_implementation/parNew/parNewGeneration.cpp
 diff -up jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp
 --- jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t	2014-03-11 16:02:13.000000000 -0400
 +++ jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp	2014-05-16 13:31:55.620132543 -0400
-@@ -386,7 +386,7 @@ void TwoGenerationCollectorPolicy::initi
+@@ -389,7 +389,7 @@
        uintx calculated_size = NewSize + OldSize;
        double shrink_factor = (double) MaxHeapSize / calculated_size;
        uintx smaller_new_size = align_size_down((uintx)(NewSize * shrink_factor), _gen_alignment);
@@ -147,7 +147,7 @@ diff -up jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t jdk8/hotspo
        _initial_gen0_size = NewSize;
  
        // OldSize is already aligned because above we aligned MaxHeapSize to
-@@ -434,7 +434,7 @@ void GenCollectorPolicy::initialize_size
+@@ -437,7 +437,7 @@
      // yield a size that is too small) and bound it by MaxNewSize above.
      // Ergonomics plays here by previously calculating the desired
      // NewSize and MaxNewSize.
@@ -156,15 +156,16 @@ diff -up jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t jdk8/hotspo
    }
    assert(max_new_size > 0, "All paths should set max_new_size");
  
-@@ -461,16 +461,16 @@ void GenCollectorPolicy::initialize_size
-       // generally small compared to the NewRatio calculation.
+@@ -459,7 +459,7 @@
+       // lower limit.
        _min_gen0_size = NewSize;
        desired_new_size = NewSize;
 -      max_new_size = MAX2(max_new_size, NewSize);
 +      max_new_size = MAX2(max_new_size, (size_t)NewSize);
-     } else {
-       // For the case where NewSize is the default, use NewRatio
-       // to size the minimum and initial generation sizes.
+     } else if (FLAG_IS_ERGO(NewSize)) {
+       // If NewSize is set ergonomically, we should use it as a lower
+       // limit, but use NewRatio to calculate the initial size.
+@@ -473,10 +473,9 @@
        // Use the default NewSize as the floor for these values.  If
        // NewRatio is overly large, the resulting sizes can be too
        // small.
@@ -172,11 +173,12 @@ diff -up jdk8/hotspot/src/share/vm/memory/collectorPolicy.cpp.size_t jdk8/hotspo
 +      _min_gen0_size = MAX2(scale_by_NewRatio_aligned(_min_heap_byte_size), (size_t)NewSize);
        desired_new_size =
 -        MAX2(scale_by_NewRatio_aligned(_initial_heap_byte_size), NewSize);
-+        MAX2(scale_by_NewRatio_aligned(_initial_heap_byte_size), (size_t)NewSize);
-     }
+-    }
++        MAX2(scale_by_NewRatio_aligned(_initial_heap_byte_size), (size_t)NewSize);    }
  
      assert(_min_gen0_size > 0, "Sanity check");
-@@ -572,7 +572,7 @@ void TwoGenerationCollectorPolicy::initi
+     _initial_gen0_size = desired_new_size;
+@@ -577,7 +576,7 @@
    } else {
      // It's been explicitly set on the command line.  Use the
      // OldSize and then determine the consequences.

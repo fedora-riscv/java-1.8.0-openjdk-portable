@@ -97,7 +97,7 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       40
-%global buildver        b01
+%global buildver        b02
 %global aarch64_updatever 0
 %global aarch64_buildver b128
 # priority must be 6 digits in total
@@ -225,7 +225,6 @@ Patch203: system-lcms.patch
 
 Patch300: jstack-pr1845.patch
 
-Patch999:  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
 Patch9999: enableArm64.patch
 
 BuildRequires: autoconf
@@ -481,7 +480,6 @@ sh %{SOURCE12}
 %ifarch ppc %{power64}
 # PPC fixes
 %patch103
-%patch999 -p1
 %endif
 
 # Extract systemtap tapsets
@@ -1336,6 +1334,15 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Aug 28 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b02
+- updated to u20-b26
+- adapted aarch64 patch
+- removed upstreamed patch  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
+
+* Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b02
+- updated to u40-b02
+- adapted aarch64 patches
+
 * Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b01
 - updated to u40-b01
 - adapted  java-1.8.0-openjdk-accessible-toolkit.patch
