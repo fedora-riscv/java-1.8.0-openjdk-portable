@@ -1335,7 +1335,6 @@ exit 0
 
 %changelog
 * Thu Aug 28 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b02
-- updated to u20-b26
 - adapted aarch64 patch
 - removed upstreamed patch  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
 
@@ -1350,7 +1349,7 @@ exit 0
 - removed patch8 set-active-window.patch
 - removed patch9 javadoc-error-jdk-8029145.patch
 - removed patch10 javadoc-error-jdk-8037484.patch
-- remopved patch99 applet-hole.patch - itw 1.5.1 is able to ive without it
+- removed patch99 applet-hole.patch - itw 1.5.1 is able to ive without it
 
 * Tue Aug 19 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.11-19.b12
 - fixed desktop icons
