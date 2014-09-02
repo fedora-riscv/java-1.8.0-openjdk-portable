@@ -137,7 +137,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -258,7 +258,7 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-BuildRequires: %{_datadir}/javazi-1.8/tzdb.dat
+BuildRequires: tzdata-java >= 2014f-1
 
 # cacerts build requirement.
 BuildRequires: openssl
@@ -305,8 +305,7 @@ Requires: ca-certificates
 # Require jpackage-utils for ownership of /usr/lib/jvm/
 Requires: jpackage-utils
 # Require zoneinfo data provided by tzdata-java subpackage.
-Requires: tzdata-java
-Requires: %{_datadir}/javazi-1.8/tzdb.dat
+Requires: tzdata-java >= 2014f-1
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives.
@@ -1334,7 +1333,11 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
-* Thu Aug 28 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b02
+* Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-2.b26
+- requirement Requires: javazi-1.8/tzdb.dat changed to tzdata-java >= 2014f-1
+- see RH1130800#c5
+
+* Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b02
 - adapted aarch64 patch
 - removed upstreamed patch  0001-PPC64LE-arch-support-in-openjdk-1.8.patch
 
