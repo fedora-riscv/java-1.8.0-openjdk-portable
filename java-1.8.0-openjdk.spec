@@ -6,7 +6,7 @@
 %global ppc64le         ppc64le
 %global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
-%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{ppc64} 
+%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -26,9 +26,6 @@
 %global archinstall ppc
 %endif
 %ifarch %{power64}
-%global archinstall ppc64
-%endif
-%ifarch %{ppc64le}
 %global archinstall ppc64
 %endif
 %ifarch %{ix86}
@@ -135,7 +132,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1337,7 +1334,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
-* Thu Sep 04 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-5.b26
+* Fri Sep 05 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-6.b26
+- Use %%{power64} instead of %%{ppc64}.
+
+* Thu Sep 04 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-5.b26
 - Update aarch64 hotspot to jdk7u40-b02 to match the rest of the JDK
 - commented out patch2 (obsolated by 666)
 - all ppc64 added to jitarches
