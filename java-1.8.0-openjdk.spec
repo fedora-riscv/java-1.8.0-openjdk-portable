@@ -1,14 +1,12 @@
 # If debug is 1, OpenJDK is built with all debug info present.
 %global debug 0
 
-%global aarch64_hg_tag  992
-
 %global aarch64         aarch64 arm64 armv8
 # sometimes we need to distinguish big and little endian PPC64
 %global ppc64le         ppc64le
 %global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
-%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{ppc64le} 
+%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{ppc64} 
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -98,8 +96,8 @@
 %global origin          openjdk
 %global updatever       40
 %global buildver        b02
-%global aarch64_updatever 0
-%global aarch64_buildver b128
+%global aarch64_updatever 40
+%global aarch64_buildver b02
 # priority must be 6 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -137,7 +135,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -158,7 +156,7 @@ URL:      http://openjdk.java.net/
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%{updatever}-%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %{aarch64_hg_tag}
 Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  aarch64-hotspot-jdk8-%{aarch64_buildver}-aarch64-%{aarch64_hg_tag}.tar.xz
+Source1:  aarch64-hotspot-jdk8u%{aarch64_updatever}-%{aarch64_buildver}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -209,6 +207,7 @@ Patch11: hotspot-build-j-directive.patch
 #
 # OpenJDK specific patches
 #
+Patch666: stackoverflow-ppc32_64-20140828.patch
 
 
 # JVM heap size changes for s390 (thanks to aph)
@@ -457,12 +456,16 @@ sh %{SOURCE12}
 %patch9999
 %endif
 
+%ifnarch %{aarch64}
+%patch666
+%endif
+
 %patch201
 %patch202
 %patch203
 
 %patch1
-%patch2
+#%patch2
 %patch3
 %patch4
 %patch5
@@ -540,14 +543,15 @@ bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
 %endif
+%ifarch %{ppc64le}
+    --with-jvm-interpreter=cpp \
+%endif
     --disable-zip-debug-info \
     --with-milestone="fcs" \
-%ifnarch %{aarch64}
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
-%else
-    --with-build-number=%{aarch64_buildver} \
-    --with-user-release-suffix="aarch64-%{aarch64_hg_tag}" \
+%ifarch %{aarch64}
+    --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}" \
 %endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=%{debugbuild} \
@@ -1333,6 +1337,14 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Sep 04 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-5.b26
+- Update aarch64 hotspot to jdk7u40-b02 to match the rest of the JDK
+- commented out patch2 (obsolated by 666)
+- all ppc64 added to jitarches
+
+* Thu Sep 04 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.20-4.b26
+- Use the cpp interpreter on ppc64le.
+
 * Wed Sep 03 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-3.b26
 - fixed RH1136544, orriginal issue, state of pc64le jit remians mistery
 
