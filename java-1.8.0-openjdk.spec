@@ -133,7 +133,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 8.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -756,7 +756,8 @@ NOT_HEADLESS=\
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libpulse-java.so
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libsplashscreen.so
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libawt_xawt.so
-%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so"
+%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so
+%{_jvmdir}/%{uniquesuffix}/jre/bin/policytool"
 #filter  %{name}.files from  %{name}.files.all to  %{name}.files-headless
 ALL=`cat %{name}.files.all`
 for file in $ALL ; do 
@@ -1335,6 +1336,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Sep 11 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-8.b26
+- fixed headless to become headless again
+ - jre/bin/policytool added to not headless exclude list
+
 * Wed Sep 10 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.20-7.b26
 - Update aarch64 hotspot to latest upstream version
 
