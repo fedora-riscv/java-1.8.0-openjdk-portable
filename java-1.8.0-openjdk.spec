@@ -78,16 +78,6 @@
 %global script 'use File::Spec; print File::Spec->abs2rel($ARGV[0], $ARGV[1])'
 %global abs2rel %{__perl} -e %{script}
 
-# Hard-code libdir on 64-bit architectures to make the 64-bit JDK
-# simply be another alternative.
-%global LIBDIR %{_libdir}
-#backuped original one
-%ifarch %{multilib_arches}
-%global syslibdir       %{_prefix}/lib64
-%global _libdir         %{_prefix}/lib
-%else
-%global syslibdir       %{_libdir}
-%endif
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
@@ -133,7 +123,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 8.%{buildver}%{?dist}
+Release: 9.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -151,8 +141,8 @@ License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and L
 URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. To regenerate, use
-# ./generate_source_tarball.sh jdk8u jdk8u jdk8u%{updatever}-%{buildver}
-# ./generate_source_tarball.sh aarch64-port jdk8 %{aarch64_hg_tag}
+# ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
+# ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
 Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
 Source1:  aarch64-hotspot-jdk8u%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}.tar.xz
 
@@ -463,7 +453,7 @@ sh %{SOURCE12}
 %patch203
 
 %patch1
-#%patch2
+#%%patch2
 %patch3
 %patch4
 %patch5
@@ -749,7 +739,7 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type f -o -type l \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'||' \
   > %{name}.files.all
-#split %{name}.files to %{name}.files-headless and %{name}.files
+#split %%{name}.files to %%{name}.files-headless and %%{name}.files
 #see https://bugzilla.redhat.com/show_bug.cgi?id=875408
 NOT_HEADLESS=\
 "%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjsoundalsa.so
@@ -758,7 +748,7 @@ NOT_HEADLESS=\
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libawt_xawt.so
 %{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so
 %{_jvmdir}/%{uniquesuffix}/jre/bin/policytool"
-#filter  %{name}.files from  %{name}.files.all to  %{name}.files-headless
+#filter  %%{name}.files from  %%{name}.files.all to %%{name}.files-headless
 ALL=`cat %{name}.files.all`
 for file in $ALL ; do 
   INLCUDE="NO" ; 
@@ -805,10 +795,10 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
 # Create links which leads to separately installed java-atk-bridge and allow configuration
 # links points to java-atk-wrapper - an dependence
   pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/%{archinstall}
-    ln -s %{syslibdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so
+    ln -s %{_libdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so
   popd
   pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/ext
-     ln -s %{syslibdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
+     ln -s %{_libdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
   popd
   pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/
     echo "#Config file to  enable java-atk-wrapper" > accessibility.properties
@@ -1336,6 +1326,10 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Wed Sep 17 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.20-9.b26
+- Remove LIBDIR and funny definition of _libdir.
+- Fix rpmlint warnings about macros in comments.
+
 * Thu Sep 11 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-8.b26
 - fixed headless to become headless again
  - jre/bin/policytool added to not headless exclude list
@@ -1576,7 +1570,7 @@ exit 0
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
 * Fri Aug 02 2013 Deepak Bhole <dbhole@redhat.com> - 1:1.8.0.0-0.15.b89
-- Added a missing includes patch (#302/%{name}-arm64-missing-includes.patch)
+- Added a missing includes patch (#302/%%{name}-arm64-missing-includes.patch)
 - Added --disable-precompiled-headers for arm64 build
 
 * Mon Jul 29 2013 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.0-0.14.b89
