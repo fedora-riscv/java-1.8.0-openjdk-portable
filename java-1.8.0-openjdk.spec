@@ -123,7 +123,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 9.%{buildver}%{?dist}
+Release: 10.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -177,8 +177,6 @@ Source101: config.sub
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   %{name}-accessible-toolkit.patch
 
-# RHBZ 1015432
-Patch2: 1015432.patch
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
 # RHBZ 808293
@@ -195,22 +193,21 @@ Patch11: hotspot-build-j-directive.patch
 #
 # OpenJDK specific patches
 #
-Patch666: stackoverflow-ppc32_64-20140828.patch
-
 
 # JVM heap size changes for s390 (thanks to aph)
 Patch100: %{name}-s390-java-opts.patch
 # Type fixing for s390
 Patch102: %{name}-size_t.patch
 
-# Patch for PPC/PPC64
-Patch103: %{name}-ppc-zero-hotspot.patch
-
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 
 Patch300: jstack-pr1845.patch
+
+Patch400: ppc_stack_overflow_fix.patch 
+Patch401: fix_ZERO_ARCHDEF_ppc.patch
+Patch402: atomic_linux_zero.inline.hpp.patch
 
 Patch9999: enableArm64.patch
 
@@ -444,16 +441,11 @@ sh %{SOURCE12}
 %patch9999
 %endif
 
-%ifnarch %{aarch64}
-%patch666
-%endif
-
 %patch201
 %patch202
 %patch203
 
 %patch1
-#%%patch2
 %patch3
 %patch4
 %patch5
@@ -467,10 +459,11 @@ sh %{SOURCE12}
 %patch102
 %endif
 
-%ifarch ppc %{power64}
-# PPC fixes
-%patch103
-%endif
+# Zero PPC fixes.
+#  TODO: propose them upstream
+%patch400
+%patch401
+%patch402
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -517,7 +510,13 @@ export ARCH_DATA_MODEL=64
 export CFLAGS="$CFLAGS -mieee"
 %endif
 
-export CFLAGS="$CFLAGS -fstack-protector-strong"
+EXTRA_CFLAGS="-fstack-protector-strong"
+# PPC/PPC64 needs -fno-tree-vectorize since -O3 would
+# otherwise generate wrong code producing segfaults.
+%ifarch %{power64} ppc
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
+%endif
+export EXTRA_CFLAGS
 
 (cd jdk8/common/autoconf
  bash ./autogen.sh
@@ -550,9 +549,10 @@ bash ../../configure \
     --with-libpng=system \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
-    --with-num-cores="$NUM_PROC" \
     --with-extra-cflags="-fno-devirtualize" \
-    --with-extra-cxxflags="-fno-devirtualize"
+    --with-extra-cxxflags="-fno-devirtualize" \
+    --with-extra-cflags="$EXTRA_CFLAGS" \
+    --with-num-cores="$NUM_PROC"
 
 # The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
 # disables FDS for all build configs and reverts to pre-FDS make logic.
@@ -1326,6 +1326,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-10.b26
+- sync with rhel7
+
 * Wed Sep 17 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.20-9.b26
 - Remove LIBDIR and funny definition of _libdir.
 - Fix rpmlint warnings about macros in comments.
