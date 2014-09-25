@@ -511,10 +511,14 @@ export CFLAGS="$CFLAGS -mieee"
 %endif
 
 EXTRA_CFLAGS="-fstack-protector-strong"
+#see https://bugzilla.redhat.com/show_bug.cgi?id=1120792
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize" 
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
+# fix rpmlint warnings
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
 %endif
 export EXTRA_CFLAGS
 
@@ -549,7 +553,6 @@ bash ../../configure \
     --with-libpng=system \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
-    --with-extra-cflags="-fno-devirtualize" \
     --with-extra-cxxflags="-fno-devirtualize" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
     --with-num-cores="$NUM_PROC"
