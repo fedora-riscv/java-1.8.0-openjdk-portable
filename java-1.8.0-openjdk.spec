@@ -123,7 +123,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -513,6 +513,7 @@ export CFLAGS="$CFLAGS -mieee"
 EXTRA_CFLAGS="-fstack-protector-strong"
 #see https://bugzilla.redhat.com/show_bug.cgi?id=1120792
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize" 
+EXTRA_CPP_FLAGS="-fno-devirtualize"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
@@ -553,7 +554,7 @@ bash ../../configure \
     --with-libpng=system \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
-    --with-extra-cxxflags="-fno-devirtualize" \
+    --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
     --with-num-cores="$NUM_PROC"
 
@@ -1329,6 +1330,9 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
+* Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-11.b26
+- fixing flags usages (thanx to jerboaa!)
+
 * Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-10.b26
 - sync with rhel7
 
