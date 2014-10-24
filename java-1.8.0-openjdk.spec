@@ -123,7 +123,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -189,6 +189,7 @@ Patch6: disable-doclint-by-default.patch
 Patch7: include-all-srcs.patch
 # Problem discovered with make 4.0
 Patch11: hotspot-build-j-directive.patch
+Patch12: removeSunEcProvider-RH1154143.patch
 
 #
 # OpenJDK specific patches
@@ -452,6 +453,7 @@ sh %{SOURCE12}
 %patch6
 %patch7
 %patch11
+%patch12
 
 # s390 build fixes
 %ifarch s390
@@ -610,6 +612,9 @@ ZERO_JVM="$JAVA_HOME/jre/lib/%{archinstall}/zero/libjvm.so"
 if [ -f "$ZERO_JVM" ] ; then
   nm -aCl "$ZERO_JVM" | grep javaCalls.cpp
 fi
+
+# Check src.zip has all sources. See RHBZ#1130490
+jar -tf $JAVA_HOME/src.zip | grep Unsafe
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -992,8 +997,10 @@ exit 0
 # fixed upstream.
 %post headless
 %ifarch %{jit_arches}
+%ifnarch %{ppc64le}
 #see https://bugzilla.redhat.com/show_bug.cgi?id=513605
 %{jrebindir}/java -Xshare:dump >/dev/null 2>/dev/null
+%endif
 %endif
 
 ext=.gz
@@ -1330,7 +1337,13 @@ exit 0
 %{_jvmdir}/%{jredir}/lib/accessibility.properties
 
 %changelog
-* Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-11.b26
+* Fri Oct 24 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-12.b02
+- added patch12,removeSunEcProvider-RH1154143
+- xdump excluded from ppc64le (rh1156151)
+- Add check for src.zip completeness. See RH1130490 (by sgehwolf@redhat.com)
+- Resolves: rhbz#1125260
+
+* Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-11.b02
 - fixing flags usages (thanx to jerboaa!)
 
 * Thu Sep 25 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.20-10.b26
