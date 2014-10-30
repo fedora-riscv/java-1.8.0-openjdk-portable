@@ -1,5 +1,33 @@
-# If debug is 1, OpenJDK is built with all debug info present.
-%global debug 0
+#note, parametrised macros are order-senisitve (unlike not-parametrized)
+%global debug_suffix "-debug"
+%global normal_suffix ""
+
+# by default we build normal build always.
+%global include_normal_build 1
+%if %{include_normal_build}
+%global build_loop1 %{normal_suffix}
+%else
+%global build_loop1 %{nil}
+%endif
+
+# by default we build debug build during main build only on intel arches
+%ifarch %{ix86} x86_64
+%global include_debug_build 1
+%else
+%global include_debug_build 0
+%endif
+
+%if %{include_debug_build}
+%global build_loop2 %{debug_suffix}
+%else
+%global build_loop2 %{nil}
+%endif
+
+# if you disable both builds, then build fails
+%global build_loop  %{build_loop1} %{build_loop2}
+# note, that order  normal_suffix debug_suffix, in case of both enabled,
+# is expected in one single case at the end of build
+
 
 %global aarch64         aarch64 arm64 armv8
 # sometimes we need to distinguish big and little endian PPC64
@@ -58,11 +86,6 @@
 %global archinstall %{_arch}
 %endif
 
-%if %{debug}
-%global debugbuild slowdebug
-%else
-%global debugbuild release
-%endif
 
 %global buildoutputdir jdk8/build/jdk8.build
 
@@ -90,20 +113,23 @@
 %global priority        18000%{updatever}
 %global javaver         1.8.0
 
-# Standard JPackage directories and symbolic links.
-%global sdkdir          %{uniquesuffix}
-%global jrelnk          jre-%{javaver}-%{origin}-%{version}-%{release}.%{_arch}
-
-%global jredir          %{sdkdir}/jre
-%global sdkbindir       %{_jvmdir}/%{sdkdir}/bin
-%global jrebindir       %{_jvmdir}/%{jredir}/bin
-%global jvmjardir       %{_jvmjardir}/%{uniquesuffix}
-
+# parametrized macros are order-sensitive
 %global fullversion     %{name}-%{version}-%{release}
-
-%global uniquesuffix          %{fullversion}.%{_arch}
+#images stub
+%global j2sdkimage() %{expand:j2sdk-image%1}
+#main id and dir of this jdk
+%global uniquesuffix()        %{expand:%{fullversion}.%{_arch}%1}
 #we can copy the javadoc to not arched dir, or made it not noarch
 %global uniquejavadocdir       %{fullversion}
+
+# Standard JPackage directories and symbolic links.
+%global sdkdir()        %{expand:%{uniquesuffix %%1}}
+%global jrelnk()        %{expand:jre-%{javaver}-%{origin}-%{version}-%{release}.%{_arch}%1}
+
+%global jredir()        %{expand:%{sdkdir %%1}/jre}
+%global sdkbindir()     %{expand:%{_jvmdir}/%{sdkdir %%1}/bin}
+%global jrebindir()     %{expand:%{_jvmdir}/%{jredir %%1}/bin}
+%global jvmjardir()     %{expand:%{_jvmjardir}/%{uniquesuffix %%1}}
 
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
@@ -117,6 +143,127 @@
 %global tapsetroot /usr/share/systemtap
 %global tapsetdir %{tapsetroot}/tapset/%{_build_cpu}
 %endif
+
+%global files_jre() %{expand:
+%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
+%{_datadir}/applications/*policytool.desktop
+}
+
+
+%global files_jre_headless() %{expand:
+%defattr(-,root,root,-)
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/ASSEMBLY_EXCEPTION
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/THIRD_PARTY_README
+%dir %{_jvmdir}/%{sdkdir}
+%{_jvmdir}/%{jrelnk %%1}
+%{_jvmjardir}/%{jrelnk %%1}
+%{_jvmprivdir}/*
+%{jvmjardir %%1}
+%dir %{_jvmdir}/%{jredir %%1}/lib/security
+%{_jvmdir}/%{jredir %%1}/lib/security/cacerts
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/US_export_policy.jar
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/local_policy.jar
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/java.policy
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/java.security
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/blacklisted.certs
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/logging.properties
+%{_mandir}/man1/java-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jjs-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/keytool-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/orbd-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/pack200-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/rmid-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/rmiregistry-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/servertool-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1*
+%config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/nss.cfg
+%{_jvmdir}/%{jredir %%1}/lib/audio/
+%ifarch %{jit_arches}
+%attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/classes.jsa
+%attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/client/classes.jsa
+%endif
+%{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/
+%{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/client/
+}
+
+%global files_devel() %{expand:
+%defattr(-,root,root,-)
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/ASSEMBLY_EXCEPTION
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/LICENSE
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/THIRD_PARTY_README
+%dir %{_jvmdir}/%{sdkdir %%1}/bin
+%dir %{_jvmdir}/%{sdkdir %%1}/include
+%dir %{_jvmdir}/%{sdkdir %%1}/lib
+%if %{with_systemtap}
+%dir %{_jvmdir}/%{sdkdir %%1}/tapset
+%endif
+%{_jvmdir}/%{sdkdir %%1}/bin/*
+%{_jvmdir}/%{sdkdir %%1}/include/*
+%{_jvmdir}/%{sdkdir %%1}/lib/*
+%if %{with_systemtap}
+%{_jvmdir}/%{sdkdir %%1}/tapset/*.stp
+%endif
+%{_jvmjardir}/%{sdkdir %%1}
+%{_datadir}/applications/*jconsole.desktop
+%{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/extcheck-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/idlj-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jar-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jarsigner-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/javac-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/javadoc-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/javah-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/javap-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jconsole-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jcmd-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jdb-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jdeps-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jhat-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jinfo-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jmap-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jps-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jrunscript-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jsadebugd-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jstack-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jstat-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/rmic-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/schemagen-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/serialver-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/wsgen-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/wsimport-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/xjc-%{uniquesuffix %%1}.1*
+%if %{with_systemtap}
+%{tapsetroot}
+%endif
+}
+
+%global files_demo() %{expand:
+%defattr(-,root,root,-)
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
+}
+
+%global files_src() %{expand:
+%defattr(-,root,root,-)
+%doc README.src
+%{_jvmdir}/%{sdkdir %%1}/src.zip
+}
+
+%global files_javadoc() %{expand:
+%defattr(-,root,root,-)
+%doc %{_javadocdir}/%{uniquejavadocdir}
+%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
+}
+
+%global files_accessibility() %{expand:
+%{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/libatk-wrapper.so
+%{_jvmdir}/%{jredir %%1}/lib/ext/java-atk-wrapper.jar
+%{_jvmdir}/%{jredir %%1}/lib/accessibility.properties
+}
 
 # Prevent brp-java-repack-jars from being run.
 %global __jar_repack 0
@@ -417,7 +564,23 @@ need to.
 
 
 %prep
-%setup -q -c -n %{uniquesuffix} -T -a 0
+if [ %{include_normal_build} -eq 0 -o  %{include_normal_build} -eq 1 ] ; then
+  echo "include_normal_build is %{include_normal_build}"
+else
+  echo "include_normal_build is %{include_normal_build}, thats invalid. Use 1 for yes or 0 for no"
+  exit 11
+fi
+if [ %{include_debug_build} -eq 0 -o  %{include_debug_build} -eq 1 ] ; then
+  echo "include_debug_build is %{include_debug_build}"
+else
+  echo "include_debug_build is %{include_debug_build}, thats invalid. Use 1 for yes or 0 for no"
+  exit 12
+fi
+if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
+  echo "you have disabled both include_debug_build and enclude_debug_build. no go."
+  exit 13
+fi
+%setup -q -c -n %{uniquesuffix ""} -T -a 0
 %ifarch %{aarch64}
 pushd jdk8
 rm -r hotspot
@@ -474,29 +637,39 @@ tar xzf %{SOURCE8}
 
 %patch300
 
-for file in tapset/*.in; do
+%if %{include_debug_build}
+cp -r tapset tapset%{debug_suffix}
+%endif
 
+
+for suffix in %{build_loop} ; do
+  for file in "tapset"$suffix/*.in; do
     OUTPUT_FILE=`echo $file | sed -e s:%{javaver}\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g`
-    sed -e s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir}/jre/lib/%{archinstall}/server/libjvm.so:g $file > $file.1
+    sed -e s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir $suffix}/jre/lib/%{archinstall}/server/libjvm.so:g $file > $file.1
 # TODO find out which architectures other than i686 have a client vm
 %ifarch %{ix86}
-    sed -e s:@ABS_CLIENT_LIBJVM_SO@:%{_jvmdir}/%{sdkdir}/jre/lib/%{archinstall}/client/libjvm.so:g $file.1 > $OUTPUT_FILE
+    sed -e s:@ABS_CLIENT_LIBJVM_SO@:%{_jvmdir}/%{sdkdir $suffix}/jre/lib/%{archinstall}/client/libjvm.so:g $file.1 > $OUTPUT_FILE
 %else
     sed -e '/@ABS_CLIENT_LIBJVM_SO@/d' $file.1 > $OUTPUT_FILE
 %endif
-    sed -i -e s:@ABS_JAVA_HOME_DIR@:%{_jvmdir}/%{sdkdir}:g $OUTPUT_FILE
+    sed -i -e s:@ABS_JAVA_HOME_DIR@:%{_jvmdir}/%{sdkdir $suffix}:g $OUTPUT_FILE
     sed -i -e s:@INSTALL_ARCH_DIR@:%{archinstall}:g $OUTPUT_FILE
-
+  done
 done
-
-%endif
+# systemtap tapsets ends
+%endif 
 
 # Prepare desktop files
+for suffix in %{build_loop} ; do
 for file in %{SOURCE9} %{SOURCE10} ; do
-    OUTPUT_FILE=`basename $file | sed -e s:\.in$::g`
-    sed -e s:#JAVA_HOME#:%{sdkbindir}:g $file > $OUTPUT_FILE
-    sed -i -e  s:#JRE_HOME#:%{jrebindir}:g $OUTPUT_FILE
-    sed -i -e  s:#ARCH#:%{version}-%{release}.%{_arch}:g $OUTPUT_FILE
+    FILE=`basename $file | sed -e s:\.in$::g`
+    EXT="${FILE##*.}"
+    NAME="${FILE%.*}"
+    OUTPUT_FILE=$NAME$suffix.$EXT
+    sed -e s:#JAVA_HOME#:%{sdkbindir $suffix}:g $file > $OUTPUT_FILE
+    sed -i -e  s:#JRE_HOME#:%{jrebindir $suffix}:g $OUTPUT_FILE
+    sed -i -e  s:#ARCH#:%{version}-%{release}.%{_arch}$suffix:g $OUTPUT_FILE
+done
 done
 
 %build
@@ -529,8 +702,17 @@ export EXTRA_CFLAGS
  bash ./autogen.sh
 )
 
-mkdir -p %{buildoutputdir}
+# backup of normal image for case of dual build on
+normalBuildStore=`mktemp -d`
 
+for suffix in %{build_loop} ; do
+if [ "$suffix" = "%{debug_suffix}" ] ; then
+debugbuild=slowdebug
+else
+debugbuild=release
+fi
+
+mkdir -p %{buildoutputdir}
 pushd %{buildoutputdir}
 
 bash ../../configure \
@@ -548,7 +730,7 @@ bash ../../configure \
     --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}" \
 %endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
-    --with-debug-level=%{debugbuild} \
+    --with-debug-level=$debugbuild \
     --enable-unlimited-crypto \
     --with-zlib=system \
     --with-libjpeg=system \
@@ -575,17 +757,17 @@ make \
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
 # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
-find images/j2sdk-image -iname '*.jar' -exec chmod ugo+r {} \;
-chmod ugo+r images/j2sdk-image/lib/ct.sym
+find images/%{j2sdkimage ""} -iname '*.jar' -exec chmod ugo+r {} \;
+chmod ugo+r images/%{j2sdkimage ""}/lib/ct.sym
 
 # remove redundant *diz and *debuginfo files
-find images/j2sdk-image -iname '*.diz' -exec rm {} \;
-find images/j2sdk-image -iname '*.debuginfo' -exec rm {} \;
+find images/%{j2sdkimage ""} -iname '*.diz' -exec rm {} \;
+find images/%{j2sdkimage ""} -iname '*.debuginfo' -exec rm {} \;
 
 popd >& /dev/null
 
 # Install nss.cfg right away as we will be using the JRE above
-export JAVA_HOME=$(pwd)/%{buildoutputdir}/images/j2sdk-image
+export JAVA_HOME=$(pwd)/%{buildoutputdir}/images/%{j2sdkimage ""}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
@@ -616,51 +798,75 @@ fi
 # Check src.zip has all sources. See RHBZ#1130490
 jar -tf $JAVA_HOME/src.zip | grep Unsafe
 
+pushd %{buildoutputdir}
+#note, that order is normal_suffix debug_suffix (in case of both enabled)
+if [ "$suffix" = "%{debug_suffix}" ] ; then
+# debug build passed, mv it to j2sdk-image-%%{debug_suffix}
+  mv images/%{j2sdkimage ""} images/%{j2sdkimage debug}
+fi
+if [ %{include_normal_build} -eq 1 -a  %{include_debug_build} -eq 1 ] ; then
+  if [ "$suffix" = "%{normal_suffix}" ] ; then
+# normal build just passed, and debug one is going to run
+    mv images/%{j2sdkimage ""} $normalBuildStore
+    make clean
+  fi
+  if [ "$suffix" = "%{debug_suffix}" ] ; then
+# debug build just passed, restore normal one (see that debug one already renamed)
+    mv $normalBuildStore/%{j2sdkimage ""} images/
+  fi
+fi
+popd
+
+#build cycles
+done
+
 %install
 rm -rf $RPM_BUILD_ROOT
 STRIP_KEEP_SYMTAB=libjvm*
 
+for suffix in %{build_loop} ; do
 # Install symlink to default soundfont
-install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/audio
-pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/audio
+install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
+pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
 ln -s %{_datadir}/soundfonts/default.sf2
 popd
 
-pushd %{buildoutputdir}/images/j2sdk-image
+pushd %{buildoutputdir}/images/%{j2sdkimage $suffix}
 
 #install jsa directories so we can owe them
-mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/server/
-mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
+mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/server/
+mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/client/
 
   # Install main files.
-  install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}
-  cp -a bin include lib src.zip $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}
-  install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
-  cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
+  install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}
+  cp -a bin include lib src.zip $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}
+  install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}
+  cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}
 
 %if %{with_systemtap}
   # Install systemtap support files.
-  install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset
-  cp -a $RPM_BUILD_DIR/%{uniquesuffix}/tapset/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/tapset/
+  install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/tapset
+  # note, that uniquesuffix  is in BUILD dir in this case
+  cp -a $RPM_BUILD_DIR/%{uniquesuffix ""}/tapset$suffix/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/tapset/
   install -d -m 755 $RPM_BUILD_ROOT%{tapsetdir}
   pushd $RPM_BUILD_ROOT%{tapsetdir}
-    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir}/tapset %{tapsetdir})
+    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir $suffix}/tapset %{tapsetdir})
     ln -sf $RELATIVE/*.stp .
   popd
 %endif
 
   # Install cacerts symlink.
-  rm -f $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/security/cacerts
-  pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/security
+  rm -f $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security/cacerts
+  pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security
     RELATIVE=$(%{abs2rel} %{_sysconfdir}/pki/java \
-      %{_jvmdir}/%{jredir}/lib/security)
+      %{_jvmdir}/%{jredir $suffix}/lib/security)
     ln -sf $RELATIVE/cacerts .
   popd
 
   # Install extension symlinks.
-  install -d -m 755 $RPM_BUILD_ROOT%{jvmjardir}
-  pushd $RPM_BUILD_ROOT%{jvmjardir}
-    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{jredir}/lib %{jvmjardir})
+  install -d -m 755 $RPM_BUILD_ROOT%{jvmjardir $suffix}
+  pushd $RPM_BUILD_ROOT%{jvmjardir $suffix}
+    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{jredir $suffix}/lib %{jvmjardir $suffix})
     ln -sf $RELATIVE/jsse.jar jsse-%{version}.jar
     ln -sf $RELATIVE/jce.jar jce-%{version}.jar
     ln -sf $RELATIVE/rt.jar jndi-%{version}.jar
@@ -682,15 +888,15 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
   popd
 
   # Install JCE policy symlinks.
-  install -d -m 755 $RPM_BUILD_ROOT%{_jvmprivdir}/%{uniquesuffix}/jce/vanilla
+  install -d -m 755 $RPM_BUILD_ROOT%{_jvmprivdir}/%{uniquesuffix $suffix}/jce/vanilla
 
   # Install versioned symlinks.
   pushd $RPM_BUILD_ROOT%{_jvmdir}
-    ln -sf %{jredir} %{jrelnk}
+    ln -sf %{jredir $suffix} %{jrelnk $suffix}
   popd
 
   pushd $RPM_BUILD_ROOT%{_jvmjardir}
-    ln -sf %{sdkdir} %{jrelnk}
+    ln -sf %{sdkdir $suffix} %{jrelnk $suffix}
   popd
 
   # Remove javaws man page
@@ -704,14 +910,17 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
     iconv -f ISO_8859-1 -t UTF8 $manpage -o $manpage.tmp
     mv -f $manpage.tmp $manpage
     install -m 644 -p $manpage $RPM_BUILD_ROOT%{_mandir}/man1/$(basename \
-      $manpage .1)-%{uniquesuffix}.1
+      $manpage .1)-%{uniquesuffix $suffix}.1
   done
 
   # Install demos and samples.
-  cp -a demo $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}
+  cp -a demo $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}
   mkdir -p sample/rmi
-  mv bin/java-rmi.cgi sample/rmi
-  cp -a sample $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}
+  if [ ! -e sample/rmi/java-rmi.cgi ] ; then 
+    # hack to allow --short-circuit on install
+    mv bin/java-rmi.cgi sample/rmi
+  fi
+  cp -a sample $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}
 
 popd
 
@@ -729,8 +938,8 @@ done
 
 # Install desktop files.
 install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/{applications,pixmaps}
-for e in jconsole policytool ; do
-    desktop-file-install --vendor=%{uniquesuffix} --mode=644 \
+for e in jconsole$suffix policytool$suffix ; do
+    desktop-file-install --vendor=%{uniquesuffix $suffix} --mode=644 \
         --dir=$RPM_BUILD_ROOT%{_datadir}/applications $e.desktop
 done
 
@@ -739,26 +948,26 @@ done
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/.java/.systemPrefs
 
 # Find JRE directories.
-find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type d \
+find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix} -type d \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'|%dir |' \
-  > %{name}.files-headless
+  > %{name}.files-headless"$suffix"
 # Find JRE files.
-find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir} -type f -o -type l \
+find $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix} -type f -o -type l \
   | grep -v jre/lib/security \
   | sed 's|'$RPM_BUILD_ROOT'||' \
-  > %{name}.files.all
+  > %{name}.files.all"$suffix"
 #split %%{name}.files to %%{name}.files-headless and %%{name}.files
 #see https://bugzilla.redhat.com/show_bug.cgi?id=875408
 NOT_HEADLESS=\
-"%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjsoundalsa.so
-%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libpulse-java.so
-%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libsplashscreen.so
-%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libawt_xawt.so
-%{_jvmdir}/%{uniquesuffix}/jre/lib/%{archinstall}/libjawt.so
-%{_jvmdir}/%{uniquesuffix}/jre/bin/policytool"
+"%{_jvmdir}/%{uniquesuffix $suffix}/jre/lib/%{archinstall}/libjsoundalsa.so
+%{_jvmdir}/%{uniquesuffix $suffix}/jre/lib/%{archinstall}/libpulse-java.so
+%{_jvmdir}/%{uniquesuffix $suffix}/jre/lib/%{archinstall}/libsplashscreen.so
+%{_jvmdir}/%{uniquesuffix $suffix}/jre/lib/%{archinstall}/libawt_xawt.so
+%{_jvmdir}/%{uniquesuffix $suffix}/jre/lib/%{archinstall}/libjawt.so
+%{_jvmdir}/%{uniquesuffix $suffix}/jre/bin/policytool"
 #filter  %%{name}.files from  %%{name}.files.all to %%{name}.files-headless
-ALL=`cat %{name}.files.all`
+ALL=`cat %{name}.files.all"$suffix"`
 for file in $ALL ; do 
   INLCUDE="NO" ; 
   for blacklist in $NOT_HEADLESS ; do
@@ -770,59 +979,62 @@ for file in $ALL ; do
     fi;
 done
 if [ "x$INLCUDE" = "xNO"  ]; then 
-    echo "$file" >> %{name}.files-headless
+    echo "$file" >> %{name}.files-headless"$suffix"
 else
-    echo "$file" >> %{name}.files
+    echo "$file" >> %{name}.files"$suffix"
 fi
 done
 # Find demo directories.
-find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
-  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/sample -type d \
+find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
+  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/sample -type d \
   | sed 's|'$RPM_BUILD_ROOT'|%dir |' \
-  > %{name}-demo.files
+  > %{name}-demo.files"$suffix"
 
 # FIXME: remove SONAME entries from demo DSOs.  See
 # https://bugzilla.redhat.com/show_bug.cgi?id=436497
 
 # Find non-documentation demo files.
-find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
-  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/sample \
+find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
+  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/sample \
   -type f -o -type l | sort \
   | grep -v README \
   | sed 's|'$RPM_BUILD_ROOT'||' \
-  >> %{name}-demo.files
+  >> %{name}-demo.files"$suffix"
 # Find documentation demo files.
-find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/demo \
-  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir}/sample \
+find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
+  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/sample \
   -type f -o -type l | sort \
   | grep README \
   | sed 's|'$RPM_BUILD_ROOT'||' \
   | sed 's|^|%doc |' \
-  >> %{name}-demo.files
+  >> %{name}-demo.files"$suffix"
 
 # intentionally after the files generation, as it goes to separate package
 # Create links which leads to separately installed java-atk-bridge and allow configuration
 # links points to java-atk-wrapper - an dependence
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/%{archinstall}
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}
     ln -s %{_libdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so
   popd
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/ext
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/ext
      ln -s %{_libdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
   popd
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir}/lib/
+  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/
     echo "#Config file to  enable java-atk-wrapper" > accessibility.properties
     echo "" >> accessibility.properties
     echo "assistive_technologies=org.GNOME.Accessibility.AtkWrapper" >> accessibility.properties
     echo "" >> accessibility.properties
   popd
 
+# end, dual install
+done
+
 %pretrans headless -p <lua>
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 
 local posix = require "posix"
 
-local currentjvm = "%{uniquesuffix}"
-local jvmdir = "%{_jvmdir}"
+local currentjvm = "%{uniquesuffix \"\"}"
+local jvmdir = "%{_jvmdir \"\"}"
 local jvmDestdir = jvmdir
 local origname = "%{name}"
 local origjavaver = "%{javaver}"
@@ -1221,120 +1433,27 @@ exit 0
 
 
 %files -f %{name}.files
-%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
-%{_datadir}/applications/*policytool.desktop
+%{files_jre %{nil}}
 
 # important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 # all config/norepalce files (and more) have to be declared in pretrans. See pretrans
 %files headless  -f %{name}.files-headless
-%defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/j2sdk-image/jre/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
-%doc %{buildoutputdir}/images/j2sdk-image/jre/THIRD_PARTY_README
-%dir %{_jvmdir}/%{sdkdir}
-%{_jvmdir}/%{jrelnk}
-%{_jvmjardir}/%{jrelnk}
-%{_jvmprivdir}/*
-%{jvmjardir}
-%dir %{_jvmdir}/%{jredir}/lib/security
-%{_jvmdir}/%{jredir}/lib/security/cacerts
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/US_export_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/local_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.policy
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/java.security
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/blacklisted.certs
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/logging.properties
-%{_mandir}/man1/java-%{uniquesuffix}.1*
-%{_mandir}/man1/jjs-%{uniquesuffix}.1*
-%{_mandir}/man1/keytool-%{uniquesuffix}.1*
-%{_mandir}/man1/orbd-%{uniquesuffix}.1*
-%{_mandir}/man1/pack200-%{uniquesuffix}.1*
-%{_mandir}/man1/rmid-%{uniquesuffix}.1*
-%{_mandir}/man1/rmiregistry-%{uniquesuffix}.1*
-%{_mandir}/man1/servertool-%{uniquesuffix}.1*
-%{_mandir}/man1/tnameserv-%{uniquesuffix}.1*
-%{_mandir}/man1/unpack200-%{uniquesuffix}.1*
-%config(noreplace) %{_jvmdir}/%{jredir}/lib/security/nss.cfg
-%{_jvmdir}/%{jredir}/lib/audio/
-%ifarch %{jit_arches}
-%attr(664, root, root) %ghost %{_jvmdir}/%{jredir}/lib/%{archinstall}/server/classes.jsa
-%attr(664, root, root) %ghost %{_jvmdir}/%{jredir}/lib/%{archinstall}/client/classes.jsa
-%endif
-
-%{_jvmdir}/%{jredir}/lib/%{archinstall}/server/
-%{_jvmdir}/%{jredir}/lib/%{archinstall}/client/
+%{files_jre_headless %{nil}}
 
 %files devel
-%defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/j2sdk-image/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir}/images/j2sdk-image/LICENSE
-%doc %{buildoutputdir}/images/j2sdk-image/THIRD_PARTY_README
-%dir %{_jvmdir}/%{sdkdir}/bin
-%dir %{_jvmdir}/%{sdkdir}/include
-%dir %{_jvmdir}/%{sdkdir}/lib
-%if %{with_systemtap}
-%dir %{_jvmdir}/%{sdkdir}/tapset
-%endif
-%{_jvmdir}/%{sdkdir}/bin/*
-%{_jvmdir}/%{sdkdir}/include/*
-%{_jvmdir}/%{sdkdir}/lib/*
-%if %{with_systemtap}
-%{_jvmdir}/%{sdkdir}/tapset/*.stp
-%endif
-%{_jvmjardir}/%{sdkdir}
-%{_datadir}/applications/*jconsole.desktop
-%{_mandir}/man1/appletviewer-%{uniquesuffix}.1*
-%{_mandir}/man1/extcheck-%{uniquesuffix}.1*
-%{_mandir}/man1/idlj-%{uniquesuffix}.1*
-%{_mandir}/man1/jar-%{uniquesuffix}.1*
-%{_mandir}/man1/jarsigner-%{uniquesuffix}.1*
-%{_mandir}/man1/javac-%{uniquesuffix}.1*
-%{_mandir}/man1/javadoc-%{uniquesuffix}.1*
-%{_mandir}/man1/javah-%{uniquesuffix}.1*
-%{_mandir}/man1/javap-%{uniquesuffix}.1*
-%{_mandir}/man1/jconsole-%{uniquesuffix}.1*
-%{_mandir}/man1/jcmd-%{uniquesuffix}.1*
-%{_mandir}/man1/jdb-%{uniquesuffix}.1*
-%{_mandir}/man1/jdeps-%{uniquesuffix}.1*
-%{_mandir}/man1/jhat-%{uniquesuffix}.1*
-%{_mandir}/man1/jinfo-%{uniquesuffix}.1*
-%{_mandir}/man1/jmap-%{uniquesuffix}.1*
-%{_mandir}/man1/jps-%{uniquesuffix}.1*
-%{_mandir}/man1/jrunscript-%{uniquesuffix}.1*
-%{_mandir}/man1/jsadebugd-%{uniquesuffix}.1*
-%{_mandir}/man1/jstack-%{uniquesuffix}.1*
-%{_mandir}/man1/jstat-%{uniquesuffix}.1*
-%{_mandir}/man1/jstatd-%{uniquesuffix}.1*
-%{_mandir}/man1/native2ascii-%{uniquesuffix}.1*
-%{_mandir}/man1/policytool-%{uniquesuffix}.1*
-%{_mandir}/man1/rmic-%{uniquesuffix}.1*
-%{_mandir}/man1/schemagen-%{uniquesuffix}.1*
-%{_mandir}/man1/serialver-%{uniquesuffix}.1*
-%{_mandir}/man1/wsgen-%{uniquesuffix}.1*
-%{_mandir}/man1/wsimport-%{uniquesuffix}.1*
-%{_mandir}/man1/xjc-%{uniquesuffix}.1*
-%if %{with_systemtap}
-%{tapsetroot}
-%endif
+%{files_devel %{nil}}
 
 %files demo -f %{name}-demo.files
-%defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
+%{files_demo %{nil}}
 
 %files src
-%defattr(-,root,root,-)
-%doc README.src
-%{_jvmdir}/%{sdkdir}/src.zip
+%{files_src %{nil}}
 
 %files javadoc
-%defattr(-,root,root,-)
-%doc %{_javadocdir}/%{uniquejavadocdir}
-%doc %{buildoutputdir}/images/j2sdk-image/jre/LICENSE
+%{files_javadoc %{nil}}
 
 %files accessibility
-%{_jvmdir}/%{jredir}/lib/%{archinstall}/libatk-wrapper.so
-%{_jvmdir}/%{jredir}/lib/ext/java-atk-wrapper.jar
-%{_jvmdir}/%{jredir}/lib/accessibility.properties
+%{files_accessibility %{nil}}
 
 %changelog
 * Fri Oct 24 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-12.b02
