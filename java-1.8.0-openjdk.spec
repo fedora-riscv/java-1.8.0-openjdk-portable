@@ -578,6 +578,7 @@ Patch7: include-all-srcs.patch
 # Problem discovered with make 4.0
 Patch11: hotspot-build-j-directive.patch
 Patch12: removeSunEcProvider-RH1154143.patch
+Patch13: libjpeg-turbo-1.4-compat.patch
 
 #
 # OpenJDK specific patches
@@ -858,6 +859,7 @@ sh %{SOURCE12}
 %patch7
 %patch11
 %patch12
+%patch13
 
 # s390 build fixes
 %ifarch s390
@@ -1500,6 +1502,9 @@ end
 %{files_accessibility %{nil}}
 
 %changelog
+* Fri Oct 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-13.b02
+- Build against libjpeg-turbo-1.4
+
 * Fri Oct 24 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-13.b02
 - preparing for parallel debug+normal build
 - files and scripelts moved to extendable macros as first step to dual build
