@@ -1,6 +1,12 @@
-#note, parametrised macros are order-senisitve (unlike not-parametrized)
-%global debug_suffix "-debug"
+# note, parametrised macros are order-senisitve (unlike not-parametrized) even with normal macros
+%global debug_suffix_unquoted -debug
+# quoted one for shell operations
+%global debug_suffix "%{debug_suffix_unquoted}"
 %global normal_suffix ""
+
+#if you wont only debug build, but providing java, build only normal build, but  set normalbuild_parameter
+%global debugbuild_parameter  slowdebug
+%global normalbuild_parameter release
 
 # by default we build normal build always.
 %global include_normal_build 1
@@ -12,7 +18,7 @@
 
 # by default we build debug build during main build only on intel arches
 %ifarch %{ix86} x86_64
-%global include_debug_build 1
+%global include_debug_build 0
 %else
 %global include_debug_build 0
 %endif
@@ -42,7 +48,7 @@
 # Always set this so the nss.cfg file is not broken
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
 
-#fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
+# fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 %global _privatelibs libmawt[.]so.*
 %global __provides_exclude ^(%{_privatelibs})$
 %global __requires_exclude ^(%{_privatelibs})$
@@ -144,6 +150,241 @@
 %global tapsetdir %{tapsetroot}/tapset/%{_build_cpu}
 %endif
 
+%global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+
+%global post_script() %{expand:
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+exit 0
+}
+
+
+%global post_headless() %{expand:
+# FIXME: identical binaries are copied, not linked. This needs to be
+# fixed upstream.
+%ifarch %{jit_arches}
+%ifnarch %{ppc64le}
+#see https://bugzilla.redhat.com/show_bug.cgi?id=513605
+%{jrebindir %%1}/java -Xshare:dump >/dev/null 2>/dev/null
+%endif
+%endif
+
+ext=.gz
+alternatives \\
+  --install %{_bindir}/java java %{jrebindir %%1}/java %{priority} \\
+  --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
+  --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
+  --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
+  --slave %{_bindir}/keytool keytool %{jrebindir %%1}/keytool \\
+  --slave %{_bindir}/orbd orbd %{jrebindir %%1}/orbd \\
+  --slave %{_bindir}/pack200 pack200 %{jrebindir %%1}/pack200 \\
+  --slave %{_bindir}/rmid rmid %{jrebindir %%1}/rmid \\
+  --slave %{_bindir}/rmiregistry rmiregistry %{jrebindir %%1}/rmiregistry \\
+  --slave %{_bindir}/servertool servertool %{jrebindir %%1}/servertool \\
+  --slave %{_bindir}/tnameserv tnameserv %{jrebindir %%1}/tnameserv \\
+  --slave %{_bindir}/unpack200 unpack200 %{jrebindir %%1}/unpack200 \\
+  --slave %{_mandir}/man1/java.1$ext java.1$ext \\
+  %{_mandir}/man1/java-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \\
+  %{_mandir}/man1/jjs-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_bindir}/policytool policytool %{jrebindir %%1}/policytool \\
+  --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \\
+  %{_mandir}/man1/keytool-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \\
+  %{_mandir}/man1/orbd-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/pack200.1$ext pack200.1$ext \\
+  %{_mandir}/man1/pack200-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/rmid.1$ext rmid.1$ext \\
+  %{_mandir}/man1/rmid-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/rmiregistry.1$ext rmiregistry.1$ext \\
+  %{_mandir}/man1/rmiregistry-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/servertool.1$ext servertool.1$ext \\
+  %{_mandir}/man1/servertool-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/tnameserv.1$ext tnameserv.1$ext \\
+  %{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/unpack200.1$ext unpack200.1$ext \\
+  %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1$ext
+
+for X in %{origin} %{javaver} ; do
+  alternatives \\
+    --install %{_jvmdir}/jre-"$X" \\
+    jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority} \\
+    --slave %{_jvmjardir}/jre-"$X" \\
+    jre_"$X"_exports %{_jvmjardir}/%{jredir %%1}
+done
+
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority} \\
+--slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
+
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+exit 0
+}
+
+%global postun_script() %{expand:
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+if [ $1 -eq 0 ] ; then
+    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    %{update_desktop_icons}
+fi
+exit 0
+}
+
+
+%global postun_headless() %{expand:
+  alternatives --remove java %{jrebindir %%1}/java
+  alternatives --remove jre_%{origin} %{_jvmdir}/%{jredir %%1}
+  alternatives --remove jre_%{javaver} %{_jvmdir}/%{jredir %%1}
+  alternatives --remove jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1}
+}
+
+%global posttrans_script() %{expand:
+%{update_desktop_icons}
+}
+
+%global post_devel() %{expand:
+ext=.gz
+alternatives \\
+  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac %{priority} \\
+  --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
+  --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
+  --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
+  --slave %{_bindir}/extcheck extcheck %{sdkbindir %%1}/extcheck \\
+  --slave %{_bindir}/idlj idlj %{sdkbindir %%1}/idlj \\
+  --slave %{_bindir}/jar jar %{sdkbindir %%1}/jar \\
+  --slave %{_bindir}/jarsigner jarsigner %{sdkbindir %%1}/jarsigner \\
+  --slave %{_bindir}/javadoc javadoc %{sdkbindir %%1}/javadoc \\
+  --slave %{_bindir}/javah javah %{sdkbindir %%1}/javah \\
+  --slave %{_bindir}/javap javap %{sdkbindir %%1}/javap \\
+  --slave %{_bindir}/jcmd jcmd %{sdkbindir %%1}/jcmd \\
+  --slave %{_bindir}/jconsole jconsole %{sdkbindir %%1}/jconsole \\
+  --slave %{_bindir}/jdb jdb %{sdkbindir %%1}/jdb \\
+  --slave %{_bindir}/jdeps jdeps %{sdkbindir %%1}/jdeps \\
+  --slave %{_bindir}/jhat jhat %{sdkbindir %%1}/jhat \\
+  --slave %{_bindir}/jinfo jinfo %{sdkbindir %%1}/jinfo \\
+  --slave %{_bindir}/jmap jmap %{sdkbindir %%1}/jmap \\
+  --slave %{_bindir}/jps jps %{sdkbindir %%1}/jps \\
+  --slave %{_bindir}/jrunscript jrunscript %{sdkbindir %%1}/jrunscript \\
+  --slave %{_bindir}/jsadebugd jsadebugd %{sdkbindir %%1}/jsadebugd \\
+  --slave %{_bindir}/jstack jstack %{sdkbindir %%1}/jstack \\
+  --slave %{_bindir}/jstat jstat %{sdkbindir %%1}/jstat \\
+  --slave %{_bindir}/jstatd jstatd %{sdkbindir %%1}/jstatd \\
+  --slave %{_bindir}/native2ascii native2ascii %{sdkbindir %%1}/native2ascii \\
+  --slave %{_bindir}/rmic rmic %{sdkbindir %%1}/rmic \\
+  --slave %{_bindir}/schemagen schemagen %{sdkbindir %%1}/schemagen \\
+  --slave %{_bindir}/serialver serialver %{sdkbindir %%1}/serialver \\
+  --slave %{_bindir}/wsgen wsgen %{sdkbindir %%1}/wsgen \\
+  --slave %{_bindir}/wsimport wsimport %{sdkbindir %%1}/wsimport \\
+  --slave %{_bindir}/xjc xjc %{sdkbindir %%1}/xjc \\
+  --slave %{_mandir}/man1/appletviewer.1$ext appletviewer.1$ext \\
+  %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/extcheck.1$ext extcheck.1$ext \\
+  %{_mandir}/man1/extcheck-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/idlj.1$ext idlj.1$ext \\
+  %{_mandir}/man1/idlj-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jar.1$ext jar.1$ext \\
+  %{_mandir}/man1/jar-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jarsigner.1$ext jarsigner.1$ext \\
+  %{_mandir}/man1/jarsigner-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/javac.1$ext javac.1$ext \\
+  %{_mandir}/man1/javac-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/javadoc.1$ext javadoc.1$ext \\
+  %{_mandir}/man1/javadoc-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/javah.1$ext javah.1$ext \\
+  %{_mandir}/man1/javah-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/javap.1$ext javap.1$ext \\
+  %{_mandir}/man1/javap-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jcmd.1$ext jcmd.1$ext \\
+  %{_mandir}/man1/jcmd-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jconsole.1$ext jconsole.1$ext \\
+  %{_mandir}/man1/jconsole-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jdb.1$ext jdb.1$ext \\
+  %{_mandir}/man1/jdb-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jdeps.1$ext jdeps.1$ext \\
+  %{_mandir}/man1/jdeps-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jhat.1$ext jhat.1$ext \\
+  %{_mandir}/man1/jhat-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jinfo.1$ext jinfo.1$ext \\
+  %{_mandir}/man1/jinfo-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jmap.1$ext jmap.1$ext \\
+  %{_mandir}/man1/jmap-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jps.1$ext jps.1$ext \\
+  %{_mandir}/man1/jps-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jrunscript.1$ext jrunscript.1$ext \\
+  %{_mandir}/man1/jrunscript-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jsadebugd.1$ext jsadebugd.1$ext \\
+  %{_mandir}/man1/jsadebugd-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jstack.1$ext jstack.1$ext \\
+  %{_mandir}/man1/jstack-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jstat.1$ext jstat.1$ext \\
+  %{_mandir}/man1/jstat-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/jstatd.1$ext jstatd.1$ext \\
+  %{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/native2ascii.1$ext native2ascii.1$ext \\
+  %{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \\
+  %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/rmic.1$ext rmic.1$ext \\
+  %{_mandir}/man1/rmic-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/schemagen.1$ext schemagen.1$ext \\
+  %{_mandir}/man1/schemagen-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/serialver.1$ext serialver.1$ext \\
+  %{_mandir}/man1/serialver-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/wsgen.1$ext wsgen.1$ext \\
+  %{_mandir}/man1/wsgen-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/wsimport.1$ext wsimport.1$ext \\
+  %{_mandir}/man1/wsimport-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/xjc.1$ext xjc.1$ext \\
+  %{_mandir}/man1/xjc-%{uniquesuffix %%1}.1$ext
+
+for X in %{origin} %{javaver} ; do
+  alternatives \\
+    --install %{_jvmdir}/java-"$X" \\
+    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+    --slave %{_jvmjardir}/java-"$X" \\
+    java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
+done
+
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+--slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
+
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
+
+exit 0
+}
+
+%global postun_devel() %{expand:
+  alternatives --remove javac %{sdkbindir %%1}/javac
+  alternatives --remove java_sdk_%{origin} %{_jvmdir}/%{sdkdir %%1}
+  alternatives --remove java_sdk_%{javaver} %{_jvmdir}/%{sdkdir %%1}
+  alternatives --remove java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1}
+
+update-desktop-database %{_datadir}/applications &> /dev/null || :
+
+if [ $1 -eq 0 ] ; then
+    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
+    %{update_desktop_icons}
+fi
+exit 0
+}
+
+%global posttrans_devel() %{expand:
+%{update_desktop_icons}
+}
+
+%global post_javadoc() %{expand:
+alternatives \\
+  --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir}/api \\
+  %{priority}
+exit 0
+}
+
+%global postun_javadoc() %{expand:
+  alternatives --remove javadocdir %{_javadocdir}/%{uniquejavadocdir}/api
+exit 0
+}
+
 %global files_jre() %{expand:
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_datadir}/applications/*policytool.desktop
@@ -155,7 +396,7 @@
 %doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/ASSEMBLY_EXCEPTION
 %doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
 %doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/THIRD_PARTY_README
-%dir %{_jvmdir}/%{sdkdir}
+%dir %{_jvmdir}/%{sdkdir %%1}
 %{_jvmdir}/%{jrelnk %%1}
 %{_jvmjardir}/%{jrelnk %%1}
 %{_jvmprivdir}/*
@@ -270,7 +511,7 @@
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -707,9 +948,9 @@ normalBuildStore=`mktemp -d`
 
 for suffix in %{build_loop} ; do
 if [ "$suffix" = "%{debug_suffix}" ] ; then
-debugbuild=slowdebug
+debugbuild=%{debugbuild_parameter}
 else
-debugbuild=release
+debugbuild=%{normalbuild_parameter}
 fi
 
 mkdir -p %{buildoutputdir}
@@ -1028,13 +1269,14 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
 # end, dual install
 done
 
+# iintentioanlly only for non-debug
 %pretrans headless -p <lua>
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 
 local posix = require "posix"
 
-local currentjvm = "%{uniquesuffix \"\"}"
-local jvmdir = "%{_jvmdir \"\"}"
+local currentjvm = "%{uniquesuffix %{nil}}"
+local jvmdir = "%{_jvmdir %{nil}}"
 local jvmDestdir = jvmdir
 local origname = "%{name}"
 local origjavaver = "%{javaver}"
@@ -1200,236 +1442,38 @@ end
 
 
 %post 
-update-desktop-database %{_datadir}/applications &> /dev/null || :
-/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-exit 0
+%{post_script %{nil}}
 
 
-# FIXME: identical binaries are copied, not linked. This needs to be
-# fixed upstream.
+
 %post headless
-%ifarch %{jit_arches}
-%ifnarch %{ppc64le}
-#see https://bugzilla.redhat.com/show_bug.cgi?id=513605
-%{jrebindir}/java -Xshare:dump >/dev/null 2>/dev/null
-%endif
-%endif
-
-ext=.gz
-alternatives \
-  --install %{_bindir}/java java %{jrebindir}/java %{priority} \
-  --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir} \
-  --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk} \
-  --slave %{_bindir}/jjs jjs %{jrebindir}/jjs \
-  --slave %{_bindir}/keytool keytool %{jrebindir}/keytool \
-  --slave %{_bindir}/orbd orbd %{jrebindir}/orbd \
-  --slave %{_bindir}/pack200 pack200 %{jrebindir}/pack200 \
-  --slave %{_bindir}/rmid rmid %{jrebindir}/rmid \
-  --slave %{_bindir}/rmiregistry rmiregistry %{jrebindir}/rmiregistry \
-  --slave %{_bindir}/servertool servertool %{jrebindir}/servertool \
-  --slave %{_bindir}/tnameserv tnameserv %{jrebindir}/tnameserv \
-  --slave %{_bindir}/unpack200 unpack200 %{jrebindir}/unpack200 \
-  --slave %{_mandir}/man1/java.1$ext java.1$ext \
-  %{_mandir}/man1/java-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \
-  %{_mandir}/man1/jjs-%{uniquesuffix}.1$ext \
-  --slave %{_bindir}/policytool policytool %{jrebindir}/policytool \
-  --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \
-  %{_mandir}/man1/keytool-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \
-  %{_mandir}/man1/orbd-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/pack200.1$ext pack200.1$ext \
-  %{_mandir}/man1/pack200-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/rmid.1$ext rmid.1$ext \
-  %{_mandir}/man1/rmid-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/rmiregistry.1$ext rmiregistry.1$ext \
-  %{_mandir}/man1/rmiregistry-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/servertool.1$ext servertool.1$ext \
-  %{_mandir}/man1/servertool-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/tnameserv.1$ext tnameserv.1$ext \
-  %{_mandir}/man1/tnameserv-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/unpack200.1$ext unpack200.1$ext \
-  %{_mandir}/man1/unpack200-%{uniquesuffix}.1$ext
-
-for X in %{origin} %{javaver} ; do
-  alternatives \
-    --install %{_jvmdir}/jre-"$X" \
-    jre_"$X" %{_jvmdir}/%{jredir} %{priority} \
-    --slave %{_jvmjardir}/jre-"$X" \
-    jre_"$X"_exports %{_jvmjardir}/%{jredir}
-done
-
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk} %{priority} \
---slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir}
-
-update-desktop-database %{_datadir}/applications &> /dev/null || :
-
-/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-
-exit 0
+%{post_headless %{nil}}
 
 %postun
-update-desktop-database %{_datadir}/applications &> /dev/null || :
-
-if [ $1 -eq 0 ] ; then
-    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
-    /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-fi
-
-exit 0
-
+%{postun_script %{nil}}
 
 %postun headless
-  alternatives --remove java %{jrebindir}/java
-  alternatives --remove jre_%{origin} %{_jvmdir}/%{jredir}
-  alternatives --remove jre_%{javaver} %{_jvmdir}/%{jredir}
-  alternatives --remove jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk}
+%{postun_headless %{nil}}
 
 
 %posttrans
-/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+%{posttrans_script %{nil}}
 
 %post devel
-ext=.gz
-alternatives \
-  --install %{_bindir}/javac javac %{sdkbindir}/javac %{priority} \
-  --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir} \
-  --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir} \
-  --slave %{_bindir}/appletviewer appletviewer %{sdkbindir}/appletviewer \
-  --slave %{_bindir}/extcheck extcheck %{sdkbindir}/extcheck \
-  --slave %{_bindir}/idlj idlj %{sdkbindir}/idlj \
-  --slave %{_bindir}/jar jar %{sdkbindir}/jar \
-  --slave %{_bindir}/jarsigner jarsigner %{sdkbindir}/jarsigner \
-  --slave %{_bindir}/javadoc javadoc %{sdkbindir}/javadoc \
-  --slave %{_bindir}/javah javah %{sdkbindir}/javah \
-  --slave %{_bindir}/javap javap %{sdkbindir}/javap \
-  --slave %{_bindir}/jcmd jcmd %{sdkbindir}/jcmd \
-  --slave %{_bindir}/jconsole jconsole %{sdkbindir}/jconsole \
-  --slave %{_bindir}/jdb jdb %{sdkbindir}/jdb \
-  --slave %{_bindir}/jdeps jdeps %{sdkbindir}/jdeps \
-  --slave %{_bindir}/jhat jhat %{sdkbindir}/jhat \
-  --slave %{_bindir}/jinfo jinfo %{sdkbindir}/jinfo \
-  --slave %{_bindir}/jmap jmap %{sdkbindir}/jmap \
-  --slave %{_bindir}/jps jps %{sdkbindir}/jps \
-  --slave %{_bindir}/jrunscript jrunscript %{sdkbindir}/jrunscript \
-  --slave %{_bindir}/jsadebugd jsadebugd %{sdkbindir}/jsadebugd \
-  --slave %{_bindir}/jstack jstack %{sdkbindir}/jstack \
-  --slave %{_bindir}/jstat jstat %{sdkbindir}/jstat \
-  --slave %{_bindir}/jstatd jstatd %{sdkbindir}/jstatd \
-  --slave %{_bindir}/native2ascii native2ascii %{sdkbindir}/native2ascii \
-  --slave %{_bindir}/rmic rmic %{sdkbindir}/rmic \
-  --slave %{_bindir}/schemagen schemagen %{sdkbindir}/schemagen \
-  --slave %{_bindir}/serialver serialver %{sdkbindir}/serialver \
-  --slave %{_bindir}/wsgen wsgen %{sdkbindir}/wsgen \
-  --slave %{_bindir}/wsimport wsimport %{sdkbindir}/wsimport \
-  --slave %{_bindir}/xjc xjc %{sdkbindir}/xjc \
-  --slave %{_mandir}/man1/appletviewer.1$ext appletviewer.1$ext \
-  %{_mandir}/man1/appletviewer-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/extcheck.1$ext extcheck.1$ext \
-  %{_mandir}/man1/extcheck-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/idlj.1$ext idlj.1$ext \
-  %{_mandir}/man1/idlj-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jar.1$ext jar.1$ext \
-  %{_mandir}/man1/jar-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jarsigner.1$ext jarsigner.1$ext \
-  %{_mandir}/man1/jarsigner-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/javac.1$ext javac.1$ext \
-  %{_mandir}/man1/javac-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/javadoc.1$ext javadoc.1$ext \
-  %{_mandir}/man1/javadoc-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/javah.1$ext javah.1$ext \
-  %{_mandir}/man1/javah-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/javap.1$ext javap.1$ext \
-  %{_mandir}/man1/javap-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jcmd.1$ext jcmd.1$ext \
-  %{_mandir}/man1/jcmd-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jconsole.1$ext jconsole.1$ext \
-  %{_mandir}/man1/jconsole-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jdb.1$ext jdb.1$ext \
-  %{_mandir}/man1/jdb-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jdeps.1$ext jdeps.1$ext \
-  %{_mandir}/man1/jdeps-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jhat.1$ext jhat.1$ext \
-  %{_mandir}/man1/jhat-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jinfo.1$ext jinfo.1$ext \
-  %{_mandir}/man1/jinfo-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jmap.1$ext jmap.1$ext \
-  %{_mandir}/man1/jmap-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jps.1$ext jps.1$ext \
-  %{_mandir}/man1/jps-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jrunscript.1$ext jrunscript.1$ext \
-  %{_mandir}/man1/jrunscript-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jsadebugd.1$ext jsadebugd.1$ext \
-  %{_mandir}/man1/jsadebugd-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jstack.1$ext jstack.1$ext \
-  %{_mandir}/man1/jstack-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jstat.1$ext jstat.1$ext \
-  %{_mandir}/man1/jstat-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/jstatd.1$ext jstatd.1$ext \
-  %{_mandir}/man1/jstatd-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/native2ascii.1$ext native2ascii.1$ext \
-  %{_mandir}/man1/native2ascii-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \
-  %{_mandir}/man1/policytool-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/rmic.1$ext rmic.1$ext \
-  %{_mandir}/man1/rmic-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/schemagen.1$ext schemagen.1$ext \
-  %{_mandir}/man1/schemagen-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/serialver.1$ext serialver.1$ext \
-  %{_mandir}/man1/serialver-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/wsgen.1$ext wsgen.1$ext \
-  %{_mandir}/man1/wsgen-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/wsimport.1$ext wsimport.1$ext \
-  %{_mandir}/man1/wsimport-%{uniquesuffix}.1$ext \
-  --slave %{_mandir}/man1/xjc.1$ext xjc.1$ext \
-  %{_mandir}/man1/xjc-%{uniquesuffix}.1$ext
-
-for X in %{origin} %{javaver} ; do
-  alternatives \
-    --install %{_jvmdir}/java-"$X" \
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir} %{priority} \
-    --slave %{_jvmjardir}/java-"$X" \
-    java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir}
-done
-
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir} %{priority} \
---slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir}
-
-update-desktop-database %{_datadir}/applications &> /dev/null || :
-/bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
-
-exit 0
+%{post_devel %{nil}}
 
 %postun devel
-  alternatives --remove javac %{sdkbindir}/javac
-  alternatives --remove java_sdk_%{origin} %{_jvmdir}/%{sdkdir}
-  alternatives --remove java_sdk_%{javaver} %{_jvmdir}/%{sdkdir}
-  alternatives --remove java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir}
-
-update-desktop-database %{_datadir}/applications &> /dev/null || :
-
-if [ $1 -eq 0 ] ; then
-    /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null
-    /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
-fi
-
-exit 0
+%{postun_devel %{nil}}
 
 %posttrans  devel
-/usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
+%{posttrans_devel %{nil}}
 
 
 %post javadoc
-alternatives \
-  --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir}/api \
-  %{priority}
-
-exit 0
+%{post_javadoc %{nil}}
 
 %postun javadoc
-  alternatives --remove javadocdir %{_javadocdir}/%{uniquejavadocdir}/api
-
-exit 0
+%{postun_javadoc %{nil}}
 
 
 %files -f %{name}.files
@@ -1456,6 +1500,12 @@ exit 0
 %{files_accessibility %{nil}}
 
 %changelog
+* Fri Oct 24 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-13.b02
+- preparing for parallel debug+normal build
+- files and scripelts moved to extendable macros as first step to dual build
+- install and build may be done in loop for both release and slowdebug
+- debugbuild off untill its completed
+
 * Fri Oct 24 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-12.b02
 - added patch12,removeSunEcProvider-RH1154143
 - xdump excluded from ppc64le (rh1156151)
