@@ -1,4 +1,5 @@
 # note, parametrised macros are order-senisitve (unlike not-parametrized) even with normal macros
+# also necessary when passing it as parameter other macros. If not macro, then it is considered as switch
 %global debug_suffix_unquoted -debug
 # quoted one for shell operations
 %global debug_suffix "%{debug_suffix_unquoted}"
@@ -7,6 +8,9 @@
 #if you wont only debug build, but providing java, build only normal build, but  set normalbuild_parameter
 %global debugbuild_parameter  slowdebug
 %global normalbuild_parameter release
+%global debug_warning This package have full debug on. Install only in need, and remove asap.
+%global debug_on with full debug on
+%global for_debug for packages with debug on
 
 # by default we build normal build always.
 %global include_normal_build 1
@@ -150,6 +154,7 @@
 %global tapsetdir %{tapsetroot}/tapset/%{_build_cpu}
 %endif
 
+# not-duplicated scriplets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 %global post_script() %{expand:
@@ -506,12 +511,136 @@ exit 0
 %{_jvmdir}/%{jredir %%1}/lib/accessibility.properties
 }
 
+# not-duplicated requires/provides/obsolate for normal/debug packages
+%global java_rpo() %{expand:
+Requires: fontconfig
+Requires: xorg-x11-fonts-Type1
+
+# Requires rest of java
+Requires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+
+
+# Standard JPackage base provides.
+Provides: jre-%{javaver}-%{origin}%1 = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin}%1 = %{epoch}:%{version}-%{release}
+Provides: jre-%{javaver}%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}%1 = %{epoch}:%{version}-%{release}
+Provides: jre = %{javaver}%1
+Provides: java-%{origin}%1 = %{epoch}:%{version}-%{release}
+Provides: java%1 = %{epoch}:%{javaver}
+# Standard JPackage extensions provides.
+Provides: java-fonts%1 = %{epoch}:%{version}
+
+Obsoletes: java-1.7.0-openjdk%1
+Provides:  java-1.8.0-openjdk%1 = %{epoch}:%{version}-%{release}
+}
+
+%global java_headless_rpo() %{expand:
+# Require /etc/pki/java/cacerts.
+Requires: ca-certificates
+# Require jpackage-utils for ownership of /usr/lib/jvm/
+Requires: jpackage-utils
+# Require zoneinfo data provided by tzdata-java subpackage.
+Requires: tzdata-java >= 2014f-1
+# Post requires alternatives to install tool alternatives.
+Requires(post):   %{_sbindir}/alternatives
+# Postun requires alternatives to uninstall tool alternatives.
+Requires(postun): %{_sbindir}/alternatives
+
+# Standard JPackage base provides.
+Provides: jre-%{javaver}-%{origin}-headless%1 = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin}-headless%1 = %{epoch}:%{version}-%{release}
+Provides: jre-%{javaver}-headless%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-headless%1 = %{epoch}:%{version}-%{release}
+Provides: jre-headless%1 = %{epoch}:%{javaver}
+Provides: java-%{origin}-headless%1 = %{epoch}:%{version}-%{release}
+Provides: java-headless%1 = %{epoch}:%{javaver}
+# Standard JPackage extensions provides.
+Provides: jndi%1 = %{epoch}:%{version}
+Provides: jndi-ldap%1 = %{epoch}:%{version}
+Provides: jndi-cos%1 = %{epoch}:%{version}
+Provides: jndi-rmi%1 = %{epoch}:%{version}
+Provides: jndi-dns%1 = %{epoch}:%{version}
+Provides: jaas%1 = %{epoch}:%{version}
+Provides: jsse%1 = %{epoch}:%{version}
+Provides: jce%1 = %{epoch}:%{version}
+Provides: jdbc-stdext%1 = 4.1
+Provides: java-sasl%1 = %{epoch}:%{version}
+
+Obsoletes: java-1.7.0-openjdk-headless%1
+Provides: java-1.8.0-openjdk-headless%1 = %{epoch}:%{version}-%{release}
+}
+
+%global java_devel_rpo() %{expand:
+# Require base package.
+Requires:         %{name}%1 = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+# Post requires alternatives to install tool alternatives.
+Requires(post):   %{_sbindir}/alternatives
+# Postun requires alternatives to uninstall tool alternatives.
+Requires(postun): %{_sbindir}/alternatives
+
+# Standard JPackage devel provides.
+Provides: java-sdk-%{javaver}-%{origin}%1 = %{epoch}:%{version}
+Provides: java-sdk-%{javaver}%1 = %{epoch}:%{version}
+Provides: java-sdk-%{origin}%1 = %{epoch}:%{version}
+Provides: java-sdk%1 = %{epoch}:%{javaver}
+Provides: java-%{javaver}-devel%1 = %{epoch}:%{version}
+Provides: java-devel-%{origin}%1 = %{epoch}:%{version}
+Provides: java-devel%1 = %{epoch}:%{javaver}
+
+Obsoletes: java-1.7.0-openjdk-devel%1
+Provides: java-1.8.0-openjdk-devel%1 = %{epoch}:%{version}-%{release}
+}
+
+
+%global java_demo_rpo() %{expand:
+Requires: %{name}%1 = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-demo%1
+Provides: java-1.8.0-openjdk-demo%1 = %{epoch}:%{version}-%{release}
+}
+
+%global java_javadoc_rpo() %{expand:
+OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+# Post requires alternatives to install javadoc alternative.
+Requires(post):   %{_sbindir}/alternatives
+# Postun requires alternatives to uninstall javadoc alternative.
+Requires(postun): %{_sbindir}/alternatives
+
+# Standard JPackage javadoc provides.
+Provides: java-javadoc%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-javadoc%1 = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-javadoc%1
+Provides: java-1.8.0-openjdk-javadoc%1 = %{epoch}:%{version}-%{release}
+
+}
+
+%global java_src_rpo() %{expand:
+Requires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-src%1
+Provides: java-1.8.0-openjdk-src%1 = %{epoch}:%{version}-%{release}
+}
+
+%global java_accessibility_rpo() %{expand:
+Requires: java-atk-wrapper
+Requires: %{name}%1 = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+
+Obsoletes: java-1.7.0-openjdk-accessibility%1
+Provides: java-1.8.0-openjdk-accessibility%1 = %{epoch}:%{version}-%{release}
+}
+
 # Prevent brp-java-repack-jars from being run.
 %global __jar_repack 0
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 14.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -645,154 +774,147 @@ BuildRequires: prelink
 BuildRequires: systemtap-sdt-devel
 %endif
 
-Requires: fontconfig
-Requires: xorg-x11-fonts-Type1
 
-# Requires rest of java
-Requires: %{name}-headless = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless = %{epoch}:%{version}-%{release}
-
-
-# Standard JPackage base provides.
-Provides: jre-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre-%{origin} = %{epoch}:%{version}-%{release}
-Provides: jre-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver} = %{epoch}:%{version}-%{release}
-Provides: jre = %{javaver}
-Provides: java-%{origin} = %{epoch}:%{version}-%{release}
-Provides: java = %{epoch}:%{javaver}
-# Standard JPackage extensions provides.
-Provides: java-fonts = %{epoch}:%{version}
-
-Obsoletes: java-1.7.0-openjdk
-Provides:  java-1.8.0-openjdk = %{epoch}:%{version}-%{release}
+# this is built always, also during debug-only build
+# when it is built in debug-only, then this package is just placeholder
+%{java_rpo %{nil}}
 
 %description
 The OpenJDK runtime environment.
 
+%if %{include_debug_build}
+%package debug
+Summary: OpenJDK Runtime Environment %{debug_on}
+Group:   Development/Languages
+
+%{java_rpo %{debug_suffix_unquoted}}
+%description debug
+The OpenJDK runtime environment.
+%{debug_warning}
+%endif
+
+%if %{include_normal_build}
 %package headless
 Summary: OpenJDK Runtime Environment
 Group:   Development/Languages
 
-# Require /etc/pki/java/cacerts.
-Requires: ca-certificates
-# Require jpackage-utils for ownership of /usr/lib/jvm/
-Requires: jpackage-utils
-# Require zoneinfo data provided by tzdata-java subpackage.
-Requires: tzdata-java >= 2014f-1
-# Post requires alternatives to install tool alternatives.
-Requires(post):   %{_sbindir}/alternatives
-# Postun requires alternatives to uninstall tool alternatives.
-Requires(postun): %{_sbindir}/alternatives
-
-# Standard JPackage base provides.
-Provides: jre-%{javaver}-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: jre-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: jre-%{javaver}-headless = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-headless = %{epoch}:%{version}-%{release}
-Provides: jre-headless = %{epoch}:%{javaver}
-Provides: java-%{origin}-headless = %{epoch}:%{version}-%{release}
-Provides: java-headless = %{epoch}:%{javaver}
-# Standard JPackage extensions provides.
-Provides: jndi = %{epoch}:%{version}
-Provides: jndi-ldap = %{epoch}:%{version}
-Provides: jndi-cos = %{epoch}:%{version}
-Provides: jndi-rmi = %{epoch}:%{version}
-Provides: jndi-dns = %{epoch}:%{version}
-Provides: jaas = %{epoch}:%{version}
-Provides: jsse = %{epoch}:%{version}
-Provides: jce = %{epoch}:%{version}
-Provides: jdbc-stdext = 4.1
-Provides: java-sasl = %{epoch}:%{version}
-
-Obsoletes: java-1.7.0-openjdk-headless
-Provides: java-1.8.0-openjdk-headless = %{epoch}:%{version}-%{release}
+%{java_headless_rpo %{nil}}
 
 %description headless
 The OpenJDK runtime environment without audio and video support.
+%endif
 
+%if %{include_debug_build}
+%package headless-debug
+Summary: OpenJDK Runtime Environment %{debug_on}
+Group:   Development/Languages
+
+%{java_headless_rpo %{debug_suffix_unquoted}}
+
+%description headless-debug
+The OpenJDK runtime environment without audio and video support.
+%{debug_warning}
+%endif
+
+%if %{include_normal_build}
 %package devel
 Summary: OpenJDK Development Environment
 Group:   Development/Tools
 
-# Require base package.
-Requires:         %{name} = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless = %{epoch}:%{version}-%{release}
-# Post requires alternatives to install tool alternatives.
-Requires(post):   %{_sbindir}/alternatives
-# Postun requires alternatives to uninstall tool alternatives.
-Requires(postun): %{_sbindir}/alternatives
-
-# Standard JPackage devel provides.
-Provides: java-sdk-%{javaver}-%{origin} = %{epoch}:%{version}
-Provides: java-sdk-%{javaver} = %{epoch}:%{version}
-Provides: java-sdk-%{origin} = %{epoch}:%{version}
-Provides: java-sdk = %{epoch}:%{javaver}
-Provides: java-%{javaver}-devel = %{epoch}:%{version}
-Provides: java-devel-%{origin} = %{epoch}:%{version}
-Provides: java-devel = %{epoch}:%{javaver}
-
-Obsoletes: java-1.7.0-openjdk-devel
-Provides: java-1.8.0-openjdk-devel = %{epoch}:%{version}-%{release}
+%{java_devel_rpo %{nil}}
 
 %description devel
 The OpenJDK development tools.
+%endif
 
+%if %{include_debug_build}
+%package devel-debug
+Summary: OpenJDK Development Environment %{debug_on}
+Group:   Development/Tools
+
+%{java_devel_rpo %{debug_suffix_unquoted}}
+
+%description devel-debug
+The OpenJDK development tools.
+%{debug_warning}
+%endif
+
+%if %{include_normal_build}
 %package demo
 Summary: OpenJDK Demos
 Group:   Development/Languages
 
-Requires: %{name} = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless = %{epoch}:%{version}-%{release}
-
-Obsoletes: java-1.7.0-openjdk-demo
-Provides: java-1.8.0-openjdk-demo = %{epoch}:%{version}-%{release}
+%{java_demo_rpo %{nil}}
 
 %description demo
 The OpenJDK demos.
+%endif
 
+%if %{include_debug_build}
+%package demo-debug
+Summary: OpenJDK Demos %{debug_on}
+Group:   Development/Languages
+
+%{java_demo_rpo %{debug_suffix_unquoted}}
+
+%description demo-debug
+The OpenJDK demos.
+%{debug_warning}
+%endif
+
+%if %{include_normal_build}
 %package src
 Summary: OpenJDK Source Bundle
 Group:   Development/Languages
 
-Requires: %{name} = %{epoch}:%{version}-%{release}
-
-Obsoletes: java-1.7.0-openjdk-src
-Provides: java-1.8.0-openjdk-src = %{epoch}:%{version}-%{release}
+%{java_src_rpo %{nil}}
 
 %description src
 The OpenJDK source bundle.
+%endif
 
+%if %{include_debug_build}
+%package src-debug
+Summary: OpenJDK Source Bundle %{for_debug}
+Group:   Development/Languages
+
+%{java_src_rpo %{debug_suffix_unquoted}}
+
+%description src-debug
+The OpenJDK source bundle %{for_debug}.
+%endif
+
+%if %{include_normal_build}
 %package javadoc
 Summary: OpenJDK API Documentation
 Group:   Documentation
 Requires: jpackage-utils
 BuildArch: noarch
 
-OrderWithRequires: %{name}-headless = %{epoch}:%{version}-%{release}
-# Post requires alternatives to install javadoc alternative.
-Requires(post):   %{_sbindir}/alternatives
-# Postun requires alternatives to uninstall javadoc alternative.
-Requires(postun): %{_sbindir}/alternatives
-
-# Standard JPackage javadoc provides.
-Provides: java-javadoc = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-javadoc = %{epoch}:%{version}-%{release}
-
-Obsoletes: java-1.7.0-openjdk-javadoc
-Provides: java-1.8.0-openjdk-javadoc = %{epoch}:%{version}-%{release}
+%{java_javadoc_rpo %{nil}}
 
 %description javadoc
 The OpenJDK API documentation.
+%endif
 
+%if %{include_debug_build}
+%package javadoc-debug
+Summary: OpenJDK API Documentation %{for_debug}
+Group:   Documentation
+Requires: jpackage-utils
+BuildArch: noarch
+
+%{java_javadoc_rpo %{debug_suffix_unquoted}}
+
+%description javadoc-debug
+The OpenJDK API documentation %{for_debug}.
+%endif
+
+%if %{include_normal_build}
 %package accessibility
 Summary: OpenJDK accessibility connector
-Requires: java-atk-wrapper
-Requires: %{name} = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless = %{epoch}:%{version}-%{release}
 
-Obsoletes: java-1.7.0-openjdk-accessibility
-Provides: java-1.8.0-openjdk-accessibility = %{epoch}:%{version}-%{release}
+%{java_accessibility_rpo %{nil}}
 
 %description accessibility
 Enables accessibility support in OpenJDK by using java-atk-wrapper. This allows
@@ -803,7 +925,17 @@ Please note, the java-atk-wrapper is still in beta, and OpenJDK itself is still
 being tuned to be working with accessibility features. There are known issues
 with accessibility on, so please do not install this package unless you really
 need to.
+%endif
 
+%if %{include_debug_build}
+%package accessibility-debug
+Summary: OpenJDK accessibility connector %{for_debug}
+
+%{java_accessibility_rpo %{debug_suffix_unquoted}}
+
+%description accessibility-debug
+See normal java-%{version}-openjdk-accessibility description.
+%endif
 
 %prep
 if [ %{include_normal_build} -eq 0 -o  %{include_normal_build} -eq 1 ] ; then
@@ -1271,7 +1403,7 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
 # end, dual install
 done
 
-# iintentioanlly only for non-debug
+# intentioanlly only for non-debug
 %pretrans headless -p <lua>
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 
