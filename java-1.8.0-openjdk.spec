@@ -22,7 +22,7 @@
 
 # by default we build debug build during main build only on intel arches
 %ifarch %{ix86} x86_64
-%global include_debug_build 0
+%global include_debug_build 1
 %else
 %global include_debug_build 0
 %endif
@@ -392,7 +392,7 @@ exit 0
 
 %global files_jre() %{expand:
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
-%{_datadir}/applications/*policytool.desktop
+%{_datadir}/applications/*policytool%1.desktop
 }
 
 
@@ -452,7 +452,7 @@ exit 0
 %{_jvmdir}/%{sdkdir %%1}/tapset/*.stp
 %endif
 %{_jvmjardir}/%{sdkdir %%1}
-%{_datadir}/applications/*jconsole.desktop
+%{_datadir}/applications/*jconsole%1.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/extcheck-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/idlj-%{uniquesuffix %%1}.1*
@@ -533,7 +533,6 @@ Provides: java%1 = %{epoch}:%{javaver}
 Provides: java-fonts%1 = %{epoch}:%{version}
 
 Obsoletes: java-1.7.0-openjdk%1
-Provides:  java-1.8.0-openjdk%1 = %{epoch}:%{version}-%{release}
 }
 
 %global java_headless_rpo() %{expand:
@@ -569,7 +568,6 @@ Provides: jdbc-stdext%1 = 4.1
 Provides: java-sasl%1 = %{epoch}:%{version}
 
 Obsoletes: java-1.7.0-openjdk-headless%1
-Provides: java-1.8.0-openjdk-headless%1 = %{epoch}:%{version}-%{release}
 }
 
 %global java_devel_rpo() %{expand:
@@ -591,7 +589,6 @@ Provides: java-devel-%{origin}%1 = %{epoch}:%{version}
 Provides: java-devel%1 = %{epoch}:%{javaver}
 
 Obsoletes: java-1.7.0-openjdk-devel%1
-Provides: java-1.8.0-openjdk-devel%1 = %{epoch}:%{version}-%{release}
 }
 
 
@@ -600,7 +597,6 @@ Requires: %{name}%1 = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-demo%1
-Provides: java-1.8.0-openjdk-demo%1 = %{epoch}:%{version}-%{release}
 }
 
 %global java_javadoc_rpo() %{expand:
@@ -615,7 +611,6 @@ Provides: java-javadoc%1 = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-javadoc%1 = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-javadoc%1
-Provides: java-1.8.0-openjdk-javadoc%1 = %{epoch}:%{version}-%{release}
 
 }
 
@@ -623,7 +618,6 @@ Provides: java-1.8.0-openjdk-javadoc%1 = %{epoch}:%{version}-%{release}
 Requires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-src%1
-Provides: java-1.8.0-openjdk-src%1 = %{epoch}:%{version}-%{release}
 }
 
 %global java_accessibility_rpo() %{expand:
@@ -632,7 +626,6 @@ Requires: %{name}%1 = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-accessibility%1
-Provides: java-1.8.0-openjdk-accessibility%1 = %{epoch}:%{version}-%{release}
 }
 
 # Prevent brp-java-repack-jars from being run.
@@ -640,7 +633,7 @@ Provides: java-1.8.0-openjdk-accessibility%1 = %{epoch}:%{version}-%{release}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 14.%{buildver}%{?dist}
+Release: 15.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1177,7 +1170,7 @@ pushd %{buildoutputdir}
 #note, that order is normal_suffix debug_suffix (in case of both enabled)
 if [ "$suffix" = "%{debug_suffix}" ] ; then
 # debug build passed, mv it to j2sdk-image-%%{debug_suffix}
-  mv images/%{j2sdkimage ""} images/%{j2sdkimage debug}
+  mv images/%{j2sdkimage ""} images/%{j2sdkimage %{debug_suffix_unquoted}}
 fi
 if [ %{include_normal_build} -eq 1 -a  %{include_debug_build} -eq 1 ] ; then
   if [ "$suffix" = "%{normal_suffix}" ] ; then
@@ -1403,6 +1396,7 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
 # end, dual install
 done
 
+%if %{include_normal_build} 
 # intentioanlly only for non-debug
 %pretrans headless -p <lua>
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
@@ -1574,11 +1568,8 @@ for i,file in pairs(caredFiles) do
   end
 end
 
-
 %post 
 %{post_script %{nil}}
-
-
 
 %post headless
 %{post_headless %{nil}}
@@ -1588,7 +1579,6 @@ end
 
 %postun headless
 %{postun_headless %{nil}}
-
 
 %posttrans
 %{posttrans_script %{nil}}
@@ -1602,17 +1592,57 @@ end
 %posttrans  devel
 %{posttrans_devel %{nil}}
 
-
 %post javadoc
 %{post_javadoc %{nil}}
 
 %postun javadoc
 %{postun_javadoc %{nil}}
+%endif
 
+%if %{include_debug_build} 
+%post debug
+%{post_script %{debug_suffix_unquoted}}
 
+%post headless-debug
+%{post_headless %{debug_suffix_unquoted}}
+
+%postun debug
+%{postun_script %{debug_suffix_unquoted}}
+
+%postun headless-debug
+%{postun_headless %{debug_suffix_unquoted}}
+
+%posttrans debug
+%{posttrans_script %{debug_suffix_unquoted}}
+
+%post devel-debug
+%{post_devel %{debug_suffix_unquoted}}
+
+%postun devel-debug
+%{postun_devel %{debug_suffix_unquoted}}
+
+%posttrans  devel-debug
+%{posttrans_devel %{debug_suffix_unquoted}}
+
+%post javadoc-debug
+%{post_javadoc %{debug_suffix_unquoted}}
+
+%postun javadoc-debug
+%{postun_javadoc %{debug_suffix_unquoted}}
+%endif
+
+# main package builds always
+%if %{include_normal_build} 
 %files -f %{name}.files
 %{files_jre %{nil}}
+%else
+# placeholder
+%files
 
+%endif
+
+
+%if %{include_normal_build} 
 # important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 # all config/norepalce files (and more) have to be declared in pretrans. See pretrans
 %files headless  -f %{name}.files-headless
@@ -1632,8 +1662,37 @@ end
 
 %files accessibility
 %{files_accessibility %{nil}}
+%endif
+
+%if %{include_debug_build} 
+%files debug -f %{name}.files-debug
+%{files_jre %{debug_suffix_unquoted}}
+
+%files headless-debug  -f %{name}.files-headless-debug
+%{files_jre_headless %{debug_suffix_unquoted}}
+
+%files devel-debug
+%{files_devel %{debug_suffix_unquoted}}
+
+%files demo-debug -f %{name}-demo.files-debug
+%{files_demo %{debug_suffix_unquoted}}
+
+%files src-debug
+%{files_src %{debug_suffix_unquoted}}
+
+%files javadoc-debug
+%{files_javadoc %{debug_suffix_unquoted}}
+
+%files accessibility-debug
+%{files_accessibility %{debug_suffix_unquoted}}
+%endif
+
 
 %changelog
+* Mon Nov 03 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-15.b02
+- enabled debug packages
+- removed all provides duplicating package name
+
 * Fri Oct 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-13.b02
 - Build against libjpeg-turbo-1.4
 
