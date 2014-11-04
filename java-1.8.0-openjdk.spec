@@ -127,10 +127,10 @@
 %global fullversion     %{name}-%{version}-%{release}
 #images stub
 %global j2sdkimage() %{expand:j2sdk-image%1}
+#we can copy the javadoc to not arched dir, or made it not noarch
+%global uniquejavadocdir()    %{expand:%{fullversion}%1}
 #main id and dir of this jdk
 %global uniquesuffix()        %{expand:%{fullversion}.%{_arch}%1}
-#we can copy the javadoc to not arched dir, or made it not noarch
-%global uniquejavadocdir       %{fullversion}
 
 # Standard JPackage directories and symbolic links.
 %global sdkdir()        %{expand:%{uniquesuffix %%1}}
@@ -380,13 +380,13 @@ exit 0
 
 %global post_javadoc() %{expand:
 alternatives \\
-  --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir}/api \\
+  --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
   %{priority}
 exit 0
 }
 
 %global postun_javadoc() %{expand:
-  alternatives --remove javadocdir %{_javadocdir}/%{uniquejavadocdir}/api
+  alternatives --remove javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api
 exit 0
 }
 
@@ -501,7 +501,7 @@ exit 0
 
 %global files_javadoc() %{expand:
 %defattr(-,root,root,-)
-%doc %{_javadocdir}/%{uniquejavadocdir}
+%doc %{_javadocdir}/%{uniquejavadocdir %%1}
 %doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
 }
 
@@ -1295,7 +1295,7 @@ popd
 
 # Install Javadoc documentation.
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
-cp -a %{buildoutputdir}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir}
+cp -a %{buildoutputdir}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
 
 # Install icons and menu entries.
 for s in 16 24 32 48 ; do
