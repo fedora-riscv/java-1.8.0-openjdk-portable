@@ -1171,16 +1171,20 @@ pushd %{buildoutputdir}
 if [ "$suffix" = "%{debug_suffix}" ] ; then
 # debug build passed, mv it to j2sdk-image-%%{debug_suffix}
   mv images/%{j2sdkimage ""} images/%{j2sdkimage %{debug_suffix_unquoted}}
+# same with docs
+  mv docs docs$suffix
 fi
 if [ %{include_normal_build} -eq 1 -a  %{include_debug_build} -eq 1 ] ; then
   if [ "$suffix" = "%{normal_suffix}" ] ; then
-# normal build just passed, and debug one is going to run
+# normal build just passed, and debug one is going to run. backup image and docs
     mv images/%{j2sdkimage ""} $normalBuildStore
+    mv docs $normalBuildStore
     make clean
   fi
   if [ "$suffix" = "%{debug_suffix}" ] ; then
-# debug build just passed, restore normal one (see that debug one already renamed)
+# debug build just passed, restore normal backups (see that debug one already renamed)
     mv $normalBuildStore/%{j2sdkimage ""} images/
+    mv $normalBuildStore/docs images/
   fi
 fi
 popd
@@ -1295,7 +1299,7 @@ popd
 
 # Install Javadoc documentation.
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
-cp -a %{buildoutputdir}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
+cp -a %{buildoutputdir}/docs$suffix $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
 
 # Install icons and menu entries.
 for s in 16 24 32 48 ; do
