@@ -117,8 +117,8 @@
 %global updatever       40
 %global buildver        b02
 %global aarch64_updatever 40
-%global aarch64_buildver b04
-%global aarch64_changesetid a6df78e590bb
+%global aarch64_buildver b12
+%global aarch64_changesetid aarch64
 # priority must be 6 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -654,7 +654,7 @@ URL:      http://openjdk.java.net/
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
 Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  aarch64-hotspot-jdk8u%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}.tar.xz
+Source1:  jdk8-jdk8u%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -944,7 +944,7 @@ else
   exit 12
 fi
 if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
-  echo "you have disabled both include_debug_build and enclude_debug_build. no go."
+  echo "you have disabled both include_debug_build and include_debug_build. no go."
   exit 13
 fi
 %setup -q -c -n %{uniquesuffix ""} -T -a 0

@@ -46,7 +46,12 @@ rm  "${VERSION}.tar.gz"
 mv "${REPO_NAME}-${VERSION}" jdk8
 pushd jdk8
 
-for subrepo in corba hotspot jdk jaxws jaxp langtools nashorn
+repos="corba hotspot jdk jaxws jaxp langtools nashorn"
+if [ aarch64-port = $PROJECT_NAME ] ; then
+repos="hotspot"
+fi;
+
+for subrepo in $repos
 do
     wget "${REPO_ROOT}/${subrepo}/archive/${VERSION}.tar.gz"
     tar xf "${VERSION}.tar.gz"
@@ -54,8 +59,9 @@ do
     mv "${subrepo}-${VERSION}" "${subrepo}"
 done
 
-rm -vr jdk/src/share/native/sun/security/ec/impl
-
+if [ -e jdk ] ; then 
+  rm -vr jdk/src/share/native/sun/security/ec/impl
+fi
 popd
 
 tar cJf ${REPO_NAME}-${VERSION}.tar.xz jdk8
