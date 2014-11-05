@@ -115,7 +115,7 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       40
-%global buildver        b02
+%global buildver        b12
 %global aarch64_updatever 40
 %global aarch64_buildver b12
 %global aarch64_changesetid aarch64
