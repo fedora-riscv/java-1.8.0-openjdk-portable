@@ -1184,7 +1184,7 @@ if [ %{include_normal_build} -eq 1 -a  %{include_debug_build} -eq 1 ] ; then
   if [ "$suffix" = "%{debug_suffix}" ] ; then
 # debug build just passed, restore normal backups (see that debug one already renamed)
     mv $normalBuildStore/%{j2sdkimage ""} images/
-    mv $normalBuildStore/docs images/
+    mv $normalBuildStore/docs .
   fi
 fi
 popd
@@ -1635,21 +1635,20 @@ end
 %{postun_javadoc %{debug_suffix_unquoted}}
 %endif
 
-# main package builds always
 %if %{include_normal_build} 
 %files -f %{name}.files
+# main package builds always
 %{files_jre %{nil}}
 %else
-# placeholder
 %files
-
+# placeholder
 %endif
 
 
 %if %{include_normal_build} 
+%files headless  -f %{name}.files-headless
 # important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
 # all config/norepalce files (and more) have to be declared in pretrans. See pretrans
-%files headless  -f %{name}.files-headless
 %{files_jre_headless %{nil}}
 
 %files devel
@@ -1696,6 +1695,8 @@ end
 * Mon Nov 03 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-15.b02
 - enabled debug packages
 - removed all provides duplicating package name
+- comments about files moved inside files section (to prevent different javadoc postuns)
+ - see (RH1160693)
 
 * Fri Oct 31 2014 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-13.b02
 - Build against libjpeg-turbo-1.4
