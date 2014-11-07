@@ -97,7 +97,6 @@
 %endif
 
 
-%global buildoutputdir jdk8/build/jdk8.build
 
 %ifarch %{jit_arches}
 %global with_systemtap 1
@@ -126,7 +125,9 @@
 # parametrized macros are order-sensitive
 %global fullversion     %{name}-%{version}-%{release}
 #images stub
-%global j2sdkimage() %{expand:j2sdk-image%1}
+%global j2sdkimage       j2sdk-image
+# output dir stub
+%global buildoutputdir() %{expand:jdk8/build/jdk8.build%1}
 #we can copy the javadoc to not arched dir, or made it not noarch
 %global uniquejavadocdir()    %{expand:%{fullversion}%1}
 #main id and dir of this jdk
@@ -398,9 +399,9 @@ exit 0
 
 %global files_jre_headless() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/THIRD_PARTY_README
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/ASSEMBLY_EXCEPTION
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir %%1}
 %{_jvmdir}/%{jrelnk %%1}
 %{_jvmjardir}/%{jrelnk %%1}
@@ -436,9 +437,9 @@ exit 0
 
 %global files_devel() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/LICENSE
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/THIRD_PARTY_README
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/ASSEMBLY_EXCEPTION
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/LICENSE
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir %%1}/bin
 %dir %{_jvmdir}/%{sdkdir %%1}/include
 %dir %{_jvmdir}/%{sdkdir %%1}/lib
@@ -490,7 +491,7 @@ exit 0
 
 %global files_demo() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
 %global files_src() %{expand:
@@ -502,7 +503,7 @@ exit 0
 %global files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir %%1}
-%doc %{buildoutputdir}/images/%{j2sdkimage %%1}/jre/LICENSE
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
 %global files_accessibility() %{expand:
@@ -1073,9 +1074,6 @@ export EXTRA_CFLAGS
  bash ./autogen.sh
 )
 
-# backup of normal image for case of dual build on
-normalBuildStore=`mktemp -d`
-
 for suffix in %{build_loop} ; do
 if [ "$suffix" = "%{debug_suffix}" ] ; then
 debugbuild=%{debugbuild_parameter}
@@ -1083,8 +1081,8 @@ else
 debugbuild=%{normalbuild_parameter}
 fi
 
-mkdir -p %{buildoutputdir}
-pushd %{buildoutputdir}
+mkdir -p %{buildoutputdir $suffix}
+pushd %{buildoutputdir $suffix}
 
 bash ../../configure \
 %ifnarch %{jit_arches}
@@ -1128,17 +1126,17 @@ make \
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
 # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
-find images/%{j2sdkimage ""} -iname '*.jar' -exec chmod ugo+r {} \;
-chmod ugo+r images/%{j2sdkimage ""}/lib/ct.sym
+find images/%{j2sdkimage} -iname '*.jar' -exec chmod ugo+r {} \;
+chmod ugo+r images/%{j2sdkimage}/lib/ct.sym
 
 # remove redundant *diz and *debuginfo files
-find images/%{j2sdkimage ""} -iname '*.diz' -exec rm {} \;
-find images/%{j2sdkimage ""} -iname '*.debuginfo' -exec rm {} \;
+find images/%{j2sdkimage} -iname '*.diz' -exec rm {} \;
+find images/%{j2sdkimage} -iname '*.debuginfo' -exec rm {} \;
 
 popd >& /dev/null
 
 # Install nss.cfg right away as we will be using the JRE above
-export JAVA_HOME=$(pwd)/%{buildoutputdir}/images/%{j2sdkimage ""}
+export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
@@ -1169,29 +1167,6 @@ fi
 # Check src.zip has all sources. See RHBZ#1130490
 jar -tf $JAVA_HOME/src.zip | grep Unsafe
 
-pushd %{buildoutputdir}
-#note, that order is normal_suffix debug_suffix (in case of both enabled)
-if [ "$suffix" = "%{debug_suffix}" ] ; then
-# debug build passed, mv it to j2sdk-image-%%{debug_suffix}
-  mv images/%{j2sdkimage ""} images/%{j2sdkimage %{debug_suffix_unquoted}}
-# same with docs
-  mv docs docs$suffix
-fi
-if [ %{include_normal_build} -eq 1 -a  %{include_debug_build} -eq 1 ] ; then
-  if [ "$suffix" = "%{normal_suffix}" ] ; then
-# normal build just passed, and debug one is going to run. backup image and docs
-    mv images/%{j2sdkimage ""} $normalBuildStore
-    mv docs $normalBuildStore
-    make clean
-  fi
-  if [ "$suffix" = "%{debug_suffix}" ] ; then
-# debug build just passed, restore normal backups (see that debug one already renamed)
-    mv $normalBuildStore/%{j2sdkimage ""} images/
-    mv $normalBuildStore/docs .
-  fi
-fi
-popd
-
 #build cycles
 done
 
@@ -1206,7 +1181,7 @@ pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
 ln -s %{_datadir}/soundfonts/default.sf2
 popd
 
-pushd %{buildoutputdir}/images/%{j2sdkimage $suffix}
+pushd %{buildoutputdir  $suffix}/images/%{j2sdkimage}
 
 #install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/server/
@@ -1302,7 +1277,7 @@ popd
 
 # Install Javadoc documentation.
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
-cp -a %{buildoutputdir}/docs$suffix $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
+cp -a %{buildoutputdir $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
 
 # Install icons and menu entries.
 for s in 16 24 32 48 ; do
@@ -1697,6 +1672,7 @@ end
 %changelog
 * Fri Nov 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-17.b12
 - obsoleted gcj and sindoc. rh1149674 and rh1149675
+- removed backup/restore on images and docs in favor of reconfigure in different directory
 
 * Mon Nov 03 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-16.b12
 - updated both noral and aarch64 tarballs to u40b12
