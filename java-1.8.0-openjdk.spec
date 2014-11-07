@@ -533,6 +533,8 @@ Provides: java%1 = %{epoch}:%{javaver}
 Provides: java-fonts%1 = %{epoch}:%{version}
 
 Obsoletes: java-1.7.0-openjdk%1
+Obsoletes: java-1.5.0-gcj%1
+Obsoletes: sinjdoc
 }
 
 %global java_headless_rpo() %{expand:
@@ -589,6 +591,7 @@ Provides: java-devel-%{origin}%1 = %{epoch}:%{version}
 Provides: java-devel%1 = %{epoch}:%{javaver}
 
 Obsoletes: java-1.7.0-openjdk-devel%1
+Obsoletes: java-1.5.0-gcj-devel%1
 }
 
 
@@ -633,7 +636,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 16.%{buildver}%{?dist}
+Release: 17.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1692,6 +1695,9 @@ end
 
 
 %changelog
+* Fri Nov 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-17.b12
+- obsoleted gcj and sindoc. rh1149674 and rh1149675
+
 * Mon Nov 03 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-16.b12
 - updated both noral and aarch64 tarballs to u40b12
 
