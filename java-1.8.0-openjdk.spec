@@ -117,7 +117,7 @@
 %global buildver        b12
 %global aarch64_updatever 40
 %global aarch64_buildver b12
-%global aarch64_changesetid aarch64
+%global aarch64_changesetid aarch64-1263
 # priority must be 6 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -637,7 +637,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 17.%{buildver}%{?dist}
+Release: 18.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1670,6 +1670,9 @@ end
 
 
 %changelog
+* Fri Nov 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-18.b12
+- updated arm64 tarball to jdk8-jdk8u40-b12-aarch64-1263.tar.xz
+
 * Fri Nov 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-17.b12
 - obsoleted gcj and sindoc. rh1149674 and rh1149675
 - removed backup/restore on images and docs in favor of reconfigure in different directory
