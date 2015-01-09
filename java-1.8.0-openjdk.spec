@@ -637,7 +637,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 18.%{buildver}%{?dist}
+Release: 19.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1670,6 +1670,9 @@ end
 
 
 %changelog
+* Fri Jan 09 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.40-19.b12
+- refresh s390 patches
+
 * Fri Nov 07 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-18.b12
 - updated arm64 tarball to jdk8-jdk8u40-b12-aarch64-1263.tar.xz
 
