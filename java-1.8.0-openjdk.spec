@@ -637,7 +637,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 20.%{buildver}%{?dist}
+Release: 21.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1064,8 +1064,8 @@ export CFLAGS="$CFLAGS -mieee"
 
 EXTRA_CFLAGS="-fstack-protector-strong"
 #see https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize" 
-EXTRA_CPP_FLAGS="-fno-devirtualize"
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize -Wno-return-local-addr"
+EXTRA_CPP_FLAGS="-fno-devirtualize -Wno-return-local-addr"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
@@ -1123,6 +1123,7 @@ bash ../../configure \
 
 make \
     DEBUG_BINARIES=true \
+    JAVAC_FLAGS=-g \
     STRIP_POLICY=no_strip \
     POST_STRIP_CMD="" \
     LOG=trace \
@@ -1170,7 +1171,17 @@ if [ -f "$ZERO_JVM" ] ; then
 fi
 
 # Check src.zip has all sources. See RHBZ#1130490
-jar -tf $JAVA_HOME/src.zip | grep Unsafe
+jar -tf $JAVA_HOME/src.zip | grep 'sun.misc.Unsafe'
+
+# Check class files include useful debugging information
+$JAVA_HOME/bin/javap -l java.lang.Object | grep "Compiled from"
+$JAVA_HOME/bin/javap -l java.lang.Object | grep LineNumberTable
+$JAVA_HOME/bin/javap -l java.lang.Object | grep LocalVariableTable
+
+# Check generated class files include useful debugging information
+$JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
+$JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
+$JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
 
 #build cycles
 done
@@ -1677,6 +1688,11 @@ end
 
 
 %changelog
+* Thu Feb 12 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-21.b25
+- Fix building with gcc 5 by ignoring return-local-addr warning
+- Include additional debugging info for java class files and test that they are
+  present
+
 * Thu Feb 12 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-20.b25
 - bumped to b25
 - removed upstreamed patch11 hotspot-build-j-directive.patch
