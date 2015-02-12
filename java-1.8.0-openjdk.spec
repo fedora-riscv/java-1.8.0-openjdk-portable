@@ -118,7 +118,7 @@
 %global aarch64_updatever 40
 %global aarch64_buildver b12
 %global aarch64_changesetid aarch64-1263
-# priority must be 6 digits in total
+# priority must be 7 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
 
@@ -682,6 +682,8 @@ Source12: remove-intree-libraries.sh
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
 
+Source20: repackReproduciblePolycies.sh
+
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
@@ -951,6 +953,11 @@ if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
   exit 13
 fi
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
+prioritylength=`expr length %{priority}`
+if [ $prioritylength -ne 7 ] ; then
+ echo "priority must be 7 digits in total, violated"
+ exit 14
+fi
 %ifarch %{aarch64}
 pushd jdk8
 rm -r hotspot
@@ -1373,6 +1380,8 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
     echo "" >> accessibility.properties
   popd
 
+bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix} %{javaver}
+
 # end, dual install
 done
 
@@ -1671,6 +1680,9 @@ end
 * Thu Feb 12 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-20.b25
 - bumped to b25
 - removed upstreamed patch11 hotspot-build-j-directive.patch
+- policies repacked to stop spamming yum update
+- added and used source20 repackReproduciblePolycies.sh
+- added mehanism to force priority size
 
 * Fri Jan 09 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.40-19.b12
 - refresh s390 patches
