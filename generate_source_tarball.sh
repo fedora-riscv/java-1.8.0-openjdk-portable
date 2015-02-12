@@ -5,6 +5,7 @@
 # Usage: generate_source_tarball.sh project_name repo_name tag
 #
 # Examples:
+#  sh generate_source_tarball.sh jdk8u jdk8u40 jdk8u40-b25
 #   ./generate_source_tarball.sh jdk8 jdk8 jdk8-b79
 #   ./generate_source_tarball.sh jdk8u jdk8u jdk8u5-b13
 #   ./generate_source_tarball.sh aarch64-port jdk8 aarch64-${DATE}

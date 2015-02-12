@@ -114,7 +114,7 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       40
-%global buildver        b12
+%global buildver        b25
 %global aarch64_updatever 40
 %global aarch64_buildver b12
 %global aarch64_changesetid aarch64-1263
@@ -637,7 +637,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 19.%{buildver}%{?dist}
+Release: 20.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -657,7 +657,7 @@ URL:      http://openjdk.java.net/
 # Source from upstrem OpenJDK8 project. To regenerate, use
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
-Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
+Source0:  jdk8u40-jdk8u%{updatever}-%{buildver}.tar.xz
 Source1:  jdk8-jdk8u%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}.tar.xz
 
 # Custom README for -src subpackage
@@ -702,7 +702,6 @@ Patch6: disable-doclint-by-default.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
 # Problem discovered with make 4.0
-Patch11: hotspot-build-j-directive.patch
 Patch12: removeSunEcProvider-RH1154143.patch
 Patch13: libjpeg-turbo-1.4-compat.patch
 
@@ -986,7 +985,6 @@ sh %{SOURCE12}
 %patch5
 %patch6
 %patch7
-%patch11
 %patch12
 %patch13
 
@@ -1670,6 +1668,10 @@ end
 
 
 %changelog
+* Thu Feb 12 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-20.b25
+- bumped to b25
+- removed upstreamed patch11 hotspot-build-j-directive.patch
+
 * Fri Jan 09 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.40-19.b12
 - refresh s390 patches
 
