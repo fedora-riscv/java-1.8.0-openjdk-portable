@@ -216,7 +216,7 @@ for X in %{origin} %{javaver} ; do
     --install %{_jvmdir}/jre-"$X" \\
     jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority} \\
     --slave %{_jvmjardir}/jre-"$X" \\
-    jre_"$X"_exports %{_jvmjardir}/%{jredir %%1}
+    jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
 done
 
 update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority} \\
