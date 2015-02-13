@@ -1,4 +1,5 @@
 #!/bin/sh
+# https://bugzilla.redhat.com/show_bug.cgi?id=1142153
 M=META-INF/MANIFEST.MF
 #P=/usr/lib/jvm/java/jre/lib/security
 P=$1/lib/security
