@@ -719,6 +719,7 @@ Patch102: %{name}-size_t.patch
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
+Patch204: zero-interpreter-fix.patch
 
 Patch300: jstack-pr1845.patch
 
@@ -986,6 +987,9 @@ sh %{SOURCE12}
 %patch201
 %patch202
 %patch203
+%ifnarch %{aarch64}
+%patch204
+%endif
 
 %patch1
 %patch3
@@ -1689,6 +1693,9 @@ end
 
 
 %changelog
+* Fri Feb 20 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-21.b25
+- Fix zero interpreter build.
+
 * Thu Feb 12 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-21.b25
 - Fix building with gcc 5 by ignoring return-local-addr warning
 - Include additional debugging info for java class files and test that they are
