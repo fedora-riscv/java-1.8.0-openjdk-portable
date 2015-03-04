@@ -1693,6 +1693,9 @@ end
 
 
 %changelog
+* Tue Mar 03 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.40-21.b25
+- Added compiler no-warn-
+
 * Fri Feb 20 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-21.b25
 - Fix zero interpreter build.
 
