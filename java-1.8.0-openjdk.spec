@@ -116,8 +116,8 @@
 %global updatever       40
 %global buildver        b25
 %global aarch64_updatever 40
-%global aarch64_buildver b12
-%global aarch64_changesetid aarch64-1263
+%global aarch64_buildver b25
+%global aarch64_changesetid aarch64-jdk8u40-b25
 # priority must be 7 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
