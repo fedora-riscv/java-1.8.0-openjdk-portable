@@ -443,15 +443,9 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir %%1}/bin
 %dir %{_jvmdir}/%{sdkdir %%1}/include
 %dir %{_jvmdir}/%{sdkdir %%1}/lib
-%if %{with_systemtap}
-%dir %{_jvmdir}/%{sdkdir %%1}/tapset
-%endif
 %{_jvmdir}/%{sdkdir %%1}/bin/*
 %{_jvmdir}/%{sdkdir %%1}/include/*
 %{_jvmdir}/%{sdkdir %%1}/lib/*
-%if %{with_systemtap}
-%{_jvmdir}/%{sdkdir %%1}/tapset/*.stp
-%endif
 %{_jvmjardir}/%{sdkdir %%1}
 %{_datadir}/applications/*jconsole%1.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
@@ -485,7 +479,11 @@ exit 0
 %{_mandir}/man1/wsimport-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/xjc-%{uniquesuffix %%1}.1*
 %if %{with_systemtap}
-%{tapsetroot}
+%dir %{tapsetroot}
+%dir %{tapsetdir}
+%{tapsetdir}/*%{version}-%{release}.%{_arch}%1.stp
+%dir %{_jvmdir}/%{sdkdir %%1}/tapset
+%{_jvmdir}/%{sdkdir %%1}/tapset/*.stp
 %endif
 }
 
@@ -637,7 +635,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 21.%{buildver}%{?dist}
+Release: 22.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1219,10 +1217,16 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/client/
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/tapset
   # note, that uniquesuffix  is in BUILD dir in this case
   cp -a $RPM_BUILD_DIR/%{uniquesuffix ""}/tapset$suffix/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/tapset/
+  pushd  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/tapset/
+   tapsetFiles=`ls *.stp`
+  popd
   install -d -m 755 $RPM_BUILD_ROOT%{tapsetdir}
   pushd $RPM_BUILD_ROOT%{tapsetdir}
     RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir $suffix}/tapset %{tapsetdir})
-    ln -sf $RELATIVE/*.stp .
+    for name in $tapsetFiles ; do
+      targetName=`echo $name | sed "s/.stp/$suffix.stp/"`
+      ln -sf $RELATIVE/$name $targetName
+    done
   popd
 %endif
 
@@ -1693,6 +1697,9 @@ end
 
 
 %changelog
+* Mon Mar 23 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-22.b25
+- sytemtap made working for dual package
+
 * Tue Mar 03 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.40-21.b25
 - Added compiler no-warn-
 
