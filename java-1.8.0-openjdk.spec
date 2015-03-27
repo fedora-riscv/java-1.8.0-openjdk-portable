@@ -635,7 +635,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 24.%{buildver}%{?dist}
+Release: 25.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1705,6 +1705,9 @@ end
 
 
 %changelog
+* Fri Mar 27 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.40-25.b25
+- refresh s390 patches
+
 * Fri Mar 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-24.b25
 - added patch501 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
 - added patch502 1182694_javaApplicationMenuMisbehave.patch
