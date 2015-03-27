@@ -635,7 +635,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 23.%{buildver}%{?dist}
+Release: 24.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -724,6 +724,11 @@ Patch300: jstack-pr1845.patch
 Patch400: ppc_stack_overflow_fix.patch 
 Patch401: fix_ZERO_ARCHDEF_ppc.patch
 Patch402: atomic_linux_zero.inline.hpp.patch
+
+#both upstreamed, will fly away in u60
+Patch501: 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
+Patch502: 1182694_javaApplicationMenuMisbehave.patch
+
 
 Patch9999: enableArm64.patch
 
@@ -1016,6 +1021,9 @@ sh %{SOURCE12}
 tar xzf %{SOURCE8}
 
 %patch300
+
+%patch501
+%patch502
 
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
@@ -1697,6 +1705,11 @@ end
 
 
 %changelog
+* Fri Mar 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-24.b25
+- added patch501 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
+- added patch502 1182694_javaApplicationMenuMisbehave.patch
+- both upstreamed, will be gone with u60
+
 * Wed Mar 25 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-23.b25
 - Disable various EC algorithms in configuration
 
