@@ -635,7 +635,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 25.%{buildver}%{?dist}
+Release: 26.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -724,6 +724,8 @@ Patch300: jstack-pr1845.patch
 Patch400: ppc_stack_overflow_fix.patch 
 Patch401: fix_ZERO_ARCHDEF_ppc.patch
 Patch402: atomic_linux_zero.inline.hpp.patch
+# Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
+Patch403: rhbz1206656_fix_current_stack_pointer.patch
 
 #both upstreamed, will fly away in u60
 Patch501: 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
@@ -1014,6 +1016,7 @@ sh %{SOURCE12}
 %patch400
 %patch401
 %patch402
+%patch403
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1705,6 +1708,10 @@ end
 
 
 %changelog
+* Tue Mar 31 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.40-26.b25
+- Make Zero build-able on ARM32.
+  Resolves: RHBZ#1206656
+
 * Fri Mar 27 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.40-25.b25
 - refresh s390 patches
 
