@@ -1077,9 +1077,11 @@ export CFLAGS="$CFLAGS -mieee"
 %endif
 
 EXTRA_CFLAGS="-fstack-protector-strong"
-#see https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize -Wno-return-local-addr"
-EXTRA_CPP_FLAGS="-fno-devirtualize -Wno-return-local-addr"
+# Disable various optimizations to fix miscompliation. See:
+# - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
+# - https://bugzilla.redhat.com/show_bug.cgi?id=1208369
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize -fno-tree-vrp"
+EXTRA_CPP_FLAGS="-fno-devirtualize -fno-tree-vrp"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
@@ -1708,6 +1710,10 @@ end
 
 
 %changelog
+* Tue Apr 14 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-27.b25
+- Add -fno-tree-vrp to flags to prevent hotspot miscompilation.
+- Resolves: RHBZ#1208369
+
 * Thu Apr 02 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-27.b25
 - bumped release. Needed rebuild by itself on arm
 
