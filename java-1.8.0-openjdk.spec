@@ -1729,7 +1729,7 @@ end
 - renamed remove-intree-libraries.sh -> java-1.8.0-openjdk-remove-intree-libraries.sh
 - renamed to preven conflix with jdk7
 
-* Tue Apr 03 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-27.b25
+* Fri Apr 03 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.40-27.b25
 - Add -fno-tree-vrp to flags to prevent hotspot miscompilation.
 - Resolves: RHBZ#1208369
 
