@@ -63,8 +63,11 @@
 %ifarch ppc
 %global archinstall ppc
 %endif
-%ifarch %{power64}
+%ifarch %{ppc64be}
 %global archinstall ppc64
+%endif
+%ifarch %{ppc64le}
+%global archinstall ppc64le
 %endif
 %ifarch %{ix86}
 %global archinstall i386
@@ -169,7 +172,8 @@ exit 0
 # FIXME: identical binaries are copied, not linked. This needs to be
 # fixed upstream.
 %ifarch %{jit_arches}
-%ifnarch %{ppc64le}
+# MetaspaceShared::generate_vtable_methods not implemented for PPC JIT
+%ifnarch %{power64}
 #see https://bugzilla.redhat.com/show_bug.cgi?id=513605
 %{jrebindir %%1}/java -Xshare:dump >/dev/null 2>/dev/null
 %endif
@@ -428,8 +432,10 @@ exit 0
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/nss.cfg
 %{_jvmdir}/%{jredir %%1}/lib/audio/
 %ifarch %{jit_arches}
+%ifnarch %{power64}
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/classes.jsa
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/client/classes.jsa
+%endif
 %endif
 %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/
 %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/client/
@@ -635,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 32.%{buildver}%{?dist}
+Release: 35.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -971,6 +977,7 @@ if [ $prioritylength -ne 7 ] ; then
  echo "priority must be 7 digits in total, violated"
  exit 14
 fi
+ln -s jdk8 openjdk
 %ifarch %{aarch64}
 pushd jdk8
 rm -r hotspot
@@ -1113,9 +1120,6 @@ pushd %{buildoutputdir $suffix}
 bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
-%endif
-%ifarch %{ppc64le}
-    --with-jvm-interpreter=cpp \
 %endif
     --disable-zip-debug-info \
     --with-milestone="fcs" \
@@ -1717,6 +1721,11 @@ end
 %endif
 
 %changelog
+* Wed Apr 29 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-35.b13
+- Omit jsa files from power64 file list as well, as they are never generated
+- moved to boot build by openjdk8
+- Use the template interpreter on ppc64le
+
 * Fri Apr 10 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-31.b13
 - repacked sources
 
