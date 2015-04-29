@@ -641,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 35.%{buildver}%{?dist}
+Release: 36.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -726,13 +726,13 @@ Patch204: zero-interpreter-fix.patch
 
 Patch300: jstack-pr1845.patch
 
-# Fixed in upstream 9. See upstream bug:
+# Fixed upstream. Can be removed with u60. See upstream bug:
 # https://bugs.openjdk.java.net/browse/JDK-8064815
 Patch400: ppc_stack_overflow_fix.patch 
-# Fixed in upstream 9. See upstream bug:
+# Fixed upstream. Can be removed with u60. See upstream bug:
 # https://bugs.openjdk.java.net/browse/JDK-8067330
 Patch401: fix_ZERO_ARCHDEF_ppc.patch
-# Fixed in upstream 9. See upstream bug:
+# Fixed upstream. Can be removed with u60. See upstream bug:
 # https://bugs.openjdk.java.net/browse/JDK-8067331
 Patch402: atomic_linux_zero.inline.hpp.patch
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
@@ -742,6 +742,10 @@ Patch403: rhbz1206656_fix_current_stack_pointer.patch
 Patch501: 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
 Patch502: 1182694_javaApplicationMenuMisbehave.patch
 Patch503: d318d83c4e74.patch
+# Patch for upstream JDK-6991580 (RHBZ#1210739). Can be removed with u60
+Patch504: 1210739_dns_naming_ipv6_addresses.patch
+# Patch for upstream JDK-8078666 (RHBZ#1208369)
+Patch505: 1208369_memory_leak_gcc5.patch
 
 
 Patch9999: enableArm64.patch
@@ -1023,7 +1027,6 @@ sh %{SOURCE12}
 %endif
 
 # Zero PPC fixes.
-#  TODO: propose them upstream
 %patch400
 %patch401
 %patch402
@@ -1039,6 +1042,8 @@ tar xzf %{SOURCE8}
 %patch501
 %patch502
 %patch503
+%patch504
+%patch505
 
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
@@ -1091,8 +1096,7 @@ export CFLAGS="$CFLAGS -mieee"
 EXTRA_CFLAGS="-fstack-protector-strong"
 # Disable various optimizations to fix miscompliation. See:
 # - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-# - https://bugzilla.redhat.com/show_bug.cgi?id=1208369
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize -fno-tree-vrp"
+EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize"
 EXTRA_CPP_FLAGS="-fno-devirtualize -fno-tree-vrp"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
@@ -1721,6 +1725,13 @@ end
 %endif
 
 %changelog
+* Wed Apr 29 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.45-36.b13
+- Patch hotspot to not use undefined code rather than passing
+  -fno-tree-vrp via CFLAGS.
+  Resolves: RHBZ#1208369
+- Add upstream patch for DNS nameserver issue with IPv6 addresses.
+  Resolves: RHBZ#1210739
+
 * Wed Apr 29 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-35.b13
 - Omit jsa files from power64 file list as well, as they are never generated
 - moved to boot build by openjdk8
