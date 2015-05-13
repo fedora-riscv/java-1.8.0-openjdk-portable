@@ -117,7 +117,7 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       45
-%global buildver        b13
+%global buildver        b14
 %global aarch64_updatever 45
 %global aarch64_buildver b13
 %global aarch64_changesetid aarch64-jdk8u45-b13
@@ -548,7 +548,7 @@ Requires: ca-certificates
 # Require jpackage-utils for ownership of /usr/lib/jvm/
 Requires: jpackage-utils
 # Require zoneinfo data provided by tzdata-java subpackage.
-Requires: tzdata-java >= 2015d-2
+Requires: tzdata-java >= 2015d
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives.
@@ -641,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 37.%{buildver}%{?dist}
+Release: 38.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -781,7 +781,7 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-BuildRequires: tzdata-java >= 2015d-2
+BuildRequires: tzdata-java >= 2015d
 
 # cacerts build requirement.
 BuildRequires: openssl
@@ -1724,6 +1724,9 @@ end
 %endif
 
 %changelog
+* Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-38.b14
+- updated to 8u45-b14 with hope to fix rhbz#1123870
+
 * Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-37.b13
 - added runtime requires for tzdata
 - Remove reference to tz.properties which is no longer used (by gnu.andrew)
