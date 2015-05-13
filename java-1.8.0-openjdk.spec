@@ -548,7 +548,7 @@ Requires: ca-certificates
 # Require jpackage-utils for ownership of /usr/lib/jvm/
 Requires: jpackage-utils
 # Require zoneinfo data provided by tzdata-java subpackage.
-Requires: tzdata-java >= 2014f-1
+Requires: tzdata-java >= 2015d-2
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives.
@@ -641,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 36.%{buildver}%{?dist}
+Release: 37.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -781,7 +781,7 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-BuildRequires: tzdata-java >= 2014f-1
+BuildRequires: tzdata-java >= 2015d-2
 
 # cacerts build requirement.
 BuildRequires: openssl
@@ -1462,7 +1462,6 @@ local caredFiles = {"jre/lib/calendars.properties",
               "jre/lib/net.properties",
               "jre/lib/psfontj2d.properties",
               "jre/lib/sound.properties",
-              "jre/lib/tz.properties",
               "jre/lib/deployment.properties",
               "jre/lib/deployment.config",
               "jre/lib/security/US_export_policy.jar",
@@ -1725,6 +1724,10 @@ end
 %endif
 
 %changelog
+* Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-36.b13
+- added runtime requires for tzdata
+- Remove reference to tz.properties which is no longer used (by gnu.andrew)
+
 * Wed Apr 29 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.45-36.b13
 - Patch hotspot to not use undefined code rather than passing
   -fno-tree-vrp via CFLAGS.
