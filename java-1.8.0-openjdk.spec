@@ -1724,7 +1724,7 @@ end
 %endif
 
 %changelog
-* Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-36.b13
+* Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-37.b13
 - added runtime requires for tzdata
 - Remove reference to tz.properties which is no longer used (by gnu.andrew)
 
