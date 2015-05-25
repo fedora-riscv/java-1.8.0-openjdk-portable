@@ -641,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1013,6 +1013,10 @@ sh %{SOURCE12}
 # Zero PPC fixes.
 %patch403
 
+%patch503
+%patch505
+%patch506
+
 # Extract systemtap tapsets
 %if %{with_systemtap}
 tar xzf %{SOURCE8}
@@ -1021,9 +1025,6 @@ tar xzf %{SOURCE8}
 cp -r tapset tapset%{debug_suffix}
 %endif
 
-%patch503
-%patch505
-%patch506
 
 for suffix in %{build_loop} ; do
   for file in "tapset"$suffix/*.in; do
@@ -1699,6 +1700,10 @@ end
 %endif
 
 %changelog
+* Mon May 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-2.b16
+- Patch503 d318d83c4e74.patch, patch505 1208369_memory_leak_gcc5.patch (and patch506 gif4.1.patch)
+   moved out of "if with_systemtap" block
+
 * Mon May 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-1.b16
 - updated to u60b16
 - deleted upstreamed patches:
@@ -1710,8 +1715,6 @@ end
    patch400 ppc_stack_overflow_fix.patch
    patch204 zero-interpreter-fix.patch
 - added Patch506 gif4.1.patch to allow build agaisnt giflib > 4.1
-- Patch503 d318d83c4e74.patch, patch505 1208369_memory_leak_gcc5.patch (and patch506 gif4.1.patch)
-   moved out of "if with_systemtap" block
 
 * Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-38.b14
 - updated to 8u45-b14 with hope to fix rhbz#1123870
