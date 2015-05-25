@@ -116,8 +116,8 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       45
-%global buildver        b14
+%global updatever       60
+%global buildver        b16
 %global aarch64_updatever 45
 %global aarch64_buildver b13
 %global aarch64_changesetid aarch64-jdk8u45-b13
@@ -641,7 +641,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 38.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -662,7 +662,7 @@ URL:      http://openjdk.java.net/
 # Source from upstrem OpenJDK8 project. To regenerate, use
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
-Source0:  jdk8u45-jdk8u%{updatever}-%{buildver}.tar.xz
+Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
 Source1:  jdk8-jdk8u%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}.tar.xz
 
 # Custom README for -src subpackage
@@ -722,28 +722,13 @@ Patch102: %{name}-size_t.patch
 Patch201: system-libjpeg.patch
 Patch202: system-libpng.patch
 Patch203: system-lcms.patch
-Patch204: zero-interpreter-fix.patch
 
 Patch300: jstack-pr1845.patch
 
-# Fixed upstream. Can be removed with u60. See upstream bug:
-# https://bugs.openjdk.java.net/browse/JDK-8064815
-Patch400: ppc_stack_overflow_fix.patch 
-# Fixed upstream. Can be removed with u60. See upstream bug:
-# https://bugs.openjdk.java.net/browse/JDK-8067330
-Patch401: fix_ZERO_ARCHDEF_ppc.patch
-# Fixed upstream. Can be removed with u60. See upstream bug:
-# https://bugs.openjdk.java.net/browse/JDK-8067331
-Patch402: atomic_linux_zero.inline.hpp.patch
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
 
-#both upstreamed, will fly away in u60 (bug IDs are Red Hat bug IDs)
-Patch501: 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
-Patch502: 1182694_javaApplicationMenuMisbehave.patch
 Patch503: d318d83c4e74.patch
-# Patch for upstream JDK-6991580 (RHBZ#1210739). Can be removed with u60
-Patch504: 1210739_dns_naming_ipv6_addresses.patch
 # Patch for upstream JDK-8078666 (RHBZ#1208369)
 Patch505: 1208369_memory_leak_gcc5.patch
 
@@ -1009,7 +994,6 @@ sh %{SOURCE12}
 %patch202
 %patch203
 %ifnarch %{aarch64}
-%patch204
 %endif
 
 %patch1
@@ -1027,9 +1011,6 @@ sh %{SOURCE12}
 %endif
 
 # Zero PPC fixes.
-%patch400
-%patch401
-%patch402
 %patch403
 
 # Extract systemtap tapsets
@@ -1039,10 +1020,7 @@ tar xzf %{SOURCE8}
 
 %patch300
 
-%patch501
-%patch502
 %patch503
-%patch504
 %patch505
 
 %if %{include_debug_build}
@@ -1724,6 +1702,17 @@ end
 %endif
 
 %changelog
+* Mon May 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-1.b16
+- updated to u60b16
+- deleted upstreamed patches:
+   patch501 1182011_JavaPrintApiDoesNotPrintUmlautCharsWithPostscriptOutputCorrectly.patch
+   patch502 1182694_javaApplicationMenuMisbehave.patch
+   patch504 1210739_dns_naming_ipv6_addresses.patch
+   patch402 atomic_linux_zero.inline.hpp.patch
+   patch401 fix_ZERO_ARCHDEF_ppc.patch
+   patch400 ppc_stack_overflow_fix.patch
+   patch204 zero-interpreter-fix.patch
+
 * Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-38.b14
 - updated to 8u45-b14 with hope to fix rhbz#1123870
 

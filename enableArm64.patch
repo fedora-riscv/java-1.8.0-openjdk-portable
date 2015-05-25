@@ -17,32 +17,6 @@
    program_prefix=${target_alias}-
  
    # Figure out the build and target systems. # Note that in autoconf terminology, "build" is obvious, but "target"
-@@ -6816,6 +6817,12 @@
-       VAR_CPU=arm
-       VAR_CPU_ARCH=arm
-       VAR_CPU_BITS=32
-+      VAR_CPU_ENDIAN=little
-+      ;;
-+    aarch64)
-+      VAR_CPU=aarch64
-+      VAR_CPU_ARCH=aarch64
-+      VAR_CPU_BITS=64
-       VAR_CPU_ENDIAN=little
-       ;;
-     powerpc)
-@@ -6949,6 +6956,12 @@
-       VAR_CPU_BITS=32
-       VAR_CPU_ENDIAN=little
-       ;;
-+    aarch64)
-+      VAR_CPU=aarch64
-+      VAR_CPU_ARCH=aarch64
-+      VAR_CPU_BITS=64
-+      VAR_CPU_ENDIAN=little
-+      ;;
-     powerpc)
-       VAR_CPU=ppc
-       VAR_CPU_ARCH=ppc
 @@ -7950,6 +7963,9 @@
    if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
      INCLUDE_SA=false
@@ -86,7 +60,7 @@
 +  if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
      INCLUDE_SA=false
    fi
-   AC_SUBST(INCLUDE_SA)
+   if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
 @@ -460,12 +458,6 @@
      AC_MSG_ERROR([Update version must have a value])
    elif test "x$with_update_version" != x; then
@@ -100,21 +74,6 @@
    fi
  
    AC_ARG_WITH(user-release-suffix, [AS_HELP_STRING([--with-user-release-suffix],
---- jdk8/common/autoconf/platform.m4
-+++ jdk8/common/autoconf/platform.m4
-@@ -46,6 +46,12 @@
-       VAR_CPU=arm
-       VAR_CPU_ARCH=arm
-       VAR_CPU_BITS=32
-+      VAR_CPU_ENDIAN=little
-+      ;;
-+    aarch64)
-+      VAR_CPU=aarch64
-+      VAR_CPU_ARCH=aarch64
-+      VAR_CPU_BITS=64
-       VAR_CPU_ENDIAN=little
-       ;;
-     powerpc)
 --- jdk8/common/autoconf/toolchain.m4
 +++ jdk8/common/autoconf/toolchain.m4
 @@ -1158,6 +1158,9 @@
