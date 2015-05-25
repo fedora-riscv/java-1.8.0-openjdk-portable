@@ -731,6 +731,7 @@ Patch403: rhbz1206656_fix_current_stack_pointer.patch
 Patch503: d318d83c4e74.patch
 # Patch for upstream JDK-8078666 (RHBZ#1208369)
 Patch505: 1208369_memory_leak_gcc5.patch
+Patch506: gif4.1.patch
 
 
 Patch9999: enableArm64.patch
@@ -1022,6 +1023,7 @@ tar xzf %{SOURCE8}
 
 %patch503
 %patch505
+%patch506
 
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
@@ -1712,6 +1714,7 @@ end
    patch401 fix_ZERO_ARCHDEF_ppc.patch
    patch400 ppc_stack_overflow_fix.patch
    patch204 zero-interpreter-fix.patch
+- added Patch506 gif4.1.patch to allow build agaisnt giflib > 4.1
 
 * Wed May 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.45-38.b14
 - updated to 8u45-b14 with hope to fix rhbz#1123870

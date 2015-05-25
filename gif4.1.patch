@@ -1,0 +1,20 @@
+--- jdk8/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
++++ jdk8/jdk/src/share/native/sun/awt/splashscreen/splashscreen_gif.c
+@@ -296,7 +296,7 @@
+     free(pBitmapBits);
+     free(pOldBitmapBits);
+ 
+-    DGifCloseFile(gif, NULL);
++    DGifCloseFile(gif);
+ 
+     return 1;
+ }
+@@ -304,7 +304,7 @@
+ int
+ SplashDecodeGifStream(Splash * splash, SplashStream * stream)
+ {
+-    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc, NULL);
++    GifFileType *gif = DGifOpen((void *) stream, SplashStreamGifInputFunc);
+ 
+     if (!gif)
+         return 0;
