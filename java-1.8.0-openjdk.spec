@@ -549,6 +549,8 @@ Requires: ca-certificates
 Requires: jpackage-utils
 # Require zoneinfo data provided by tzdata-java subpackage.
 Requires: tzdata-java >= 2015d
+# libsctp.so.1 is being `dlopen`ed on demand
+Requires: lksctp-tools
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives.
@@ -641,7 +643,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1700,6 +1702,9 @@ end
 %endif
 
 %changelog
+* Fri Jun 05 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-4.b16
+- added requires lksctp-tools for headless subpackage to make sun.nio.ch.sctp work
+
 * Mon May 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-2.b16
 - Patch503 d318d83c4e74.patch, patch505 1208369_memory_leak_gcc5.patch (and patch506 gif4.1.patch)
    moved out of "if with_systemtap" block
