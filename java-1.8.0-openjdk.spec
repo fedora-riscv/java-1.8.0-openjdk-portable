@@ -643,7 +643,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -716,6 +716,9 @@ Patch13: libjpeg-turbo-1.4-compat.patch
 # OpenJDK specific patches
 #
 
+# http://hg.openjdk.java.net/jdk9/hs/hotspot/rev/471b684ff43e
+# allow build on Linux 4.x kernels
+Patch99: java-1.8.0-openjdk-linux-4.x.patch
 # JVM heap size changes for s390 (thanks to aph)
 Patch100: %{name}-s390-java-opts.patch
 # Type fixing for s390
@@ -988,6 +991,8 @@ cp %{SOURCE101} jdk8/common/autoconf/build-aux/
 
 # Remove libraries that are linked
 sh %{SOURCE12}
+
+%patch99
 
 # Add AArch64 support to configure & JDK build
 %patch9999
@@ -1702,6 +1707,10 @@ end
 %endif
 
 %changelog
+* Tue Jun 09 2015 Dan Horák <dan[at]danny.cz> - 1:1.8.0.60-5.b16
+- allow build on Linux 4.x kernel
+- refresh s390 size_t patch
+
 * Fri Jun 05 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-4.b16
 - added requires lksctp-tools for headless subpackage to make sun.nio.ch.sctp work
 
