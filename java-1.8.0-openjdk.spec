@@ -545,8 +545,8 @@ Obsoletes: sinjdoc
 %global java_headless_rpo() %{expand:
 # Require /etc/pki/java/cacerts.
 Requires: ca-certificates
-# Require jpackage-utils for ownership of /usr/lib/jvm/
-Requires: jpackage-utils
+# Require javapackages-tools for ownership of /usr/lib/jvm/
+Requires: javapackages-tools
 # Require zoneinfo data provided by tzdata-java subpackage.
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
@@ -643,7 +643,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -898,7 +898,7 @@ The OpenJDK source bundle %{for_debug}.
 %package javadoc
 Summary: OpenJDK API Documentation
 Group:   Documentation
-Requires: jpackage-utils
+Requires: javapackages-tools
 BuildArch: noarch
 
 %{java_javadoc_rpo %{nil}}
@@ -911,7 +911,7 @@ The OpenJDK API documentation.
 %package javadoc-debug
 Summary: OpenJDK API Documentation %{for_debug}
 Group:   Documentation
-Requires: jpackage-utils
+Requires: javapackages-tools
 BuildArch: noarch
 
 %{java_javadoc_rpo %{debug_suffix_unquoted}}
@@ -1707,6 +1707,9 @@ end
 %endif
 
 %changelog
+* Mon Jun 22 2015 Omair Majid <omajid@redhat.com> - 1:1.8.0.60-7.b16
+- Require javapackages-tools instead of jpackage-utils.
+
 * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1:1.8.0.60-6.b16
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
 
