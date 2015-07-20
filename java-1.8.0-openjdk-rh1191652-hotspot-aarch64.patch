@@ -1,0 +1,40 @@
+# HG changeset patch
+# User andrew
+# Date 1424102734 0
+#      Mon Feb 16 16:05:34 2015 +0000
+# Node ID 4fdaf786d977aa77afdb68b8829579d31069e39c
+# Parent  01a0011cc101f3308c5876db8282c0fc5e3ba2e6
+PR2236: ppc64le should report its os.arch as ppc64le so tools can detect it
+Summary: Use ppc64le as the arch directory on that platform and report it in os.arch
+
+--- openjdk/hotspot/make/defs.make.orig	2015-03-03 17:05:51.000000000 -0500
++++ openjdk/hotspot/make/defs.make	2015-03-03 19:18:20.000000000 -0500
+@@ -319,6 +319,13 @@
+   LIBARCH/arm     = arm
+   LIBARCH/zero    = $(ZERO_LIBARCH)
+ 
++  # Override LIBARCH for ppc64le
++  ifeq ($(ARCH), ppc64)
++    ifeq ($(OPENJDK_TARGET_CPU_ENDIAN), little)
++      LIBARCH = ppc64le
++    endif
++  endif
++
+   LP64_ARCH = sparcv9 amd64 ppc64 aarch64 ia64 zero
+ endif
+ 
+diff -r 01a0011cc101 -r 4fdaf786d977 src/os/linux/vm/os_linux.cpp
+--- openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Mon Feb 16 13:18:10 2015 +0000
++++ openjdk/hotspot/src/os/linux/vm/os_linux.cpp	Mon Feb 16 16:05:34 2015 +0000
+@@ -305,7 +305,11 @@
+ #elif defined(PPC32)
+ static char cpu_arch[] = "ppc";
+ #elif defined(PPC64)
++#if defined(VM_LITTLE_ENDIAN)
++static char cpu_arch[] = "ppc64le";
++#else
+ static char cpu_arch[] = "ppc64";
++#endif
+ #elif defined(SPARC)
+ #  ifdef _LP64
+ static char cpu_arch[] = "sparcv9";
