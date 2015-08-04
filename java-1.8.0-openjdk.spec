@@ -118,9 +118,9 @@
 %global origin          openjdk
 %global updatever       60
 %global buildver        b24
-%global aarch64_updatever 51
-%global aarch64_buildver b16
-%global aarch64_changesetid aarch64-jdk8u51-b16
+%global aarch64_updatever 60
+%global aarch64_buildver b24
+%global aarch64_changesetid arch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
 # priority must be 7 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -661,7 +661,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 9.%{buildver}%{?dist}
+Release: 10.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1738,6 +1738,9 @@ end
 %endif
 
 %changelog
+* Mon Aug 04 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-10.b24
+- arch64 updated to u60-b24 with hope to fix rhbz1249037
+
 * Fri Jul 17 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-3.b24
 - added one more md5sum test (thanx to Severin!)
  - I guess one more missing
