@@ -796,12 +796,7 @@ BuildRequires: tzdata-java >= 2015d
 
 # cacerts build requirement.
 BuildRequires: openssl
-# execstack build requirement.
-# no prelink on ARM yet
-%ifnarch %{arm} %{aarch64} %{ppc64le}
-#prelink was "replaced" by execstack in f23+ However logs are same for prleinked, execstacked or none at all builds
-BuildRequires: execstack
-%endif
+#prelink was removed from fedora
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
@@ -1741,7 +1736,6 @@ end
 %changelog
 * Mon Aug 04 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-10.b24
 - arch64 updated to u60-b24 with hope to fix rhbz1249037
-- prelink replaced by execstack sinc f23 (dont use at all?)
 
 * Fri Jul 17 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-3.b24
 - added one more md5sum test (thanx to Severin!)
