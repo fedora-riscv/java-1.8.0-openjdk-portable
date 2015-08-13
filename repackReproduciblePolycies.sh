@@ -7,7 +7,7 @@ for f in local_policy.jar US_export_policy.jar ; do
 ORIG=$P/$f
 echo "processing $f ($ORIG)"
 if [ ! -f  $ORIG ]; then
-  echo "File not found!"
+  echo "File not found! $ORIG"
   continue
 fi
 d=`mktemp -d`
@@ -22,13 +22,16 @@ NW=$d/$f
     zip -rX  $f *
   popd
   echo "replacing  $ORIG"
+  touch -t 201401010000 $ORIG
   md5sum    $ORIG
   sha256sum $ORIG
   echo "by $NW"
   md5sum    $NW
   sha256sum $NW
+  touch -t 201401010000 $NW
   cp $NW $ORIG
   md5sum    $ORIG
   sha256sum $ORIG
+  touch -t 201401010000 $ORIG
   rm -rfv $d
 done
