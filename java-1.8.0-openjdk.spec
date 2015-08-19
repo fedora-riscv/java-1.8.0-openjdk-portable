@@ -117,7 +117,7 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       60
-%global buildver        b24
+%global buildver        b27
 %global aarch64_updatever 60
 %global aarch64_buildver b24
 %global aarch64_changesetid arch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
@@ -661,7 +661,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -682,7 +682,7 @@ URL:      http://openjdk.java.net/
 # Source from upstrem OpenJDK8 project. To regenerate, use
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
-Source0:  jdk8u-jdk8u%{updatever}-%{buildver}.tar.xz
+Source0:  jdk8u60-jdk8u%{updatever}-%{buildver}.tar.xz
 Source1:  jdk8u-%{aarch64_changesetid}.tar.xz
 
 # Custom README for -src subpackage
@@ -1734,10 +1734,13 @@ end
 %endif
 
 %changelog
+* Wed Aug 19 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-12.b24
+- updated to freshly released jdk8u60-jdk8u60-b27
+
 * Thu Aug 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-11.b24
 - another touching attempt to polycies...
 
-* Mon Aug 04 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-10.b24
+* Mon Aug 03 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-10.b24
 - arch64 updated to u60-b24 with hope to fix rhbz1249037
 
 * Fri Jul 17 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-3.b24

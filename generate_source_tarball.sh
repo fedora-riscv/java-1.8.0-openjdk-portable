@@ -8,7 +8,8 @@
 #   ./generate_source_tarball.sh jdk8 jdk8 jdk8-b79
 #   ./generate_source_tarball.sh jdk8u jdk8u jdk8u5-b13
 #   ./generate_source_tarball.sh aarch64-port jdk8 aarch64-${DATE}
-#
+#	./generate_source_tarball.sh jdk8u jdk8u60 jdk8u60-b27
+
 # This script creates a single source tarball out of the repository
 # based on the given tag and removes code not allowed in fedora. For
 # consistency, the source tarball will always contain 'openjdk' as the top
