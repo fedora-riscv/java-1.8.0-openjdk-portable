@@ -119,8 +119,8 @@
 %global updatever       60
 %global buildver        b27
 %global aarch64_updatever 60
-%global aarch64_buildver b24
-%global aarch64_changesetid arch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
+%global aarch64_buildver b24.2
+%global aarch64_changesetid aarch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
 # priority must be 7 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -661,7 +661,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -683,7 +683,7 @@ URL:      http://openjdk.java.net/
 # ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
 # ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
 Source0:  jdk8u60-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  jdk8u-%{aarch64_changesetid}.tar.xz
+Source1:  jdk8-%{aarch64_changesetid}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1734,6 +1734,9 @@ end
 %endif
 
 %changelog
+* Wed Aug 26 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-13.b24
+- updated aarch64 hotpost to latest jdk8-aarch64-jdk8u60-b24.2.tar.xz
+
 * Wed Aug 19 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-12.b24
 - updated to freshly released jdk8u60-jdk8u60-b27
 
