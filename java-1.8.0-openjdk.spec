@@ -661,7 +661,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 14.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -989,14 +989,17 @@ if [ $prioritylength -ne 7 ] ; then
  exit 14
 fi
 # For old patches
-ln -s openjdk jdk8
 # Swap HotSpot for AArch64 port
 %ifarch %{aarch64}
-pushd openjdk
-rm -r hotspot
+#pushd openjdk
+#rm -r hotspot
+# tmp - containing whole aarch64 forest
+rm -r openjdk
 tar xf %{SOURCE1}
-popd
+#popd
 %endif
+ln -s openjdk jdk8
+
 cp %{SOURCE2} .
 
 # replace outdated configure guess script
@@ -1011,12 +1014,16 @@ cp %{SOURCE101} openjdk/common/autoconf/build-aux/
 # Remove libraries that are linked
 sh %{SOURCE12}
 
+#pure aarch64 forest does not have them
+%ifnarch %{aarch64}
 # Add AArch64 support to configure & JDK build
 %patch9999
+%endif
 
 %patch201
 %patch202
 %patch203
+
 %ifnarch %{aarch64}
 %endif
 
@@ -1045,8 +1052,11 @@ sh %{SOURCE12}
 %patch600
 %endif
 
+#pure aarch64 forest does not have them
+%ifnarch %{aarch64}
 %patch601
 %patch602
+%endif
 
 %patch504
 %patch511
@@ -1734,6 +1744,14 @@ end
 %endif
 
 %changelog
+* Thu Aug 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-14.b24
+- updated aarch64 tarball to contain whole forest of latest jdk8-aarch64-jdk8u60-b24.2.tar.xz
+- using this forest instead of only hotspot
+- generate_source_tarball.sh - temporarily excluded repos="hotspot" compression of download
+- not only openjdk/hotspot is replaced, by wholeopenjdk
+- ln -s openjdk jdk8 done after replacing of openjdk
+- patches 9999 601 and 602 exclded for aarch64
+
 * Wed Aug 26 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-13.b24
 - updated aarch64 hotpost to latest jdk8-aarch64-jdk8u60-b24.2.tar.xz
 

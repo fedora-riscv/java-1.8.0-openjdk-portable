@@ -50,7 +50,9 @@ pushd openjdk
 
 repos="corba hotspot jdk jaxws jaxp langtools nashorn"
 if [ aarch64-port = $PROJECT_NAME ] ; then
-repos="hotspot"
+#tmp disable because of jdk8-aarch64-jdk8u60-b24.2
+echo NOT 
+#repos="hotspot"
 fi;
 
 for subrepo in $repos
