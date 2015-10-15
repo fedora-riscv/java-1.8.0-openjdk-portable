@@ -15,9 +15,9 @@ diff -r 87c95759b92b src/share/native/com/sun/media/sound/SoundDefs.h
 --- openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Wed Feb 11 18:55:05 2015 -0800
 +++ openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Feb 17 18:25:01 2015 +0000
 @@ -43,6 +43,8 @@
- #define X_ZERO          6
  #define X_ARM           7
  #define X_PPC           8
+ #define X_AARCH64	9
 +#define X_PPC64         9
 +#define X_PPC64LE      10
  

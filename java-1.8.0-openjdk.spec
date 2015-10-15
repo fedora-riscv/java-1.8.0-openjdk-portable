@@ -117,10 +117,9 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 %global updatever       60
-%global buildver        b27
-%global aarch64_updatever 60
-%global aarch64_buildver b24.2
-%global aarch64_changesetid aarch64-jdk8u%{aarch64_updatever}-%{aarch64_buildver}
+%global buildver        b28
+%global aarch64_updatever %{updatever}
+%global aarch64_buildver  %{buildver}
 # priority must be 7 digits in total
 %global priority        18000%{updatever}
 %global javaver         1.8.0
@@ -661,7 +660,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 14.%{buildver}%{?dist}
+Release: 15.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -680,10 +679,9 @@ License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and L
 URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. To regenerate, use
-# ./generate_source_tarball.sh jdk8u jdk8u jdk8u%%{updatever}-%%{buildver}
-# ./generate_source_tarball.sh aarch64-port jdk8 %%{aarch64_hg_tag}
-Source0:  jdk8u60-jdk8u%{updatever}-%{buildver}.tar.xz
-Source1:  jdk8-%{aarch64_changesetid}.tar.xz
+# aarch64-port now contains integration forest of both aarch64 and normal jdk
+# ./generate_source_tarball.sh aarch64-port jdk8u60 aarch64-jdk8u60-b28
+Source0:  jdk8u60-aarch64-jdk8u%{updatever}-%{buildver}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -754,12 +752,9 @@ Patch504: rh1163501.patch
 Patch511: rh1214835.patch
 
 # RH1191652; fix name of ppc64le architecture
-Patch600: %{name}-rh1191652-hotspot.patch
 Patch601: %{name}-rh1191652-root.patch
 Patch602: %{name}-rh1191652-jdk.patch
 Patch603: %{name}-rh1191652-hotspot-aarch64.patch
-
-Patch9999: enableArm64.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -989,15 +984,6 @@ if [ $prioritylength -ne 7 ] ; then
  exit 14
 fi
 # For old patches
-# Swap HotSpot for AArch64 port
-%ifarch %{aarch64}
-#pushd openjdk
-#rm -r hotspot
-# tmp - containing whole aarch64 forest
-rm -r openjdk
-tar xf %{SOURCE1}
-#popd
-%endif
 ln -s openjdk jdk8
 
 cp %{SOURCE2} .
@@ -1014,18 +1000,9 @@ cp %{SOURCE101} openjdk/common/autoconf/build-aux/
 # Remove libraries that are linked
 sh %{SOURCE12}
 
-#pure aarch64 forest does not have them
-%ifnarch %{aarch64}
-# Add AArch64 support to configure & JDK build
-%patch9999
-%endif
-
 %patch201
 %patch202
 %patch203
-
-%ifnarch %{aarch64}
-%endif
 
 %patch1
 %patch3
@@ -1044,19 +1021,10 @@ sh %{SOURCE12}
 # Zero PPC fixes.
 %patch403
 
-# HotSpot ppc64le patch is different depending
-# on whether we are using 2.5 or 2.6 HotSpot.
-%ifarch %{aarch64}
 %patch603
-%else
-%patch600
-%endif
-
-#pure aarch64 forest does not have them
-%ifnarch %{aarch64}
 %patch601
 %patch602
-%endif
+
 
 %patch504
 %patch511
@@ -1150,7 +1118,7 @@ bash ../../configure \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
 %ifarch %{aarch64}
-    --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}-%{aarch64_changesetid}" \
+    --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}" \
 %endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
@@ -1744,6 +1712,11 @@ end
 %endif
 
 %changelog
+* Thu Oct 15 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-15.b28
+- moved to single source integration forest
+- removed patch patch9999 enableArm64.patch
+- removed patch patch600  %%{name}-rh1191652-hotspot.patch
+
 * Thu Aug 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-14.b24
 - updated aarch64 tarball to contain whole forest of latest jdk8-aarch64-jdk8u60-b24.2.tar.xz
 - using this forest instead of only hotspot
