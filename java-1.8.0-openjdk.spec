@@ -660,7 +660,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 15.%{buildver}%{?dist}
+Release: 16.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -755,6 +755,7 @@ Patch511: rh1214835.patch
 Patch601: %{name}-rh1191652-root.patch
 Patch602: %{name}-rh1191652-jdk.patch
 Patch603: %{name}-rh1191652-hotspot-aarch64.patch
+Patch604: aarch64-ifdefbugfix.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1024,7 +1025,7 @@ sh %{SOURCE12}
 %patch603
 %patch601
 %patch602
-
+%patch604
 
 %patch504
 %patch511
@@ -1712,6 +1713,9 @@ end
 %endif
 
 %changelog
+* Mon Nov 02 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-16.b28
+added and applied patch604: aarch64-ifdefbugfix.patch to fix rhbz1276959
+
 * Thu Oct 15 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-15.b28
 - moved to single source integration forest
 - removed patch patch9999 enableArm64.patch
