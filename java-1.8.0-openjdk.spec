@@ -209,12 +209,12 @@ alternatives \\
   --slave %{_bindir}/rmiregistry rmiregistry %{jrebindir %%1}/rmiregistry \\
   --slave %{_bindir}/servertool servertool %{jrebindir %%1}/servertool \\
   --slave %{_bindir}/tnameserv tnameserv %{jrebindir %%1}/tnameserv \\
+  --slave %{_bindir}/policytool policytool %{jrebindir %%1}/policytool \\
   --slave %{_bindir}/unpack200 unpack200 %{jrebindir %%1}/unpack200 \\
   --slave %{_mandir}/man1/java.1$ext java.1$ext \\
   %{_mandir}/man1/java-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \\
   %{_mandir}/man1/jjs-%{uniquesuffix %%1}.1$ext \\
-  --slave %{_bindir}/policytool policytool %{jrebindir %%1}/policytool \\
   --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \\
   %{_mandir}/man1/keytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/orbd.1$ext orbd.1$ext \\
@@ -229,6 +229,8 @@ alternatives \\
   %{_mandir}/man1/servertool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/tnameserv.1$ext tnameserv.1$ext \\
   %{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1$ext \\
+  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \\
+  %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/unpack200.1$ext unpack200.1$ext \\
   %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1$ext
 
@@ -349,8 +351,6 @@ alternatives \\
   %{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/native2ascii.1$ext native2ascii.1$ext \\
   %{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1$ext \\
-  --slave %{_mandir}/man1/policytool.1$ext policytool.1$ext \\
-  %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/rmic.1$ext rmic.1$ext \\
   %{_mandir}/man1/rmic-%{uniquesuffix %%1}.1$ext \\
   --slave %{_mandir}/man1/schemagen.1$ext schemagen.1$ext \\
@@ -446,6 +446,7 @@ exit 0
 %{_mandir}/man1/servertool-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/tnameserv-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1*
+%{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/nss.cfg
 %{_jvmdir}/%{jredir %%1}/lib/audio/
 %ifarch %{jit_arches}
@@ -494,7 +495,6 @@ exit 0
 %{_mandir}/man1/jstat-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/jstatd-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/native2ascii-%{uniquesuffix %%1}.1*
-%{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/rmic-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/schemagen-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/serialver-%{uniquesuffix %%1}.1*
@@ -660,7 +660,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 16.%{buildver}%{?dist}
+Release: 17.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1713,6 +1713,9 @@ end
 %endif
 
 %changelog
+* Mon Nov 09 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-17.b28
+- policytool  manpage followed the binary from devel to jre
+
 * Mon Nov 02 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-16.b28
 added and applied patch604: aarch64-ifdefbugfix.patch to fix rhbz1276959
 
