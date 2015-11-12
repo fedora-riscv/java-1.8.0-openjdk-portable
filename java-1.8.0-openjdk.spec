@@ -116,8 +116,8 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       60
-%global buildver        b28
+%global updatever       65
+%global buildver        b17
 %global aarch64_updatever %{updatever}
 %global aarch64_buildver  %{buildver}
 # priority must be 7 digits in total
@@ -660,7 +660,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 17.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -680,7 +680,7 @@ URL:      http://openjdk.java.net/
 
 # Source from upstrem OpenJDK8 project. To regenerate, use
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
-# ./generate_source_tarball.sh aarch64-port jdk8u60 aarch64-jdk8u60-b28
+# ./generate_source_tarball.sh aarch64-port jdk8u60 aarch64-jdk8u65-b17
 Source0:  jdk8u60-aarch64-jdk8u%{updatever}-%{buildver}.tar.xz
 
 # Custom README for -src subpackage
@@ -1713,6 +1713,9 @@ end
 %endif
 
 %changelog
+* Thu Nov 12 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-1.b17
+- updated to u65b17
+
 * Mon Nov 09 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.60-17.b28
 - policytool  manpage followed the binary from devel to jre
 
