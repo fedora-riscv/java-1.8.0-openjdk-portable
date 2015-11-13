@@ -448,7 +448,6 @@ exit 0
 %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/policytool-%{uniquesuffix %%1}.1*
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/nss.cfg
-%{_jvmdir}/%{jredir %%1}/lib/audio/
 %ifarch %{jit_arches}
 %ifnarch %{power64}
 %attr(664, root, root) %ghost %{_jvmdir}/%{jredir %%1}/lib/%{archinstall}/server/classes.jsa
@@ -660,7 +659,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -756,6 +755,7 @@ Patch601: %{name}-rh1191652-root.patch
 Patch602: %{name}-rh1191652-jdk.patch
 Patch603: %{name}-rh1191652-hotspot-aarch64.patch
 Patch604: aarch64-ifdefbugfix.patch
+Patch605: soundFontPatch.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1026,6 +1026,7 @@ sh %{SOURCE12}
 %patch601
 %patch602
 %patch604
+%patch605
 
 %patch504
 %patch511
@@ -1212,11 +1213,6 @@ rm -rf $RPM_BUILD_ROOT
 STRIP_KEEP_SYMTAB=libjvm*
 
 for suffix in %{build_loop} ; do
-# Install symlink to default soundfont
-install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
-pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/audio
-ln -s %{_datadir}/soundfonts/default.sf2
-popd
 
 pushd %{buildoutputdir  $suffix}/images/%{j2sdkimage}
 
@@ -1713,6 +1709,10 @@ end
 %endif
 
 %changelog
+* Fri Nov 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-2.b17
+- added and applied patch605 soundFontPatch.patch as repalcement for removed sound font links
+- removed hardcoded soundfont links
+
 * Thu Nov 12 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-1.b17
 - updated to u65b17
 
