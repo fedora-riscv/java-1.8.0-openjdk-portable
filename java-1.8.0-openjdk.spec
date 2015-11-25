@@ -196,9 +196,14 @@ fi
 %endif
 %endif
 
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 ext=.gz
 alternatives \\
-  --install %{_bindir}/java java %{jrebindir %%1}/java %{priority}  --family %{name} \\
+  --install %{_bindir}/java java %{jrebindir %%1}/java $PRIORITY  --family %{name} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
   --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
   --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
@@ -237,12 +242,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/jre-"$X" \\
-    jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority}  --family %{name} \\
+    jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY  --family %{name} \\
     --slave %{_jvmjardir}/jre-"$X" \\
     jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority}  --family %{name} \\
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name} \\
 --slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -272,9 +277,15 @@ exit 0
 }
 
 %global post_devel() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 ext=.gz
 alternatives \\
-  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac %{priority}  --family %{name} \\
+  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac $PRIORITY  --family %{name} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
   --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
@@ -367,12 +378,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/java-"$X" \\
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} %{priority}  --family %{name} \\
+    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
     --slave %{_jvmjardir}/java-"$X" \\
     java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} %{priority}  --family %{name} \\
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name} \\
 --slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -401,9 +412,15 @@ exit 0
 }
 
 %global post_javadoc() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  %{priority}  --family %{name} 
+  $PRIORITY  --family %{name} 
 exit 0
 }
 
@@ -671,7 +688,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1721,6 +1738,9 @@ end
 %endif
 
 %changelog
+* Wed Nov 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-4.b17
+- debug packages priority lowered by 1
+
 * Wed Nov 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-3.b17
 - depends on chkconfig >1.7 - added --family support
 
