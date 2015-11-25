@@ -198,7 +198,7 @@ fi
 
 ext=.gz
 alternatives \\
-  --install %{_bindir}/java java %{jrebindir %%1}/java %{priority} \\
+  --install %{_bindir}/java java %{jrebindir %%1}/java %{priority}  --family %{name} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
   --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
   --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
@@ -237,12 +237,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/jre-"$X" \\
-    jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority} \\
+    jre_"$X" %{_jvmdir}/%{jredir %%1} %{priority}  --family %{name} \\
     --slave %{_jvmjardir}/jre-"$X" \\
     jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority} \\
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} %{priority}  --family %{name} \\
 --slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -274,7 +274,7 @@ exit 0
 %global post_devel() %{expand:
 ext=.gz
 alternatives \\
-  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac %{priority} \\
+  --install %{_bindir}/javac javac %{sdkbindir %%1}/javac %{priority}  --family %{name} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
   --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
@@ -367,12 +367,12 @@ alternatives \\
 for X in %{origin} %{javaver} ; do
   alternatives \\
     --install %{_jvmdir}/java-"$X" \\
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} %{priority}  --family %{name} \\
     --slave %{_jvmjardir}/java-"$X" \\
     java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
 done
 
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} %{priority} \\
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} %{priority}  --family %{name} \\
 --slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -403,7 +403,7 @@ exit 0
 %global post_javadoc() %{expand:
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  %{priority}
+  %{priority}  --family %{name} 
 exit 0
 }
 
@@ -569,8 +569,12 @@ Requires: tzdata-java >= 2015d
 Requires: lksctp-tools
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall tool alternatives.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 # Standard JPackage base provides.
 Provides: jre-%{javaver}-%{origin}-headless%1 = %{epoch}:%{version}-%{release}
@@ -601,8 +605,12 @@ Requires:         %{name}%1 = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall tool alternatives.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 # Standard JPackage devel provides.
 Provides: java-sdk-%{javaver}-%{origin}%1 = %{epoch}:%{version}
@@ -629,8 +637,12 @@ Obsoletes: java-1.7.0-openjdk-demo%1
 OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install javadoc alternative.
 Requires(post):   %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(post):   chkconfig >= 1.7
 # Postun requires alternatives to uninstall javadoc alternative.
 Requires(postun): %{_sbindir}/alternatives
+# in version 1.7 and higher for --family switch
+Requires(postun):   chkconfig >= 1.7
 
 # Standard JPackage javadoc provides.
 Provides: java-javadoc%1 = %{epoch}:%{version}-%{release}
@@ -659,7 +671,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1709,6 +1721,9 @@ end
 %endif
 
 %changelog
+* Wed Nov 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-3.b17
+- depends on chkconfig >1.7 - added --family support
+
 * Fri Nov 13 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-2.b17
 - added and applied patch605 soundFontPatch.patch as repalcement for removed sound font links
 - removed hardcoded soundfont links
