@@ -181,7 +181,9 @@ if [ "$1" -gt 1 ]; then
   # This is the md5sum of an unmodified java.security file
   if [ "${sum}" = '1690ac33955594f71dc952c9e83fd396' -o \\
        "${sum}" = 'b138695d0c0ea947e64a21a627d973ba' -o \\
-       "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' ]; then
+       "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' -o \\
+       "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
+       "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -688,7 +690,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1158,7 +1160,7 @@ bash ../../configure \
     --with-libjpeg=system \
     --with-giflib=system \
     --with-libpng=system \
-    --with-lcms=system \
+    --with-lcms=bundled \
     --with-stdc++lib=dynamic \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
@@ -1738,6 +1740,10 @@ end
 %endif
 
 %changelog
+* Fri Nov 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-5.b17
+- added missing md5sums
+- moved to bundeld lcms
+
 * Wed Nov 25 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-4.b17
 - debug packages priority lowered by 1
 
