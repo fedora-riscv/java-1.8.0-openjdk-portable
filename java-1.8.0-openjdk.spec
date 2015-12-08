@@ -593,6 +593,8 @@ Requires: javapackages-tools
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
+# tool to copy jdk's configs
+Requires(pre): copy-jdk-configs
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
@@ -697,7 +699,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 8.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1459,174 +1461,10 @@ done
 
 %if %{include_normal_build} 
 # intentioanlly only for non-debug
-%pretrans headless -p <lua>
--- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
+%pre headless
+# see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
+%{_libexecdir}/copy_jdk_configs.lua   --currentjvm "%{uniquesuffix %{nil}}" --jvmdir "%{_jvmdir %{nil}}" --origname "%{name}" --origjavaver "%{javaver}" --arch "%{_arch}"
 
-local posix = require "posix"
-
-local currentjvm = "%{uniquesuffix %{nil}}"
-local jvmdir = "%{_jvmdir %{nil}}"
-local jvmDestdir = jvmdir
-local origname = "%{name}"
-local origjavaver = "%{javaver}"
---trasnform substitute names to lua patterns
---all percentages must be doubled for case of RPM escapingg
-local name = string.gsub(string.gsub(origname, "%%-", "%%%%-"), "%%.", "%%%%.")
-local javaver = string.gsub(origjavaver, "%%.", "%%%%.")
-local arch ="%{_arch}"
-local  debug = false;
-
-local jvms = { }
-
-local caredFiles = {"jre/lib/calendars.properties",
-              "jre/lib/content-types.properties",
-              "jre/lib/flavormap.properties",
-              "jre/lib/logging.properties",
-              "jre/lib/net.properties",
-              "jre/lib/psfontj2d.properties",
-              "jre/lib/sound.properties",
-              "jre/lib/deployment.properties",
-              "jre/lib/deployment.config",
-              "jre/lib/security/US_export_policy.jar",
-              "jre/lib/security/java.policy",
-              "jre/lib/security/java.security",
-              "jre/lib/security/local_policy.jar",
-              "jre/lib/security/nss.cfg,",
-              "jre/lib/ext"}
-
-function splitToTable(source, pattern)
-  local i1 = string.gmatch(source, pattern) 
-  local l1 = {}
-  for i in i1 do
-    table.insert(l1, i)
-  end
-  return l1
-end
-
-if (debug) then
-  print("started")
-end;
-
-foundJvms = posix.dir(jvmdir);
-if (foundJvms == nil) then
-  if (debug) then
-    print("no, or nothing in "..jvmdir.." exit")
-  end;
-  return
-end
-
-if (debug) then
-  print("found "..#foundJvms.."jvms")
-end;
-
-for i,p in pairs(foundJvms) do
--- regex similar to %{_jvmdir}/%{name}-%{javaver}*%{_arch} bash command
---all percentages must be doubled for case of RPM escapingg
-  if (string.find(p, name.."%%-"..javaver..".*"..arch) ~= nil ) then
-    if (debug) then
-      print("matched:  "..p)
-    end;
-    if (currentjvm ==  p) then
-      if (debug) then
-        print("this jdk is already installed. exiting lua script")
-      end;
-      return
-    end ;
-    table.insert(jvms, p)
-  else
-    if (debug) then
-      print("NOT matched:  "..p)
-    end;
-  end
-end
-
-if (#jvms <=0) then 
-  if (debug) then
-    print("no matching jdk in "..jvmdir.." exit")
-  end;
-  return
-end;
-
-if (debug) then
-  print("matched "..#jvms.." jdk in "..jvmdir)
-end;
-
---full names are like java-1.7.0-openjdk-1.7.0.60-2.4.5.1.fc20.x86_64
-table.sort(jvms , function(a,b) 
--- version-sort
--- split on non word: . - 
-  local l1 = splitToTable(a, "[^%.-]+") 
-  local l2 = splitToTable(b, "[^%.-]+") 
-  for x = 1, math.min(#l1, #l2) do
-    local l1x = tonumber(l1[x])
-    local l2x = tonumber(l2[x])
-    if (l1x ~= nil and l2x ~= nil)then
---if hunks are numbers, go with them 
-      if (l1x < l2x) then return true; end
-      if (l1x > l2x) then return false; end
-    else
-      if (l1[x] < l2[x]) then return true; end
-      if (l1[x] > l2[x]) then return false; end
-    end
--- if hunks are equals then move to another pair of hunks
-  end
-return a<b
-
-end)
-
-if (debug) then
-  print("sorted lsit of jvms")
-  for i,file in pairs(jvms) do
-    print(file)
-  end
-end
-
-latestjvm = jvms[#jvms]
-
-
-for i,file in pairs(caredFiles) do
-  local SOURCE=jvmdir.."/"..latestjvm.."/"..file
-  local DEST=jvmDestdir.."/"..currentjvm.."/"..file
-  if (debug) then
-    print("going to copy "..SOURCE)
-    print("to  "..DEST)
-  end;
-  local stat1 = posix.stat(SOURCE, "type");
-  if (stat1 ~= nil) then
-  if (debug) then
-    print(SOURCE.." exists")
-  end;
-  local s = ""
-  local dirs = splitToTable(DEST, "[^/]+") 
-  for i,d in pairs(dirs) do
-    if (i == #dirs) then
-      break
-    end
-    s = s.."/"..d
-    local stat2 = posix.stat(s, "type");
-    if (stat2 == nil) then
-      if (debug) then
-        print(s.." does not exists, creating")
-      end;
-      posix.mkdir(s)
-    else
-      if (debug) then
-        print(s.." exists,not creating")
-      end;
-    end
-  end
--- Copy with -a to keep everything intact
-    local exe = "cp".." -ar "..SOURCE.." "..DEST
-    if (debug) then
-      print("executing "..exe)
-    end;    
-    os.execute(exe)
-  else
-    if (debug) then
-      print(SOURCE.." does not exists")
-    end;
-  end
-end
 
 %post 
 %{post_script %{nil}}
@@ -1747,6 +1585,11 @@ end
 %endif
 
 %changelog
+* Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-8.b17
+- used extracted lua scripts.
+- now depnding on copy-jdk-configs
+- config files persisting in pre instead of %pretrans
+
 * Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-7.b17
 - changed way of generating the sources. As result:
 - "updated" to aarch64-jdk8u65-b17 (from aarch64-port/jdk8u60)
