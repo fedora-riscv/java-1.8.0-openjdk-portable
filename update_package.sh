@@ -125,7 +125,7 @@ spec_date=`date +"%a %b %d %Y"`
 revision_helper=`echo ${VERSION%-*}`
 updatever=`echo ${revision_helper##*u}`
 buildver=`echo ${VERSION##*-}`
-echo "$spec_date $user_full_name <$user_name@redhat.com> - 1:1.8.0.$updatever-$RELEASE.$buildver" 
+echo "* $spec_date $user_full_name <$user_name@redhat.com> - 1:1.8.0.$updatever-$RELEASE.$buildver" 
 echo "- updated to $VERSION (from $PROJECT_NAME/$REPO_NAME)"
 echo "- used $FILENAME as new sources"
 

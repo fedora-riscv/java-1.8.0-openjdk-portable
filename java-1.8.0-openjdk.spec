@@ -1747,7 +1747,7 @@ end
 %endif
 
 %changelog
-Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-7.b17
+* Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-7.b17
 - changed way of generating the sources. As result:
 - "updated" to aarch64-jdk8u65-b17 (from aarch64-port/jdk8u60)
 - used aarch64-port-jdk8u60-aarch64-jdk8u65-b17.tar.xz as new sources
