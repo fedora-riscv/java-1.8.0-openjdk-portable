@@ -116,12 +116,19 @@
 
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
-%global updatever       65
-%global buildver        b17
-%global aarch64_updatever %{updatever}
-%global aarch64_buildver  %{buildver}
-# priority must be 7 digits in total
-%global priority        18000%{updatever}
+# note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
+%global project         aarch64-port
+%global repo            jdk8u60
+%global revision        aarch64-jdk8u65-b17
+# eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
+%global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
+# eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
+%global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
+# eg jdk8u60-b27 -> b27
+%global buildver        %(VERSION=%{revision}; echo ${VERSION##*-})
+# priority must be 7 digits in total. The expression is workarounding tip
+%global priority        %(TIP=18000%{updatever};  echo ${TIP/tip/99})
+
 %global javaver         1.8.0
 
 # parametrized macros are order-sensitive
@@ -690,7 +697,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -711,7 +718,7 @@ URL:      http://openjdk.java.net/
 # Source from upstrem OpenJDK8 project. To regenerate, use
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # ./generate_source_tarball.sh aarch64-port jdk8u60 aarch64-jdk8u65-b17
-Source0:  jdk8u60-aarch64-jdk8u%{updatever}-%{buildver}.tar.xz
+Source0:  %{project}-%{repo}-%{revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1151,7 +1158,7 @@ bash ../../configure \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
 %ifarch %{aarch64}
-    --with-user-release-suffix="aarch64-%{aarch64_updatever}-%{aarch64_buildver}" \
+    --with-user-release-suffix="aarch64-%{updatever}-%{buildver}" \
 %endif
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
@@ -1740,6 +1747,11 @@ end
 %endif
 
 %changelog
+Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-7.b17
+- changed way of generating the sources. As result:
+- "updated" to aarch64-jdk8u65-b17 (from aarch64-port/jdk8u60)
+- used aarch64-port-jdk8u60-aarch64-jdk8u65-b17.tar.xz as new sources
+
 * Fri Nov 27 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-5.b17
 - added missing md5sums
 - moved to bundeld lcms

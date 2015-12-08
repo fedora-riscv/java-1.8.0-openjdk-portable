@@ -1,82 +1,91 @@
-#!/bin/bash
+#!/bin/bash -x
 # Generates the 'source tarball' for JDK 8 projects.
 #
-# Usage: generate_source_tarball.sh project_name repo_name tag
+# Example:
+# When used from local repo set REPO_ROOT pointing to file:// wth your repo
+# if your local repo follows upstream forests conventions, you may be enough by setting OPENJDK_URL
+# if you wont to use local copy of patch PR2126 set path to it to PR2126 variable
 #
-# Examples:
-#  sh generate_source_tarball.sh jdk8u jdk8u40 jdk8u40-b25
-#   ./generate_source_tarball.sh jdk8 jdk8 jdk8-b79
-#   ./generate_source_tarball.sh jdk8u jdk8u jdk8u5-b13
-#   ./generate_source_tarball.sh aarch64-port jdk8 aarch64-${DATE}
-#   ./generate_source_tarball.sh aarch64-port jdk8 aarch64-jdk8u60-b24.2
-#	./generate_source_tarball.sh jdk8u jdk8u60 jdk8u60-b27
+# In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
+# PROJECT_NAME=jdk8u   OR   aarch64-port 
+# REPO_NAME=jdk8u60    OR   jdk8u60 
+# VERSION=jdk8u60-b27  OR aarch64-jdk8u65-b17 OR for head, keyword 'tip' should do the job there
+# 
+# They are used to create correct name and are used in construction of sources url (unless REPO_ROOT is set)
 
 # This script creates a single source tarball out of the repository
-# based on the given tag and removes code not allowed in fedora. For
+# based on the given tag and removes code not allowed in fedora/rhel. For
 # consistency, the source tarball will always contain 'openjdk' as the top
-# level folder.
+# level folder, name is created, based on parameter
+#
 
 set -e
 
-PROJECT_NAME="$1"
-REPO_NAME="$2"
-VERSION="$3"
-OPENJDK_URL=http://hg.openjdk.java.net
-
-if [[ "${PROJECT_NAME}" = "" ]] ; then
-    echo "No repository specified."
-    exit -1
+if [ "x$PROJECT_NAME" = "x" ] ; then
+	echo "no PROJECT_NAME"
+    exit 1
 fi
-if [[ "${REPO_NAME}" = "" ]] ; then
-    echo "No repository specified."
-    exit -1
+if [ "x$REPO_NAME" = "x" ] ; then
+	echo "no REPO_NAME"
+    exit 2
 fi
-if [[ "${VERSION}" = "" ]]; then
-    echo "No version/tag specified."
-    exit -1;
+if [ "x$VERSION" = "x" ] ; then
+	echo "no VERSION"
+    exit 3
+fi
+if [ "x$OPENJDK_URL" = "x" ] ; then
+    OPENJDK_URL=http://hg.openjdk.java.net
 fi
 
-mkdir "${REPO_NAME}"
-pushd "${REPO_NAME}"
-
-REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
-
-wget "${REPO_ROOT}/archive/${VERSION}.tar.gz"
-tar xf "${VERSION}.tar.gz"
-rm  "${VERSION}.tar.gz"
-
-mv "${REPO_NAME}-${VERSION}" openjdk
-pushd openjdk
-
-repos="corba hotspot jdk jaxws jaxp langtools nashorn"
-if [ aarch64-port = $PROJECT_NAME ] ; then
-#tmp disable because of jdk8-aarch64-jdk8u60-b24.2
-echo NOT 
-#repos="hotspot"
+if [ "x$COMPRESSION" = "x" ] ; then
+# rhel 5 needs tar.gz
+    COMPRESSION=xz
+fi
+if [ "x$FILE_NAME_ROOT" = "x" ] ; then
+    FILE_NAME_ROOT=${PROJECT_NAME}-${REPO_NAME}-${VERSION}
+fi
+if [ "x$REPO_ROOT" = "x" ] ; then
+    REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
 fi;
+
+mkdir "${FILE_NAME_ROOT}"
+pushd "${FILE_NAME_ROOT}"
+
+hg clone ${REPO_ROOT} openjdk -r ${VERSION}
+pushd openjdk
+	
+#jdk is last for its size
+repos="hotspot corba jaxws jaxp langtools nashorn jdk"
 
 for subrepo in $repos
 do
-    wget "${REPO_ROOT}/${subrepo}/archive/${VERSION}.tar.gz"
-    tar xf "${VERSION}.tar.gz"
-    rm "${VERSION}.tar.gz"
-    mv "${subrepo}-${VERSION}" "${subrepo}"
+    hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
 done
+
 
 echo "Removing EC source code we don't build"
 rm -vrf jdk/src/share/native/sun/security/ec/impl
 
-#get this file http://icedtea.classpath.org/hg/icedtea/raw-file/tip/patches/pr2126.patch (from http://icedtea.classpath.org//hg/icedtea?cmd=changeset;node=8d2c9a898f50)
-#from most correct tag
-#and use it like below. Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=2126)
-pwd
 echo "Syncing EC list with NSS"
-patch -Np1 < ../../pr2126.patch
+if [ "x$PR2126" = "x" ] ; then
+# get pr2126.patch (from http://icedtea.classpath.org//hg/icedtea?cmd=changeset;node=8d2c9a898f50) from most correct tag
+# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=2126)
+    wget http://icedtea.classpath.org/hg/icedtea/raw-file/tip/patches/pr2126.patch
+    patch -Np1 < pr2126.patch
+    rm pr2126.patch
+else
+    patch -Np1 < $PR2126
+fi;
 
 popd
 
-tar cJf ${REPO_NAME}-${VERSION}.tar.xz openjdk
+if [ "X$COMPRESSION" = "Xxz" ] ; then
+    tar --exclude-vcs -cJf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
+else
+    tar --exclude-vcs -czf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
+fi
 
+mv ${FILE_NAME_ROOT}.tar.${COMPRESSION}  ..
 popd
 
-mv "${REPO_NAME}/${REPO_NAME}-${VERSION}.tar.xz" .
+
