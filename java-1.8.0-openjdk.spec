@@ -594,7 +594,7 @@ Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
 # tool to copy jdk's configs
-Requires(pre): copy-jdk-configs
+Recommends:	copy-jdk-configs
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
@@ -699,7 +699,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 8.%{buildver}%{?dist}
+Release: 9.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1461,9 +1461,11 @@ done
 
 %if %{include_normal_build} 
 # intentioanlly only for non-debug
-%pre headless
+%pretrans headless
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
-%{_libexecdir}/copy_jdk_configs.lua   --currentjvm "%{uniquesuffix %{nil}}" --jvmdir "%{_jvmdir %{nil}}" --origname "%{name}" --origjavaver "%{javaver}" --arch "%{_arch}"
+if [ -f %{_libexecdir}/copy_jdk_configs.lua ] ; then
+    %{_libexecdir}/copy_jdk_configs.lua   --currentjvm "%{uniquesuffix %{nil}}" --jvmdir "%{_jvmdir %{nil}}" --origname "%{name}" --origjavaver "%{javaver}" --arch "%{_arch}"
+fi
 
 
 %post 
@@ -1585,6 +1587,10 @@ done
 %endif
 
 %changelog
+* Wed Dec 09 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-9.b17
+- extracted lua scripts moved from pre where they don't work to pretrans
+- requirement on copy-jdk-configs made Week.
+
 * Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-8.b17
 - used extracted lua scripts.
 - now depnding on copy-jdk-configs
