@@ -699,7 +699,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 9.%{buildver}%{?dist}
+Release: 10.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1112,8 +1112,12 @@ done
 
 %build
 # How many cpu's do we have?
-export NUM_PROC=`/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :`
+export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
+%if 0%{?_smp_ncpus_max}
+# Honor %%_smp_ncpus_max
+[ ${NUM_PROC} -gt %{?_smp_ncpus_max} ] && export NUM_PROC=%{?_smp_ncpus_max}
+%endif
 
 # Build IcedTea and OpenJDK.
 %ifarch s390x sparc64 alpha %{power64} %{aarch64}
@@ -1587,6 +1591,10 @@ fi
 %endif
 
 %changelog
+* Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-10.b17
+- Add patch to honour %%{_smp_ncpus_max} from Tuomo Soini
+- Resolves: rhbz#1152896
+
 * Wed Dec 09 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-9.b17
 - extracted lua scripts moved from pre where they don't work to pretrans
 - requirement on copy-jdk-configs made Week.
