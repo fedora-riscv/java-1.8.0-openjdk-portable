@@ -706,7 +706,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -764,15 +764,12 @@ Patch1:   %{name}-accessible-toolkit.patch
 
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
-# RHBZ 808293
-Patch4: %{name}-PStack-808293.patch
 # Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
 # Problem discovered with make 4.0
 Patch12: removeSunEcProvider-RH1154143.patch
-Patch13: libjpeg-turbo-1.4-compat.patch
 
 #
 # OpenJDK specific patches
@@ -1062,11 +1059,9 @@ sh %{SOURCE12}
 
 %patch1
 %patch3
-%patch4
 %patch5
 %patch7
 %patch12
-%patch13
 
 # s390 build fixes
 %ifarch s390
@@ -1612,6 +1607,10 @@ fi
 %endif
 
 %changelog
+* Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-12.b17
+-removed patch4 java-1.8.0-openjdk-PStack-808293.patch
+-removed patch13 libjpeg-turbo-1.4-compat.patch
+
 * Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-11.b17
 - Define our own optimisation flags based on the optflags macro and pass to OpenJDK build cflags/cxxflags.
 - Remove -fno-devirtualize as we are now on GCC 5 where the GCC bug it worked around is fixed.
