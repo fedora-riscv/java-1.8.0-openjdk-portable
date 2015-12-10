@@ -38,6 +38,13 @@
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
 
+# Filter out flags from the optflags macro that cause problems with the OpenJDK build
+# We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
+# We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
+# We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
+# We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
+%global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
+%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 
 %global aarch64         aarch64 arm64 armv8
 # sometimes we need to distinguish big and little endian PPC64
@@ -699,7 +706,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -785,8 +792,16 @@ Patch300: jstack-pr1845.patch
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
 
+# PR2428: OpenJDK build can't handle commas in LDFLAGS
+Patch501: pr2428.patch
+# PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
+# This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
+Patch502: pr2462-01.patch
+Patch503: pr2462-02.patch
 # PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
 Patch504: rh1163501.patch
+# S8143855: Bad printf formatting in frame_zero.cpp (upstream from u76)
+Patch505: 8143855.patch
 # S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
 Patch511: rh1214835.patch
 
@@ -1068,7 +1083,11 @@ sh %{SOURCE12}
 %patch604
 %patch605
 
+%patch501
+%patch502
+%patch503
 %patch504
+%patch505
 %patch511
 
 # Extract systemtap tapsets
@@ -1127,11 +1146,12 @@ export ARCH_DATA_MODEL=64
 export CFLAGS="$CFLAGS -mieee"
 %endif
 
-EXTRA_CFLAGS="-fstack-protector-strong"
+# We use ourcppflags because the OpenJDK build seems to
+# pass these to the HotSpot C++ compiler...
+EXTRA_CFLAGS="%ourcppflags"
 # Disable various optimizations to fix miscompliation. See:
 # - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-devirtualize"
-EXTRA_CPP_FLAGS="-fno-devirtualize -fno-tree-vrp"
+EXTRA_CPP_FLAGS="%ourcppflags -fno-tree-vrp"
 # PPC/PPC64 needs -fno-tree-vectorize since -O3 would
 # otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
@@ -1177,6 +1197,7 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
+    --with-extra-ldflags="%__global_ldflags" \
     --with-num-cores="$NUM_PROC"
 
 cat spec.gmk
@@ -1591,6 +1612,15 @@ fi
 %endif
 
 %changelog
+* Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-11.b17
+- Define our own optimisation flags based on the optflags macro and pass to OpenJDK build cflags/cxxflags.
+- Remove -fno-devirtualize as we are now on GCC 5 where the GCC bug it worked around is fixed.
+- Pass __global_ldflags to --with-extra-ldflags so Fedora linker flags are used in the build.
+- Also Pass ourcppflags to the OpenJDK build cflags as it wrongly uses them for the HotSpot C++ build.
+- Add PR2428, PR2462 & S8143855 patches to fix build issues that arise.
+- Resolves: rhbz#1283949
+- Resolves: rhbz#1120792
+
 * Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-10.b17
 - Add patch to honour %%{_smp_ncpus_max} from Tuomo Soini
 - Resolves: rhbz#1152896
