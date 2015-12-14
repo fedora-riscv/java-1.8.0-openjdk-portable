@@ -1,6 +1,6 @@
 diff -ruN jdk8/common/autoconf/libraries.m4 jdk8/common/autoconf/libraries.m4
---- jdk8/common/autoconf/libraries.m4	2013-11-14 22:04:38.039440136 -0500
-+++ jdk8/common/autoconf/libraries.m4	2013-11-14 22:05:11.474356424 -0500
+--- openjdk/common/autoconf/libraries.m4	2013-11-14 22:04:38.039440136 -0500
++++ openjdk/common/autoconf/libraries.m4	2013-11-14 22:05:11.474356424 -0500
 @@ -676,6 +676,46 @@
  
    ###############################################################################
@@ -49,8 +49,8 @@ diff -ruN jdk8/common/autoconf/libraries.m4 jdk8/common/autoconf/libraries.m4
    #
  
 diff -ruN jdk8/jdk/make/lib/Awt2dLibraries.gmk jdk8/jdk/make/lib/Awt2dLibraries.gmk
---- jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:04:38.040440133 -0500
-+++ jdk8/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:05:11.475356411 -0500
+--- openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:04:38.040440133 -0500
++++ openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:05:11.475356411 -0500
 @@ -661,8 +661,8 @@
  ##########################################################################################
  
