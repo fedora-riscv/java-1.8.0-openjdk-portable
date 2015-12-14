@@ -97,6 +97,8 @@ if [ ! -d ${LCMS_SRC} ]; then
 	echo "${LCMS_SRC} does not exist. Refusing to proceed."
 	exit 1
 fi
+# temporary change to move bundled LCMS
+if [ ! true ]; then
 rm -vf ${LCMS_SRC}/cmscam02.c
 rm -vf ${LCMS_SRC}/cmscgats.c
 rm -vf ${LCMS_SRC}/cmscnvrt.c
@@ -125,3 +127,4 @@ rm -vf ${LCMS_SRC}/cmsxform.c
 rm -vf ${LCMS_SRC}/lcms2.h
 rm -vf ${LCMS_SRC}/lcms2_internal.h
 rm -vf ${LCMS_SRC}/lcms2_plugin.h
+fi
