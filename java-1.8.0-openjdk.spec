@@ -38,6 +38,19 @@
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
 
+%global aarch64         aarch64 arm64 armv8
+# sometimes we need to distinguish big and little endian PPC64
+%global ppc64le         ppc64le
+%global ppc64be         ppc64 ppc64p7
+%global multilib_arches %{power64} sparc64 x86_64
+%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+
+%ifnarch %{jit_arches}
+# Disable hardened build on non-jit arches. Work-around for RHBZ#1290936.
+%undefine _hardened_build
+%global ourcppflags %{nil}
+%global ourldflags %{nil}
+%else
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
@@ -45,13 +58,8 @@
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
-
-%global aarch64         aarch64 arm64 armv8
-# sometimes we need to distinguish big and little endian PPC64
-%global ppc64le         ppc64le
-%global ppc64be         ppc64 ppc64p7
-%global multilib_arches %{power64} sparc64 x86_64
-%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+%global ourldflags %{__global_ldflags}
+%endif
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -706,7 +714,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1192,7 +1200,7 @@ bash ../../configure \
     --with-stdc++lib=dynamic \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
-    --with-extra-ldflags="%__global_ldflags" \
+    --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
 cat spec.gmk
@@ -1607,6 +1615,10 @@ fi
 %endif
 
 %changelog
+* Tue Dec 15 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.65-13.b17
+- Disable hardened build on non-JIT arches.
+  Workaround for RHBZ#1290936.
+
 * Thu Dec 10 2015 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.65-12.b17
 -removed patch4 java-1.8.0-openjdk-PStack-808293.patch
 -removed patch13 libjpeg-turbo-1.4-compat.patch
