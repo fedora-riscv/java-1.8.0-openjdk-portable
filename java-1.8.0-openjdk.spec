@@ -166,6 +166,8 @@
 %global jrebindir()     %{expand:%{_jvmdir}/%{jredir %%1}/bin}
 %global jvmjardir()     %{expand:%{_jvmjardir}/%{uniquesuffix %%1}}
 
+%global rpm_state_dir %{_localstatedir}/lib/rpm-state/
+
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
 # We would like these to be in a package specific subdir,
@@ -609,7 +611,8 @@ Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
 # tool to copy jdk's configs
-Recommends:	copy-jdk-configs
+Recommends:	copy-jdk-configs >= 1.1-2
+OrderWithRequires: copy-jdk-configs
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
@@ -714,7 +717,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 14.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1489,12 +1492,46 @@ done
 
 %if %{include_normal_build} 
 # intentioanlly only for non-debug
-%pretrans headless
-# see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
-if [ -f %{_libexecdir}/copy_jdk_configs.lua ] ; then
-    %{_libexecdir}/copy_jdk_configs.lua   --currentjvm "%{uniquesuffix %{nil}}" --jvmdir "%{_jvmdir %{nil}}" --origname "%{name}" --origjavaver "%{javaver}" --arch "%{_arch}"
-fi
+%pretrans headless -p <lua>
+-- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
+-- see https://bugzilla.redhat.com/show_bug.cgi?id=1290388 for pretrans over pre
+-- if copy-jdk-configs is in transaction, it installs in pretrans to temp
+-- if copy_jdk_configs is in temp, then it means that copy-jdk-configs is in tranasction  and so is
+-- preferred over one in %%{_libexecdir}. If it is not in transaction, then depends 
+-- whether copy-jdk-configs is installed or not. If so, then configs are copied
+-- (copy_jdk_configs from %%{_libexecdir} used) or not copied at all
+local posix = require "posix"
+local debug = false
 
+SOURCE1 = "%{rpm_state_dir}/copy_jdk_configs.lua"
+SOURCE2 = "%{_libexecdir}/copy_jdk_configs.lua"
+
+local stat1 = posix.stat(SOURCE1, "type");
+local stat2 = posix.stat(SOURCE2, "type");
+
+  if (stat1 ~= nil) then
+  if (debug) then
+    print(SOURCE1 .." exists - copy-jdk-configs in transaction, using this one.")
+  end;
+  package.path = package.path .. ";" .. SOURCE1
+else 
+  if (stat2 ~= nil) then
+  if (debug) then
+    print(SOURCE2 .." exists - copy-jdk-configs alrady installed and NOT in transation. Using.")
+  end;
+  package.path = package.path .. ";" .. SOURCE2
+  else
+    if (debug) then
+      print(SOURCE1 .." does NOT exists")
+      print(SOURCE2 .." does NOT exists")
+      print("No config files will be copied")
+    end
+  return
+  end
+end
+-- run contetn of included file with fake args
+arg = {"--currentjvm", "%{uniquesuffix %{nil}}", "--jvmdir", "%{_jvmdir %{nil}}", "--origname", "%{name}", "--origjavaver", "%{javaver}", "--arch", "%{_arch}"}
+require "copy_jdk_configs.lua"
 
 %post 
 %{post_script %{nil}}
@@ -1615,6 +1652,9 @@ fi
 %endif
 
 %changelog
+* Tue Dec 15 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-14.b17
+- pretrans moved back to lua nd now includes file from copy-jdk-configs instead of call it
+
 * Tue Dec 15 2015 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.65-13.b17
 - Disable hardened build on non-JIT arches.
   Workaround for RHBZ#1290936.
