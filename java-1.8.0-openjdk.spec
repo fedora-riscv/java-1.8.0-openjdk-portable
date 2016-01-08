@@ -611,7 +611,7 @@ Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
 # tool to copy jdk's configs
-Recommends:	copy-jdk-configs >= 1.1-2
+Recommends:	copy-jdk-configs >= 1.1-3
 OrderWithRequires: copy-jdk-configs
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
