@@ -38,6 +38,14 @@
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
 
+%global bootstrap_build 0
+
+%if %{bootstrap_build}
+%global targets bootcycle-images docs
+%else
+%global targets all
+%endif
+
 %global aarch64         aarch64 arm64 armv8
 # sometimes we need to distinguish big and little endian PPC64
 %global ppc64le         ppc64le
@@ -51,6 +59,12 @@
 %global ourcppflags %{nil}
 %global ourldflags %{nil}
 %else
+%ifarch %{aarch64}
+# Disable hardened build on AArch64 as it didn't bootcycle
+%undefine _hardened_build
+%global ourcppflags "-fstack-protector-strong"
+%global ourldflags %{nil}
+%else
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
@@ -59,6 +73,7 @@
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
+%endif
 %endif
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
@@ -134,7 +149,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u60
-%global revision        aarch64-jdk8u65-b17
+%global revision        aarch64-jdk8u71-b15
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -197,8 +212,9 @@ exit 0
 # The pretrans lua scriptlet prevents an unmodified java.security
 # from being replaced via an update. It gets created as
 # java.security.rpmnew instead. This invalidates the patch of
-# JDK-8061210 of the January 2015 CPU or JDK-8043201 of the
-# July 2015 CPU. We fix this via a post scriptlet which runs on updates.
+# JDK-8061210 of the January 2015 CPU, JDK-8043201 of the
+# July 2015 CPU and JDK-8141287 of the January 2016 CPU. We
+# fix this via a post scriptlet which runs on updates.
 if [ "$1" -gt 1 ]; then
   javasecurity="%{_jvmdir}/%{uniquesuffix}/jre/lib/security/java.security"
   sum=$(md5sum "${javasecurity}" | cut -d' ' -f1)
@@ -207,7 +223,8 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = 'b138695d0c0ea947e64a21a627d973ba' -o \\
        "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' -o \\
        "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
-       "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' ]; then
+       "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' -o \\
+       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -735,10 +752,11 @@ Group:   Development/Languages
 License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and LGPL+ and LGPLv2 and MPLv1.0 and MPLv1.1 and Public Domain and W3C
 URL:      http://openjdk.java.net/
 
-# Source from upstrem OpenJDK8 project. To regenerate, use
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
-# ./generate_source_tarball.sh aarch64-port jdk8u60 aarch64-jdk8u65-b17
-Source0:  %{project}-%{repo}-%{revision}.tar.xz
+# Source from upstream OpenJDK8 project. To regenerate, use
+# VERSION=aarch64-jdk8u71-b15 FILE_NAME_ROOT=${VERSION}
+# REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
+Source0:  %{revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -772,53 +790,64 @@ Source101: config.sub
 
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   %{name}-accessible-toolkit.patch
-
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
-# Allow multiple initialization of PKCS11 libraries
+
+# Upstreamable patches
+# PR2737: Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
-# Include all sources in src.zip
-Patch7: include-all-srcs.patch
-# Problem discovered with make 4.0
-Patch12: removeSunEcProvider-RH1154143.patch
+# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
+Patch504: rh1163501.patch
+# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
+Patch511: rh1214835.patch
+# Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
+Patch512: no_strict_overflow.patch
 
-#
-# OpenJDK specific patches
-#
-
+# Arch-specific upstreamable patches
 # JVM heap size changes for s390 (thanks to aph)
 Patch100: %{name}-s390-java-opts.patch
 # Type fixing for s390
 Patch102: %{name}-size_t.patch
+# Use "%z" for size_t on s390 as size_t != intptr_t
+Patch103: s390-size_t_format_flags.patch
 
-Patch201: system-libjpeg.patch
+# Patches which need backporting to 8u
+# S8073139, RH1191652; fix name of ppc64le architecture
+Patch601: %{name}-rh1191652-root.patch
+Patch602: %{name}-rh1191652-jdk.patch
+Patch603: %{name}-rh1191652-hotspot-aarch64.patch
+# Include all sources in src.zip
+Patch7: include-all-srcs.patch
+# 8035341: Allow using a system installed libpng
 Patch202: system-libpng.patch
+# 8042159: Allow using a system-installed lcms2
 Patch203: system-lcms.patch
-
-Patch300: jstack-pr1845.patch
-
-# Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
-Patch403: rhbz1206656_fix_current_stack_pointer.patch
-
-# PR2428: OpenJDK build can't handle commas in LDFLAGS
-Patch501: pr2428.patch
 # PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462-01.patch
 Patch503: pr2462-02.patch
-# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
-Patch504: rh1163501.patch
-# S8143855: Bad printf formatting in frame_zero.cpp (upstream from u76)
-Patch505: 8143855.patch
-# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
-Patch511: rh1214835.patch
-
-# RH1191652; fix name of ppc64le architecture
-Patch601: %{name}-rh1191652-root.patch
-Patch602: %{name}-rh1191652-jdk.patch
-Patch603: %{name}-rh1191652-hotspot-aarch64.patch
-Patch604: aarch64-ifdefbugfix.patch
+# S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
 Patch605: soundFontPatch.patch
+
+# Patches upstream and appearing in 8u76
+# Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
+# 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
+Patch403: rhbz1206656_fix_current_stack_pointer.patch
+# S8146566, PR2428: OpenJDK build can't handle commas in LDFLAGS
+Patch501: 8146566.patch
+# S8143855: Bad printf formatting in frame_zero.cpp 
+Patch505: 8143855.patch
+
+# Patches ineligible for 8u
+# 8043805: Allow using a system-installed libjpeg
+Patch201: system-libjpeg.patch
+
+# Local fixes
+# Turns off ECC support as we don't ship the SunEC provider currently
+Patch12: removeSunEcProvider-RH1154143.patch
+
+# Non-OpenJDK fixes
+Patch300: jstack-pr1845.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -855,7 +884,6 @@ BuildRequires: tzdata-java >= 2015d
 
 # cacerts build requirement.
 BuildRequires: openssl
-#prelink was removed from fedora
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
@@ -1078,6 +1106,7 @@ sh %{SOURCE12}
 %ifarch s390
 %patch100
 %patch102
+%patch103
 %endif
 
 # Zero PPC fixes.
@@ -1086,7 +1115,6 @@ sh %{SOURCE12}
 %patch603
 %patch601
 %patch602
-%patch604
 %patch605
 
 %patch501
@@ -1095,6 +1123,7 @@ sh %{SOURCE12}
 %patch504
 %patch505
 %patch511
+%patch512
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1220,7 +1249,7 @@ make \
     STRIP_POLICY=no_strip \
     POST_STRIP_CMD="" \
     LOG=trace \
-    all
+    %{targets}
 
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
@@ -1652,6 +1681,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 20 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.71-2.b15
+- sync with rhel7
+- security update to CPU 19.1.2016 to u71b15
+
 * Tue Dec 15 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-14.b17
 - pretrans moved back to lua nd now includes file from copy-jdk-configs instead of call it
 

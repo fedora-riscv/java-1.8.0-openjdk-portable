@@ -1,0 +1,23 @@
+diff -r 3bde96c2f7f5 make/CompileDemos.gmk
+--- openjdk.orig/jdk/make/CompileDemos.gmk	Tue Jan 12 11:47:16 2016 +0000
++++ openjdk/jdk/make/CompileDemos.gmk	Tue Jan 12 15:47:25 2016 +0000
+@@ -229,7 +229,7 @@
+     BUILD_DEMO_JVMTI_$1_LANG := $4
+   endif
+   ifeq (C++, $4)
+-    $1_EXTRA_CXX := $(LDFLAGS_CXX_JDK) $(LIBCXX)
++    $1_EXTRA_CXX := $$(LDFLAGS_CXX_JDK) $(LIBCXX)
+   endif
+ 
+   $1_CXXFLAGS := $(CXXFLAGS_JDKLIB) -I$(JDK_TOPDIR)/src/share/demo/jvmti/$1 \
+@@ -251,8 +251,8 @@
+       LANG := $$(BUILD_DEMO_JVMTI_$1_LANG), \
+       OPTIMIZATION := LOW, \
+       CXXFLAGS := $$($1_CXXFLAGS), \
+-      LDFLAGS := $(filter-out -incremental:no -opt:ref, $(LDFLAGS_JDKLIB)), \
+-      LDFLAGS_macosx := $(call SET_EXECUTABLE_ORIGIN), \
++      LDFLAGS := $(filter-out -incremental:no -opt:ref, $$(LDFLAGS_JDKLIB)), \
++      LDFLAGS_macosx := $$(call SET_EXECUTABLE_ORIGIN), \
+       LDFLAGS_SUFFIX := $$($1_EXTRA_CXX), \
+       LDFLAGS_SUFFIX_posix := $5, \
+       LDFLAGS_SUFFIX_windows := $6, \

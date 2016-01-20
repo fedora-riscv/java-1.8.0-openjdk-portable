@@ -51,52 +51,68 @@ diff -ruN jdk8/common/autoconf/libraries.m4 jdk8/common/autoconf/libraries.m4
 diff -ruN jdk8/jdk/make/lib/Awt2dLibraries.gmk jdk8/jdk/make/lib/Awt2dLibraries.gmk
 --- openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:04:38.040440133 -0500
 +++ openjdk/jdk/make/lib/Awt2dLibraries.gmk	2013-11-14 22:05:11.475356411 -0500
-@@ -661,8 +661,8 @@
+@@ -666,18 +666,35 @@
+ 
  ##########################################################################################
  
++LIBLCMS_DIR := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms
++
++ifeq ($(USE_EXTERNAL_LCMS), true)
++  # If we're using an external library, we'll just need the wrapper part.
++  # By including it explicitely, all other files will be excluded.
++  BUILD_LIBLCMS_INCLUDE_FILES := LCMS.c
++  BUILD_LIBLCMS_HEADERS :=
++else
++  BUILD_LIBLCMS_INCLUDE_FILES :=
++  # If we're using the bundled library, we'll need to include it in the
++  # include path explicitly. Otherwise the system headers will be used.
++  BUILD_LIBLCMS_HEADERS := -I$(LIBLCMS_DIR)
++endif
++
  # TODO: Update awt lib path when awt is converted
--$(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
--    LIBRARY := lcms, \
-+$(eval $(call SetupNativeCompilation,BUILD_LIBJAVALCMS, \
-+    LIBRARY := javalcms, \
+ $(eval $(call SetupNativeCompilation,BUILD_LIBLCMS, \
+     LIBRARY := lcms, \
      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-     SRC := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms, \
+-    SRC := $(JDK_TOPDIR)/src/share/native/sun/java2d/cmm/lcms, \
++    SRC := $(LIBLCMS_DIR), \
++    INCLUDE_FILES := $(BUILD_LIBLCMS_INCLUDE_FILES), \
      LANG := C, \
-@@ -680,19 +680,19 @@
+     OPTIMIZATION := HIGHEST, \
+     CFLAGS := $(filter-out -xc99=%none, $(CFLAGS_JDKLIB)) \
+         -DCMS_DONT_USE_FAST_FLOOR \
+         $(SHARED_LIBRARY_FLAGS) \
+         -I$(JDK_TOPDIR)/src/share/native/sun/java2d \
+-        -I$(JDK_TOPDIR)/src/share/native/sun/awt/debug, \
++        -I$(JDK_TOPDIR)/src/share/native/sun/awt/debug \
++        $(BUILD_LIBLCMS_HEADERS) \
++        $(LCMS_CFLAGS), \
+     CFLAGS_solaris := -xc99=no_lib, \
+     CFLAGS_windows := -DCMS_IS_WINDOWS_, \
+     MAPFILE := $(JDK_TOPDIR)/make/mapfiles/liblcms/mapfile-vers, \
+@@ -685,10 +702,10 @@
+         $(call SET_SHARED_LIBRARY_ORIGIN), \
+     LDFLAGS_solaris := /usr/lib$(OPENJDK_TARGET_CPU_ISADIR)/libm.so.2, \
      LDFLAGS_windows := $(WIN_AWT_LIB) $(WIN_JAVA_LIB), \
-     LDFLAGS_SUFFIX_solaris := -lawt -ljava -ljvm -lc, \
-     LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm, \
+-    LDFLAGS_SUFFIX_solaris := -lawt -ljava -ljvm -lc, \
+-    LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm, \
 -    LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm, \
-+    LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm -llcms2, \
-     LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm,\
+-    LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm,\
++    LDFLAGS_SUFFIX_solaris := -lawt -ljava -ljvm -lc $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_macosx := $(LIBM) -lawt -ljava -ljvm $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_linux := -lm -lawt -ljava -ljvm $(LCMS_LIBS), \
++    LDFLAGS_SUFFIX_aix := -lm -lawt -ljava -ljvm $(LCMS_LIBS),\
      VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
      RC_FLAGS := $(RC_FLAGS) \
--        -D "JDK_FNAME=lcms.dll" \
--        -D "JDK_INTERNAL_NAME=lcms" \
-+        -D "JDK_FNAME=javalcms.dll" \
-+        -D "JDK_INTERNAL_NAME=javalcms" \
-         -D "JDK_FTYPE=0x2L", \
--    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/liblcms, \
-+    OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libjavalcms, \
-     DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
+         -D "JDK_FNAME=lcms.dll" \
+diff -r 3d1c3b0b73a3 src/share/native/sun/java2d/cmm/lcms/LCMS.c
+--- openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	Tue Sep 08 22:31:26 2015 +0300
++++ openjdk/jdk/src/share/native/sun/java2d/cmm/lcms/LCMS.c	Thu Oct 15 05:29:28 2015 +0100
+@@ -30,7 +30,7 @@
+ #include "jni_util.h"
+ #include "Trace.h"
+ #include "Disposer.h"
+-#include "lcms2.h"
++#include <lcms2.h>
+ #include "jlong.h"
  
--BUILD_LIBRARIES += $(BUILD_LIBLCMS)
-+BUILD_LIBRARIES += $(BUILD_LIBJAVALCMS)
  
--$(BUILD_LIBLCMS): $(BUILD_LIBAWT)
-+$(BUILD_LIBJAVALCMS): $(BUILD_LIBAWT)
- 
- ##########################################################################################
- 
-diff -ruN jdk8/jdk/src/share/classes/sun/cmm/lcms/LCMS.java jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java
---- jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java	2013-10-31 19:44:18.000000000 -0400
-+++ jdk8/jdk/src/share/classes/sun/java2d/cmm/lcms/LCMS.java	2013-11-14 22:05:11.476356403 -0500
-@@ -207,7 +207,7 @@
-                          * disposer frameworks
-                          */
-                         System.loadLibrary("awt");
--                        System.loadLibrary("lcms");
-+                        System.loadLibrary("javalcms");
-                         return null;
-                     }
-                 });

@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 # Generates the 'source tarball' for JDK 8 projects.
 #
 # Example:
@@ -21,36 +21,69 @@
 
 set -e
 
-if [ "x$PROJECT_NAME" = "x" ] ; then
-	echo "no PROJECT_NAME"
-    exit 1
+OPENJDK_URL_DEFAULT=http://hg.openjdk.java.net
+COMPRESSION_DEFAULT=xz
+
+if [ "x$1" = "xhelp" ] ; then
+    echo -e "Behaviour may be specified by setting the following variables:\n"
+    echo "VERSION - the version of the specified OpenJDK project"
+    echo "PROJECT_NAME -- the name of the OpenJDK project being archived (optional; only needed by defaults)"
+    echo "REPO_NAME - the name of the OpenJDK repository (optional; only needed by defaults)"
+    echo "OPENJDK_URL - the URL to retrive code from (optional; defaults to ${OPENJDK_URL_DEFAULT})"
+    echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
+    echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
+    echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
+    echo "PR2126 - the path to the PR2126 patch to apply (optional; downloaded if unavailable)"
+    exit 1;
 fi
-if [ "x$REPO_NAME" = "x" ] ; then
-	echo "no REPO_NAME"
-    exit 2
-fi
+
+
 if [ "x$VERSION" = "x" ] ; then
-	echo "no VERSION"
-    exit 3
+    echo "No VERSION specified"
+    exit -2
 fi
+echo "Version: ${VERSION}"
+    
+# REPO_NAME is only needed when we default on REPO_ROOT and FILE_NAME_ROOT
+if [ "x$FILE_NAME_ROOT" = "x" -o "x$REPO_ROOT" = "x" ] ; then
+    if [ "x$PROJECT_NAME" = "x" ] ; then
+	echo "No PROJECT_NAME specified"
+	exit -1
+    fi
+    echo "Project name: ${PROJECT_NAME}"
+    if [ "x$REPO_NAME" = "x" ] ; then
+	echo "No REPO_NAME specified"
+	exit -3
+    fi
+    echo "Repository name: ${REPO_NAME}"
+fi
+
 if [ "x$OPENJDK_URL" = "x" ] ; then
-    OPENJDK_URL=http://hg.openjdk.java.net
+    OPENJDK_URL=${OPENJDK_URL_DEFAULT}
+    echo "No OpenJDK URL specified; defaulting to ${OPENJDK_URL}"
+else
+    echo "OpenJDK URL: ${OPENJDK_URL}"
 fi
 
 if [ "x$COMPRESSION" = "x" ] ; then
 # rhel 5 needs tar.gz
-    COMPRESSION=xz
+    COMPRESSION=${COMPRESSION_DEFAULT}
 fi
+echo "Creating a tar.${COMPRESSION} archive"
+
 if [ "x$FILE_NAME_ROOT" = "x" ] ; then
     FILE_NAME_ROOT=${PROJECT_NAME}-${REPO_NAME}-${VERSION}
+    echo "No file name root specified; default to ${FILE_NAME_ROOT}"
 fi
 if [ "x$REPO_ROOT" = "x" ] ; then
     REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
+    echo "No repository root specified; default to ${REPO_ROOT}"
 fi;
 
 mkdir "${FILE_NAME_ROOT}"
 pushd "${FILE_NAME_ROOT}"
 
+echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
 hg clone ${REPO_ROOT} openjdk -r ${VERSION}
 pushd openjdk
 	
@@ -59,6 +92,7 @@ repos="hotspot corba jaxws jaxp langtools nashorn jdk"
 
 for subrepo in $repos
 do
+    echo "Cloning ${VERSION} ${subrepo} repository from ${REPO_ROOT}"
     hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
 done
 
@@ -74,6 +108,7 @@ if [ "x$PR2126" = "x" ] ; then
     patch -Np1 < pr2126.patch
     rm pr2126.patch
 else
+    echo "Applying ${PR2126}"
     patch -Np1 < $PR2126
 fi;
 
