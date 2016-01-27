@@ -148,8 +148,8 @@
 %global origin          openjdk
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
-%global repo            jdk8u60
-%global revision        aarch64-jdk8u71-b15
+%global repo            jdk8u
+%global revision        aarch64-jdk8u72-b15
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -756,7 +756,7 @@ URL:      http://openjdk.java.net/
 # Source from upstream OpenJDK8 project. To regenerate, use
 # VERSION=aarch64-jdk8u71-b15 FILE_NAME_ROOT=${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
-Source0:  %{revision}.tar.xz
+Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -833,8 +833,6 @@ Patch605: soundFontPatch.patch
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
 # 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
-# S8146566, PR2428: OpenJDK build can't handle commas in LDFLAGS
-Patch501: 8146566.patch
 # S8143855: Bad printf formatting in frame_zero.cpp 
 Patch505: 8143855.patch
 
@@ -1117,7 +1115,6 @@ sh %{SOURCE12}
 %patch602
 %patch605
 
-%patch501
 %patch502
 %patch503
 %patch504
@@ -1681,6 +1678,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 27 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.72-1.b15
+- updated to aarch64-jdk8u72-b15 (from aarch64-port/jdk8u)
+- used aarch64-port-jdk8u-aarch64-jdk8u72-b15.tar.xz as new sources
+- removed already upstreamed patch501 8146566.patch
+
 * Wed Jan 20 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.71-1.b15
 - sync with rhel7
 - security update to CPU 19.1.2016 to u71b15

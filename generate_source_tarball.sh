@@ -113,7 +113,7 @@ else
 fi;
 
 popd
-
+echo "Compresing remaining forest"
 if [ "X$COMPRESSION" = "Xxz" ] ; then
     tar --exclude-vcs -cJf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
 else
@@ -122,5 +122,6 @@ fi
 
 mv ${FILE_NAME_ROOT}.tar.${COMPRESSION}  ..
 popd
+echo "Done, you may wont to remove freshly cloned repo..."
 
 
