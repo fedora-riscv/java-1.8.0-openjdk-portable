@@ -734,7 +734,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1512,6 +1512,8 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
   popd
 
 bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix} %{javaver}
+# https://bugzilla.redhat.com/show_bug.cgi?id=1183793
+touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/security/java.security
 
 # end, dual install
 done
@@ -1678,6 +1680,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Feb 03 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.72-3.b15
+* touch -t 201401010000 java.security to try to worakround md5sums
+
 * Wed Jan 27 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.72-1.b15
 - updated to aarch64-jdk8u72-b15 (from aarch64-port/jdk8u)
 - used aarch64-port-jdk8u-aarch64-jdk8u72-b15.tar.xz as new sources
