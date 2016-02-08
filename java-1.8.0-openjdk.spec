@@ -837,8 +837,6 @@ Patch507: pr2842-02.patch
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
 # 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
-# S8146566, PR2428: OpenJDK build can't handle commas in LDFLAGS
-Patch501: 8146566.patch
 # S8143855: Bad printf formatting in frame_zero.cpp 
 Patch505: 8143855.patch
 
@@ -1121,7 +1119,6 @@ sh %{SOURCE12}
 %patch602
 %patch605
 
-%patch501
 %patch502
 %patch503
 %patch504
