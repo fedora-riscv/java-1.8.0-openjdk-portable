@@ -734,7 +734,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -788,6 +788,7 @@ Source101: config.sub
 
 # RPM/distribution specific patches
 
+# Accessibility patches
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   %{name}-accessible-toolkit.patch
 # Restrict access to java-atk-wrapper classes
@@ -828,11 +829,16 @@ Patch502: pr2462-01.patch
 Patch503: pr2462-02.patch
 # S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
 Patch605: soundFontPatch.patch
+# S8148351, PR2842: Only display resolved symlink for compiler, do not change path
+Patch506: pr2842-01.patch
+Patch507: pr2842-02.patch
 
 # Patches upstream and appearing in 8u76
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
 # 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
 Patch403: rhbz1206656_fix_current_stack_pointer.patch
+# S8146566, PR2428: OpenJDK build can't handle commas in LDFLAGS
+Patch501: 8146566.patch
 # S8143855: Bad printf formatting in frame_zero.cpp 
 Patch505: 8143855.patch
 
@@ -879,13 +885,13 @@ BuildRequires: java-1.8.0-openjdk-devel
 BuildRequires: libffi-devel
 %endif
 BuildRequires: tzdata-java >= 2015d
-
+# Earlier versions have a bug in tree vectorization on PPC
+BuildRequires: gcc >= 4.8.3-8
 # cacerts build requirement.
 BuildRequires: openssl
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
-
 
 # this is built always, also during debug-only build
 # when it is built in debug-only, then this package is just placeholder
@@ -1115,10 +1121,13 @@ sh %{SOURCE12}
 %patch602
 %patch605
 
+%patch501
 %patch502
 %patch503
 %patch504
 %patch505
+%patch506
+%patch507
 %patch511
 %patch512
 
@@ -1181,13 +1190,7 @@ export CFLAGS="$CFLAGS -mieee"
 # We use ourcppflags because the OpenJDK build seems to
 # pass these to the HotSpot C++ compiler...
 EXTRA_CFLAGS="%ourcppflags"
-# Disable various optimizations to fix miscompliation. See:
-# - https://bugzilla.redhat.com/show_bug.cgi?id=1120792
-EXTRA_CPP_FLAGS="%ourcppflags -fno-tree-vrp"
-# PPC/PPC64 needs -fno-tree-vectorize since -O3 would
-# otherwise generate wrong code producing segfaults.
 %ifarch %{power64} ppc
-EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
 %endif
@@ -1680,6 +1683,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Feb 05 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.71-4.b15
+- Backport S8148351: Only display resolved symlink for compiler, do not change path
+
 * Wed Feb 03 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.72-3.b15
 * touch -t 201401010000 java.security to try to worakround md5sums
 
