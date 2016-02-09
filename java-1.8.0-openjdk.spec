@@ -37,6 +37,7 @@
 %global build_loop  %{build_loop1} %{build_loop2}
 # note, that order  normal_suffix debug_suffix, in case of both enabled,
 # is expected in one single case at the end of build
+%global rev_build_loop  %{build_loop2} %{build_loop1}
 
 %global bootstrap_build 0
 
@@ -734,7 +735,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1185,8 +1186,10 @@ export CFLAGS="$CFLAGS -mieee"
 %endif
 
 # We use ourcppflags because the OpenJDK build seems to
-# pass these to the HotSpot C++ compiler...
-EXTRA_CFLAGS="%ourcppflags"
+# pass EXTRA_CFLAGS to the HotSpot C++ compiler...
+# Explicitly set the C++ standard as the default has changed on GCC >= 6
+EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error"
+EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98"
 %ifarch %{power64} ppc
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
@@ -1246,6 +1249,7 @@ make \
     STRIP_POLICY=no_strip \
     POST_STRIP_CMD="" \
     LOG=trace \
+    SCTP_WERROR= \
     %{targets}
 
 # the build (erroneously) removes read permissions from some jars
@@ -1260,16 +1264,24 @@ find images/%{j2sdkimage} -iname '*.debuginfo' -exec rm {} \;
 
 popd >& /dev/null
 
-# Install nss.cfg right away as we will be using the JRE above
 export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
 
-
 # Use system-wide tzdata
 rm $JAVA_HOME/jre/lib/tzdb.dat
 ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
+
+#build cycles
+done
+
+%check
+
+# We test debug first as it will give better diagnostics on a crash
+for suffix in %{rev_build_loop} ; do
+
+export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1301,8 +1313,6 @@ $JAVA_HOME/bin/javap -l java.lang.Object | grep LocalVariableTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
-
-#build cycles
 done
 
 %install
@@ -1680,6 +1690,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 08 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-5.b15
+- Explicitly set the C++ standard to use, as the default has changed to C++ 2014 in GCC 6.
+- Turn off -Werror due to format warnings in HotSpot and -std usage warnings in SCTP.
+- Run tests under the check stage and use the debug build first.
+
 * Fri Feb 05 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.71-4.b15
 - Backport S8148351: Only display resolved symlink for compiler, do not change path
 
