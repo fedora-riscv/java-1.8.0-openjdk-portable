@@ -1188,8 +1188,8 @@ export CFLAGS="$CFLAGS -mieee"
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
 # Explicitly set the C++ standard as the default has changed on GCC >= 6
-EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error"
-EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98"
+EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error -fno-delete-null-pointer-checks -fno-guess-branch-probability"
+EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98 -fno-delete-null-pointer-checks -fno-guess-branch-probability"
 %ifarch %{power64} ppc
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
@@ -1690,6 +1690,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Feb 12 2016 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.72-5.b15
+- Add -fno-delete-null-pointer-checks -fno-guess-branch-probability flags to resolve x86/x86_64 crash.
+
 * Mon Feb 08 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-5.b15
 - Explicitly set the C++ standard to use, as the default has changed to C++ 2014 in GCC 6.
 - Turn off -Werror due to format warnings in HotSpot and -std usage warnings in SCTP.
