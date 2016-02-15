@@ -735,7 +735,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -812,6 +812,9 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
+# Remove unneccessary template definition in aarch64
+# sharedRuntime code. See RHBZ#1307224
+Patch104: aarch64_FTBFS_rhbz_1307224.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -1111,6 +1114,8 @@ sh %{SOURCE12}
 %patch102
 %patch103
 %endif
+# Aarch64 build fixes
+%patch104
 
 # Zero PPC fixes.
 %patch403
@@ -1690,6 +1695,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 15 2016 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.72-6.b15
+- Add aarch64_FTBFS_rhbz_1307224.patch so as to resolve RHBZ#1307224.
+
 * Fri Feb 12 2016 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.72-5.b15
 - Add -fno-delete-null-pointer-checks -fno-guess-branch-probability flags to resolve x86/x86_64 crash.
 
