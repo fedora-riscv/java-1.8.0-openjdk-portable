@@ -82,6 +82,8 @@
 #looks liekopenjdk RPM specific bug
 # Always set this so the nss.cfg file is not broken
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
+%global NSS_LIBS %(pkg-config --libs nss)
+%global NSS_CFLAGS %(pkg-config --cflags nss-softokn)
 
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 %global _privatelibs libmawt[.]so.*
@@ -735,7 +737,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -755,9 +757,9 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u71-b15 FILE_NAME_ROOT=${VERSION}
+# VERSION=aarch64-jdk8u72-b15 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}-ec
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
-Source0: %{project}-%{repo}-%{revision}.tar.xz
+Source0: %{project}-%{repo}-%{revision}-ec.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -800,10 +802,18 @@ Patch3: java-atk-wrapper-security.patch
 Patch5: multiple-pkcs11-library-init.patch
 # PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
 Patch504: rh1163501.patch
-# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option (upstreaming post-CPU 2015/07)
+# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option
 Patch511: rh1214835.patch
 # Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
 Patch512: no_strict_overflow.patch
+# Support for building the SunEC provider with the system NSS installation
+# PR1983: Support using the system installation of NSS with the SunEC provider
+# PR2127: SunEC provider crashes when built using system NSS
+# PR2815: Race condition in SunEC provider with system NSS
+Patch513: pr1983-jdk.patch
+Patch514: pr1983-root.patch
+Patch515: pr2127.patch
+Patch516: pr2815.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -818,6 +828,8 @@ Patch103: s390-size_t_format_flags.patch
 Patch104: remove_aarch64_jvm.cfg_divergence.patch
 # RH1300630, 8147805: aarch64: C1 segmentation fault due to inline Unsafe.getAndSetObject
 Patch105: rh1300630.patch
+# Remove template in AArch64 port which causes issues with GCC 6
+Patch106: remove_aarch64_template_for_gcc6.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -852,8 +864,6 @@ Patch505: 8143855.patch
 Patch201: system-libjpeg.patch
 
 # Local fixes
-# Turns off ECC support as we don't ship the SunEC provider currently
-Patch12: removeSunEcProvider-RH1154143.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -892,6 +902,9 @@ BuildRequires: libffi-devel
 BuildRequires: tzdata-java >= 2015d
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
+# Build requirements for SunEC system NSS support
+BuildRequires: nss-softokn-freebl-devel >= 3.16.1
+
 # cacerts build requirement.
 BuildRequires: openssl
 %if %{with_systemtap}
@@ -1109,7 +1122,6 @@ sh %{SOURCE12}
 %patch3
 %patch5
 %patch7
-%patch12
 
 # s390 build fixes
 %patch100
@@ -1119,6 +1131,7 @@ sh %{SOURCE12}
 # aarch64 build fixes
 %patch104
 %patch105
+%patch106
 
 # Zero PPC fixes.
 %patch403
@@ -1136,6 +1149,10 @@ sh %{SOURCE12}
 %patch507
 %patch511
 %patch512
+%patch513
+%patch514
+%patch515
+%patch516
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1218,6 +1235,8 @@ fi
 mkdir -p %{buildoutputdir $suffix}
 pushd %{buildoutputdir $suffix}
 
+NSS_LIBS="%{NSS_LIBS} -lfreebl" \
+NSS_CFLAGS="%{NSS_CFLAGS}" \
 bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
@@ -1229,6 +1248,7 @@ bash ../../configure \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
     --enable-unlimited-crypto \
+    --enable-system-nss \
     --with-zlib=system \
     --with-libjpeg=system \
     --with-giflib=system \
@@ -1696,6 +1716,16 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Feb 24 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-11.b15
+- Add patches to allow the SunEC provider to be built with the system NSS install.
+- Re-generate source tarball so it includes ecc_impl.h.
+- Adjust tarball generation script to allow ecc_impl.h to be included.
+- Bring over NSS changes from java-1.7.0-openjdk spec file (NSS_CFLAGS/NSS_LIBS)
+- Remove patch which disables the SunEC provider as it is now usable.
+- Correct spelling mistakes in tarball generation script.
+- Move completely unrelated AArch64 gcc 6 patch into separate file.
+- Resolves: rhbz#1019554 (fedora bug)
+
 * Tue Feb 23 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.72-10.b15
 - returning accidentlay removed hunk from renamed and so wrongly merged remove_aarch64_jvm.cfg_divergence.patch
 

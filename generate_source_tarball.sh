@@ -2,7 +2,7 @@
 # Generates the 'source tarball' for JDK 8 projects.
 #
 # Example:
-# When used from local repo set REPO_ROOT pointing to file:// wth your repo
+# When used from local repo set REPO_ROOT pointing to file:// with your repo
 # if your local repo follows upstream forests conventions, you may be enough by setting OPENJDK_URL
 # if you wont to use local copy of patch PR2126 set path to it to PR2126 variable
 #
@@ -29,7 +29,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "VERSION - the version of the specified OpenJDK project"
     echo "PROJECT_NAME -- the name of the OpenJDK project being archived (optional; only needed by defaults)"
     echo "REPO_NAME - the name of the OpenJDK repository (optional; only needed by defaults)"
-    echo "OPENJDK_URL - the URL to retrive code from (optional; defaults to ${OPENJDK_URL_DEFAULT})"
+    echo "OPENJDK_URL - the URL to retrieve code from (optional; defaults to ${OPENJDK_URL_DEFAULT})"
     echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
@@ -98,7 +98,11 @@ done
 
 
 echo "Removing EC source code we don't build"
+
+mv -v jdk/src/share/native/sun/security/ec/impl/ecc_impl.h .
 rm -vrf jdk/src/share/native/sun/security/ec/impl
+mkdir jdk/src/share/native/sun/security/ec/impl
+mv -v ecc_impl.h jdk/src/share/native/sun/security/ec/impl
 
 echo "Syncing EC list with NSS"
 if [ "x$PR2126" = "x" ] ; then
@@ -113,7 +117,7 @@ else
 fi;
 
 popd
-echo "Compresing remaining forest"
+echo "Compressing remaining forest"
 if [ "X$COMPRESSION" = "Xxz" ] ; then
     tar --exclude-vcs -cJf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
 else
@@ -122,6 +126,6 @@ fi
 
 mv ${FILE_NAME_ROOT}.tar.${COMPRESSION}  ..
 popd
-echo "Done, you may wont to remove freshly cloned repo..."
+echo "Done. You may want to remove the uncompressed version."
 
 

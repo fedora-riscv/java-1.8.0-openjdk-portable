@@ -1,18 +1,3 @@
-diff --git openjdk/hotspot/src/cpu/aarch64/vm/sharedRuntime_aarch64.cpp b/java-1.8.0-openjdk-1.8.0.72-5.b15.fc24.x86_64/openjdk/hotspot/src/cpu/aarch64/vm/sharedRuntime_aarch64.cpp
-index ef50802..9d604d5 100644
---- openjdk/hotspot/src/cpu/aarch64/vm/sharedRuntime_aarch64.cpp
-+++ openjdk/hotspot/src/cpu/aarch64/vm/sharedRuntime_aarch64.cpp
-@@ -194,10 +194,6 @@ static int reg2offset_out(VMReg r) {
-   return (r->reg2stack() + SharedRuntime::out_preserve_stack_slots()) * VMRegImpl::stack_slot_size;
- }
- 
--template <class T> static const T& min (const T& a, const T& b) {
--  return (a > b) ? b : a;
--}
--
- // ---------------------------------------------------------------------------
- // Read the array of BasicTypes from a signature, and compute where the
- // arguments should go.  Values in the VMRegPair regs array refer to 4-byte
 diff -r 57824090cf28 src/share/bin/java.c
 --- openjdk/jdk/src/share/bin/java.c	Fri Feb 05 17:41:45 2016 +0000
 +++ openjdk/jdk/src/share/bin/java.c	Thu Feb 18 03:43:51 2016 +0000
