@@ -1,0 +1,15 @@
+diff -r 4c440540c962 src/share/vm/runtime/arguments.cpp
+--- openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Mon Feb 29 06:45:24 2016 +0000
++++ openjdk/hotspot/src/share/vm/runtime/arguments.cpp	Mon Feb 29 16:36:41 2016 +0000
+@@ -1137,8 +1137,9 @@
+   }
+   // Increase the code cache size - tiered compiles a lot more.
+   if (FLAG_IS_DEFAULT(ReservedCodeCacheSize)) {
+-    FLAG_SET_DEFAULT(ReservedCodeCacheSize,
+-                     MIN2(CODE_CACHE_DEFAULT_LIMIT, ReservedCodeCacheSize * 5));
++    NOT_AARCH64(FLAG_SET_DEFAULT(ReservedCodeCacheSize, ReservedCodeCacheSize * 5));
++    AARCH64_ONLY(FLAG_SET_DEFAULT(ReservedCodeCacheSize,
++				  MIN2(CODE_CACHE_DEFAULT_LIMIT, ReservedCodeCacheSize * 5)));
+   }
+   if (!UseInterpreter) { // -Xcomp
+     Tier3InvokeNotifyFreqLog = 0;

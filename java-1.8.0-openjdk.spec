@@ -152,7 +152,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u72-b15
+%global revision        aarch64-jdk8u72-b16
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -824,12 +824,10 @@ Patch102: %{name}-size_t.patch
 Patch103: s390-size_t_format_flags.patch
 
 # AArch64-specific upstreamable patches
-# Revert 'Fixes to work around "missing 'client' JVM" error messages' and sync jvm.cfg with OpenJDK 9
-Patch104: remove_aarch64_jvm.cfg_divergence.patch
-# RH1300630, 8147805: aarch64: C1 segmentation fault due to inline Unsafe.getAndSetObject
-Patch105: rh1300630.patch
 # Remove template in AArch64 port which causes issues with GCC 6
 Patch106: remove_aarch64_template_for_gcc6.patch
+# Remove accidentally included global large code cache changes which break S390
+Patch107: make_reservedcodecachesize_changes_aarch64_only.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -1129,9 +1127,8 @@ sh %{SOURCE12}
 %patch103
 
 # aarch64 build fixes
-%patch104
-%patch105
 %patch106
+%patch107
 
 # Zero PPC fixes.
 %patch403
@@ -1716,6 +1713,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 29 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-5.b16
+- Fix regression introduced on s390 by large code cache change.
+- Update to u72b16.
+- Drop 8147805 and jvm.cfg fix which are applied upstream.
+
 * Wed Feb 24 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-11.b15
 - Add patches to allow the SunEC provider to be built with the system NSS install.
 - Re-generate source tarball so it includes ecc_impl.h.
