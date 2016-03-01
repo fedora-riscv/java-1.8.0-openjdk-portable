@@ -737,7 +737,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -842,8 +842,7 @@ Patch202: system-libpng.patch
 Patch203: system-lcms.patch
 # PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
-Patch502: pr2462-01.patch
-Patch503: pr2462-02.patch
+Patch502: pr2462.patch
 # S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
 Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
@@ -1139,7 +1138,6 @@ sh %{SOURCE12}
 %patch605
 
 %patch502
-%patch503
 %patch504
 %patch505
 %patch506
@@ -1713,6 +1711,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 29 2016 Omair Majid <omajid@redhat.com> - 1:1.8.0.72-12.b15
+- Use a simple backport for PRPR2462/8074839.
+- Don't backport the crc check for pack.gz. It's not tested well upstream.
+
 * Mon Feb 29 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-5.b16
 - Fix regression introduced on s390 by large code cache change.
 - Update to u72b16.
