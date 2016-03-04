@@ -737,7 +737,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 13.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -757,8 +757,9 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u72-b15 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}-ec
+# VERSION=aarch64-jdk8u72-b16 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}-ec
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
+# where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}-ec.tar.xz
 
 # Custom README for -src subpackage
@@ -826,6 +827,8 @@ Patch103: s390-size_t_format_flags.patch
 # AArch64-specific upstreamable patches
 # Remove template in AArch64 port which causes issues with GCC 6
 Patch106: remove_aarch64_template_for_gcc6.patch
+
+# AArch64-specific upstreamed patches
 # Remove accidentally included global large code cache changes which break S390
 Patch107: make_reservedcodecachesize_changes_aarch64_only.patch
 
@@ -844,10 +847,15 @@ Patch203: system-lcms.patch
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
 # S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
+# waiting on upstream: http://mail.openjdk.java.net/pipermail/jdk8u-dev/2016-January/004916.html
 Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
+# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
+# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
+Patch508: rh1176206-jdk.patch
+Patch509: rh1176206-root.patch
 
 # Patches upstream and appearing in 8u76
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
@@ -1142,6 +1150,8 @@ sh %{SOURCE12}
 %patch505
 %patch506
 %patch507
+%patch508
+%patch509
 %patch511
 %patch512
 %patch513
@@ -1711,8 +1721,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Mar 03 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-13.b16
+- When using a compositing WM, the overlay window should be used, not the root window.
+
 * Mon Feb 29 2016 Omair Majid <omajid@redhat.com> - 1:1.8.0.72-12.b15
-- Use a simple backport for PRPR2462/8074839.
+- Use a simple backport for PR2462/8074839.
 - Don't backport the crc check for pack.gz. It's not tested well upstream.
 
 * Mon Feb 29 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-5.b16
