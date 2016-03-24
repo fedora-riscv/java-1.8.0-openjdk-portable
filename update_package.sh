@@ -24,7 +24,7 @@ if [ "x$REPO_NAME" = "x" ] ; then
     REPO_NAME="jdk8u"
 fi
 if [ "x$VERSION" = "x" ] ; then
-    VERSION="aarch64-jdk8u72-b15"
+    VERSION="aarch64-jdk8u77-b03"
 fi
 
 if [ "x$COMPRESSION" = "x" ] ; then

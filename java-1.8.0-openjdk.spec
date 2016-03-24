@@ -152,7 +152,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u72-b16
+%global revision        aarch64-jdk8u77-b03
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -737,7 +737,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 13.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -757,10 +757,10 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u72-b16 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}-ec
+# VERSION=aarch64-jdk8u77-b03 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source0: %{project}-%{repo}-%{revision}-ec.tar.xz
+Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -828,10 +828,6 @@ Patch103: s390-size_t_format_flags.patch
 # Remove template in AArch64 port which causes issues with GCC 6
 Patch106: remove_aarch64_template_for_gcc6.patch
 
-# AArch64-specific upstreamed patches
-# Remove accidentally included global large code cache changes which break S390
-Patch107: make_reservedcodecachesize_changes_aarch64_only.patch
-
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
 Patch601: %{name}-rh1191652-root.patch
@@ -897,7 +893,6 @@ BuildRequires: libXtst-devel
 BuildRequires: nss-devel
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
-#BuildRequires: redhat-lsb
 BuildRequires: zip
 BuildRequires: java-1.8.0-openjdk-devel
 # Zero-assembler build requirement.
@@ -1135,7 +1130,6 @@ sh %{SOURCE12}
 
 # aarch64 build fixes
 %patch106
-%patch107
 
 # Zero PPC fixes.
 %patch403
@@ -1721,6 +1715,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Mar 23 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-1.b03
+- Update to u77b03.
+
 * Thu Mar 03 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.72-13.b16
 - When using a compositing WM, the overlay window should be used, not the root window.
 
