@@ -475,6 +475,24 @@ exit 0
 exit 0
 }
 
+%global post_javadoc_zip() %{expand:
+
+PRIORITY=%{priority}
+if [ "%1" == %{debug_suffix} ]; then
+  let PRIORITY=PRIORITY-1
+fi
+
+alternatives \\
+  --install %{_javadocdir}/java-zip javadoczip %{_javadocdir}/%{uniquejavadocdir %%1}.zip \\
+  $PRIORITY  --family %{name}
+exit 0
+}
+
+%global postun_javadoc_zip() %{expand:
+  alternatives --remove javadoczip %{_javadocdir}/%{uniquejavadocdir %%1}.zip
+exit 0
+}
+
 %global files_jre() %{expand:
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
 %{_datadir}/applications/*policytool%1.desktop
@@ -586,6 +604,12 @@ exit 0
 %global files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir %%1}
+%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+}
+
+%global files_javadoc_zip() %{expand:
+%defattr(-,root,root,-)
+%doc %{_javadocdir}/%{uniquejavadocdir %%1}.zip
 %doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
@@ -737,7 +761,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -865,6 +889,8 @@ Patch505: 8143855.patch
 Patch201: system-libjpeg.patch
 
 # Local fixes
+# see http://mail.openjdk.java.net/pipermail/build-dev/2016-March/016852.html thread
+Patch400: jdk8-archivedJavadoc.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1033,6 +1059,19 @@ BuildArch: noarch
 The OpenJDK API documentation.
 %endif
 
+%if %{include_normal_build}
+%package javadoc-zip
+Summary: OpenJDK API Documentation compressed in single archive
+Group:   Documentation
+Requires: javapackages-tools
+BuildArch: noarch
+
+%{java_javadoc_rpo %{nil}}
+
+%description javadoc-zip
+The OpenJDK API documentation compressed in single archive.
+%endif
+
 %if %{include_debug_build}
 %package javadoc-debug
 Summary: OpenJDK API Documentation %{for_debug}
@@ -1045,6 +1084,20 @@ BuildArch: noarch
 %description javadoc-debug
 The OpenJDK API documentation %{for_debug}.
 %endif
+
+%if %{include_debug_build}
+%package javadoc-zip-debug
+Summary: OpenJDK API Documentation compressed in single archive %{for_debug}
+Group:   Documentation
+Requires: javapackages-tools
+BuildArch: noarch
+
+%{java_javadoc_rpo %{debug_suffix_unquoted}}
+
+%description javadoc-zip-debug
+The OpenJDK API documentation compressed in single archive %{for_debug}.
+%endif
+
 
 %if %{include_normal_build}
 %package accessibility
@@ -1161,6 +1214,7 @@ tar xzf %{SOURCE8}
 cp -r tapset tapset%{debug_suffix}
 %endif
 
+%patch400
 
 for suffix in %{build_loop} ; do
   for file in "tapset"$suffix/*.in; do
@@ -1275,6 +1329,8 @@ make \
     LOG=trace \
     SCTP_WERROR= \
     %{targets}
+
+make zip-docs
 
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
@@ -1449,6 +1505,7 @@ popd
 # Install Javadoc documentation.
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
 cp -a %{buildoutputdir $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}
+cp -a %{buildoutputdir $suffix}/bundles/jdk-%{javaver}_%{updatever}$suffix-%{buildver}-docs.zip  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir $suffix}.zip
 
 # Install icons and menu entries.
 for s in 16 24 32 48 ; do
@@ -1625,6 +1682,12 @@ require "copy_jdk_configs.lua"
 
 %postun javadoc
 %{postun_javadoc %{nil}}
+
+%post javadoc-zip
+%{post_javadoc_zip %{nil}}
+
+%postun javadoc-zip
+%{postun_javadoc_zip %{nil}}
 %endif
 
 %if %{include_debug_build} 
@@ -1657,6 +1720,12 @@ require "copy_jdk_configs.lua"
 
 %postun javadoc-debug
 %{postun_javadoc %{debug_suffix_unquoted}}
+
+%post javadoc-zip-debug
+%{post_javadoc_zip %{debug_suffix_unquoted}}
+
+%postun javadoc-zip-debug
+%{postun_javadoc_zip %{debug_suffix_unquoted}}
 %endif
 
 %if %{include_normal_build} 
@@ -1687,6 +1756,9 @@ require "copy_jdk_configs.lua"
 %files javadoc
 %{files_javadoc %{nil}}
 
+%files javadoc-zip
+%{files_javadoc_zip %{nil}}
+
 %files accessibility
 %{files_accessibility %{nil}}
 %endif
@@ -1710,11 +1782,18 @@ require "copy_jdk_configs.lua"
 %files javadoc-debug
 %{files_javadoc %{debug_suffix_unquoted}}
 
+%files javadoc-zip-debug
+%{files_javadoc_zip %{debug_suffix_unquoted}}
+
 %files accessibility-debug
 %{files_accessibility %{debug_suffix_unquoted}}
 %endif
 
 %changelog
+* Mon Apr 04 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.77-2.b03
+- added patch400  jdk8-archivedJavadoc.patch
+- added javadoc-zip(-debug) subpackage with compressed javadoc
+
 * Wed Mar 23 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-1.b03
 - Update to u77b03.
 
