@@ -1206,6 +1206,8 @@ sh %{SOURCE12}
 %patch515
 %patch516
 
+%patch400
+
 # Extract systemtap tapsets
 %if %{with_systemtap}
 tar xzf %{SOURCE8}
@@ -1214,7 +1216,6 @@ tar xzf %{SOURCE8}
 cp -r tapset tapset%{debug_suffix}
 %endif
 
-%patch400
 
 for suffix in %{build_loop} ; do
   for file in "tapset"$suffix/*.in; do
