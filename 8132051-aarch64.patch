@@ -1,0 +1,248 @@
+# HG changeset patch
+# User aph
+# Date 1460374398 0
+#      Mon Apr 11 11:33:18 2016 +0000
+# Node ID 388e9d0905e69727a15a94f825bdde17e2ed96d6
+# Parent  e2b90ce9a1d12eae1a8edbd34eacd9a9674e315b
+8132051: Better byte behavior
+Reviewed-by: adinn
+
+diff --git a/src/cpu/aarch64/vm/c1_LIRGenerator_aarch64.cpp b/src/cpu/aarch64/vm/c1_LIRGenerator_aarch64.cpp
+--- openjdk/hotspot/src/cpu/aarch64/vm/c1_LIRGenerator_aarch64.cpp
++++ openjdk/hotspot/src/cpu/aarch64/vm/c1_LIRGenerator_aarch64.cpp
+@@ -337,7 +337,7 @@
+     length.load_item();
+ 
+   }
+-  if (needs_store_check) {
++  if (needs_store_check || x->check_boolean()) {
+     value.load_item();
+   } else {
+     value.load_for_store(x->elt_type());
+@@ -386,7 +386,8 @@
+     // Seems to be a precise
+     post_barrier(LIR_OprFact::address(array_addr), value.result());
+   } else {
+-    __ move(value.result(), array_addr, null_check_info);
++    LIR_Opr result = maybe_mask_boolean(x, array.result(), value.result(), null_check_info);
++    __ move(result, array_addr, null_check_info);
+   }
+ }
+ 
+diff --git a/src/cpu/aarch64/vm/interp_masm_aarch64.cpp b/src/cpu/aarch64/vm/interp_masm_aarch64.cpp
+--- openjdk/hotspot/src/cpu/aarch64/vm/interp_masm_aarch64.cpp
++++ openjdk/hotspot/src/cpu/aarch64/vm/interp_masm_aarch64.cpp
+@@ -41,7 +41,43 @@
+ #include "runtime/thread.inline.hpp"
+ 
+ 
+-// Implementation of InterpreterMacroAssembler
++void InterpreterMacroAssembler::narrow(Register result) {
++
++  // Get method->_constMethod->_result_type
++  ldr(rscratch1, Address(rfp, frame::interpreter_frame_method_offset * wordSize));
++  ldr(rscratch1, Address(rscratch1, Method::const_offset()));
++  ldrb(rscratch1, Address(rscratch1, ConstMethod::result_type_offset()));
++
++  Label done, notBool, notByte, notChar;
++
++  // common case first
++  cmpw(rscratch1, T_INT);
++  br(Assembler::EQ, done);
++
++  // mask integer result to narrower return type.
++  cmpw(rscratch1, T_BOOLEAN);
++  br(Assembler::NE, notBool);
++  andw(result, result, 0x1);
++  b(done);
++
++  bind(notBool);
++  cmpw(rscratch1, T_BYTE);
++  br(Assembler::NE, notByte);
++  sbfx(result, result, 0, 8);
++  b(done);
++
++  bind(notByte);
++  cmpw(rscratch1, T_CHAR);
++  br(Assembler::NE, notChar);
++  ubfx(result, result, 0, 16);  // truncate upper 16 bits
++  b(done);
++
++  bind(notChar);
++  sbfx(result, result, 0, 16);     // sign-extend short
++
++  // Nothing to do for T_INT
++  bind(done);
++}
+ 
+ #ifndef CC_INTERP
+ 
+@@ -79,6 +115,7 @@
+                verify_oop(r0, state);               break;
+     case ltos: ldr(r0, val_addr);                   break;
+     case btos:                                   // fall through
++    case ztos:                                   // fall through
+     case ctos:                                   // fall through
+     case stos:                                   // fall through
+     case itos: ldrw(r0, val_addr);                  break;
+@@ -312,6 +349,7 @@
+   switch (state) {
+   case atos: pop_ptr();                 break;
+   case btos:
++  case ztos:
+   case ctos:
+   case stos:
+   case itos: pop_i();                   break;
+@@ -329,6 +367,7 @@
+   switch (state) {
+   case atos: push_ptr();                break;
+   case btos:
++  case ztos:
+   case ctos:
+   case stos:
+   case itos: push_i();                  break;
+diff --git a/src/cpu/aarch64/vm/interp_masm_aarch64.hpp b/src/cpu/aarch64/vm/interp_masm_aarch64.hpp
+--- openjdk/hotspot/src/cpu/aarch64/vm/interp_masm_aarch64.hpp
++++ openjdk/hotspot/src/cpu/aarch64/vm/interp_masm_aarch64.hpp
+@@ -252,6 +252,9 @@
+   void update_mdp_by_constant(Register mdp_in, int constant);
+   void update_mdp_for_ret(Register return_bci);
+ 
++  // narrow int return value
++  void narrow(Register result);
++
+   void profile_taken_branch(Register mdp, Register bumped_count);
+   void profile_not_taken_branch(Register mdp);
+   void profile_call(Register mdp);
+diff --git a/src/cpu/aarch64/vm/templateTable_aarch64.cpp b/src/cpu/aarch64/vm/templateTable_aarch64.cpp
+--- openjdk/hotspot/src/cpu/aarch64/vm/templateTable_aarch64.cpp
++++ openjdk/hotspot/src/cpu/aarch64/vm/templateTable_aarch64.cpp
+@@ -233,6 +233,7 @@
+   switch (bc) {
+   case Bytecodes::_fast_aputfield:
+   case Bytecodes::_fast_bputfield:
++  case Bytecodes::_fast_zputfield:
+   case Bytecodes::_fast_cputfield:
+   case Bytecodes::_fast_dputfield:
+   case Bytecodes::_fast_fputfield:
+@@ -1072,6 +1073,18 @@
+   // r1: index
+   // r3: array
+   index_check(r3, r1); // prefer index in r1
++
++  // Need to check whether array is boolean or byte
++  // since both types share the bastore bytecode.
++  __ load_klass(r2, r3);
++  __ ldrw(r2, Address(r2, Klass::layout_helper_offset()));
++  int diffbit = Klass::layout_helper_boolean_diffbit();
++  __ andw(rscratch1, r2, diffbit);
++  Label L_skip;
++  __ cbzw(rscratch1, L_skip);
++  __ andw(r0, r0, 1);  // if it is a T_BOOLEAN array, mask the stored value to 0/1
++  __ bind(L_skip);
++
+   __ lea(rscratch1, Address(r3, r1, Address::uxtw(0)));
+   __ strb(r0, Address(rscratch1,
+ 		      arrayOopDesc::base_offset_in_bytes(T_BYTE)));
+@@ -2186,6 +2199,13 @@
+   if (_desc->bytecode() == Bytecodes::_return)
+     __ membar(MacroAssembler::StoreStore);
+ 
++  // Narrow result if state is itos but result type is smaller.
++  // Need to narrow in the return bytecode rather than in generate_return_entry
++  // since compiled code callers expect the result to already be narrowed.
++  if (state == itos) {
++    __ narrow(r0);
++  }
++
+   __ remove_activation(state);
+   __ ret(lr);
+ }
+@@ -2395,7 +2415,7 @@
+ 
+   const Address field(obj, off);
+ 
+-  Label Done, notByte, notInt, notShort, notChar,
++  Label Done, notByte, notBool, notInt, notShort, notChar,
+               notLong, notFloat, notObj, notDouble;
+ 
+   // x86 uses a shift and mask or wings it with a shift plus assert
+@@ -2415,6 +2435,20 @@
+   __ b(Done);
+ 
+   __ bind(notByte);
++  __ cmp(flags, ztos);
++  __ br(Assembler::NE, notBool);
++
++  // ztos (same code as btos)
++  __ ldrsb(r0, field);
++  __ push(ztos);
++  // Rewrite bytecode to be faster
++  if (!is_static) {
++    // use btos rewriting, no truncating to t/f bit is needed for getfield.
++    patch_bytecode(Bytecodes::_fast_bgetfield, bc, r1);
++  }
++  __ b(Done);
++
++  __ bind(notBool);
+   __ cmp(flags, atos);
+   __ br(Assembler::NE, notObj);
+   // atos
+@@ -2606,7 +2640,7 @@
+   // field address
+   const Address field(obj, off);
+ 
+-  Label notByte, notInt, notShort, notChar,
++  Label notByte, notBool, notInt, notShort, notChar,
+         notLong, notFloat, notObj, notDouble;
+ 
+   // x86 uses a shift and mask or wings it with a shift plus assert
+@@ -2628,6 +2662,22 @@
+   }
+ 
+   __ bind(notByte);
++  __ cmp(flags, ztos);
++  __ br(Assembler::NE, notBool);
++
++  // ztos
++  {
++    __ pop(ztos);
++    if (!is_static) pop_and_check_object(obj);
++    __ andw(r0, r0, 0x1);
++    __ strb(r0, field);
++    if (!is_static) {
++      patch_bytecode(Bytecodes::_fast_zputfield, bc, r1, true, byte_no);
++    }
++    __ b(Done);
++  }
++
++  __ bind(notBool);
+   __ cmp(flags, atos);
+   __ br(Assembler::NE, notObj);
+ 
+@@ -2778,6 +2828,7 @@
+     switch (bytecode()) {          // load values into the jvalue object
+     case Bytecodes::_fast_aputfield: __ push_ptr(r0); break;
+     case Bytecodes::_fast_bputfield: // fall through
++    case Bytecodes::_fast_zputfield: // fall through
+     case Bytecodes::_fast_sputfield: // fall through
+     case Bytecodes::_fast_cputfield: // fall through
+     case Bytecodes::_fast_iputfield: __ push_i(r0); break;
+@@ -2803,6 +2854,7 @@
+     switch (bytecode()) {             // restore tos values
+     case Bytecodes::_fast_aputfield: __ pop_ptr(r0); break;
+     case Bytecodes::_fast_bputfield: // fall through
++    case Bytecodes::_fast_zputfield: // fall through
+     case Bytecodes::_fast_sputfield: // fall through
+     case Bytecodes::_fast_cputfield: // fall through
+     case Bytecodes::_fast_iputfield: __ pop_i(r0); break;
+@@ -2858,6 +2910,9 @@
+   case Bytecodes::_fast_iputfield:
+     __ strw(r0, field);
+     break;
++  case Bytecodes::_fast_zputfield:
++    __ andw(r0, r0, 0x1);  // boolean is true if LSB is 1
++    // fall through to bputfield
+   case Bytecodes::_fast_bputfield:
+     __ strb(r0, field);
+     break;

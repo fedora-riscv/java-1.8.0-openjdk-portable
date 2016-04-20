@@ -128,3 +128,16 @@ diff -r cf43a852f486 src/share/vm/utilities/globalDefinitions.hpp
  
  #define INTX_FORMAT           "%" PRIdPTR
  #define UINTX_FORMAT          "%" PRIuPTR
+diff -r 388e9d0905e6 src/share/vm/memory/collectorPolicy.cpp
+--- openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp	Mon Apr 11 11:33:18 2016 +0000
++++ openjdk/hotspot/src/share/vm/memory/collectorPolicy.cpp	Tue Apr 12 04:12:50 2016 +0100
+@@ -1056,7 +1056,8 @@
+     size_t expected = msp.scale_by_NewRatio_aligned(initial_heap_size);
+     assert(msp.initial_gen0_size() == expected, err_msg("%zu != %zu", msp.initial_gen0_size(), expected));
+     assert(FLAG_IS_ERGO(NewSize) && NewSize == expected,
+-        err_msg("NewSize should have been set ergonomically to %zu, but was %zu", expected, NewSize));
++        err_msg("NewSize should have been set ergonomically to " SIZE_FORMAT ", but was " UINTX_FORMAT,
++		expected, NewSize));
+   }
+ 
+ private:

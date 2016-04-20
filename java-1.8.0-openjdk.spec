@@ -39,7 +39,11 @@
 # is expected in one single case at the end of build
 %global rev_build_loop  %{build_loop2} %{build_loop1}
 
+%ifarch %{jit_arches}
+%global bootstrap_build 1
+%else
 %global bootstrap_build 0
+%endif
 
 %if %{bootstrap_build}
 %global targets bootcycle-images docs
@@ -152,7 +156,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u77-b03
+%global revision        aarch64-jdk8u91-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -227,7 +231,8 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = 'd17958676bdb9f9d941c8a59655311fb' -o \\
        "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
        "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' -o \\
-       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' ]; then
+       "${sum}" = '321342219bb130d238ff144b9e5dbfc1' -o \\
+       "${sum}" = '134a37a84983b620f4d8d51a550c0c38' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -761,7 +766,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -781,7 +786,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u77-b03 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=aarch64-jdk8u91-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -807,6 +812,9 @@ Source12: %{name}-remove-intree-libraries.sh
 
 # Ensure we aren't using the limited crypto policy
 Source13: TestCryptoLevel.java
+
+# Ensure ECDSA is working
+Source14: TestECDSA.java
 
 Source20: repackReproduciblePolycies.sh
 
@@ -835,10 +843,12 @@ Patch512: no_strict_overflow.patch
 # PR1983: Support using the system installation of NSS with the SunEC provider
 # PR2127: SunEC provider crashes when built using system NSS
 # PR2815: Race condition in SunEC provider with system NSS
+# PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
 Patch513: pr1983-jdk.patch
 Patch514: pr1983-root.patch
 Patch515: pr2127.patch
 Patch516: pr2815.patch
+Patch517: pr2899.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -876,6 +886,12 @@ Patch507: pr2842-02.patch
 # In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
 Patch508: rh1176206-jdk.patch
 Patch509: rh1176206-root.patch
+# S8132051: Better byte behaviour for Zero
+Patch606: 8132051-zero.patch
+
+# Patches which need adding to aarch64/8u
+# S8132051: Better byte behaviour for AArch64
+Patch701: 8132051-aarch64.patch
 
 # Patches upstream and appearing in 8u76
 # Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
@@ -1181,11 +1197,14 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
-# aarch64 build fixes
-%patch106
-
-# Zero PPC fixes.
+# Zero fixes.
 %patch403
+%patch505
+%patch606
+
+# AArch64 fixes
+%patch106
+%patch701
 
 %patch603
 %patch601
@@ -1194,7 +1213,6 @@ sh %{SOURCE12}
 
 %patch502
 %patch504
-%patch505
 %patch506
 %patch507
 %patch508
@@ -1205,7 +1223,7 @@ sh %{SOURCE12}
 %patch514
 %patch515
 %patch516
-
+%patch517
 %patch400
 
 # Extract systemtap tapsets
@@ -1368,6 +1386,10 @@ export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
 $JAVA_HOME/bin/java TestCryptoLevel
+
+# Check ECC is working
+$JAVA_HOME/bin/javac -d . %{SOURCE14}
+#$JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 
 # Check debug symbols are present and can identify code
 SERVER_JVM="$JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so"
@@ -1791,9 +1813,80 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Roll back release number as release 1 never succeeded, even with tests disabled.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Add additional fix to Zero patch to properly handle result on 64-bit big-endian
+- Revert debugging options (aarch64 back to JIT, product build, no -Wno-error)
+- Enable full bootstrap on all architectures to check we are good to go.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Turn tests back on or build will not fail.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Temporarily remove power64 from JIT arches to see if endian issue appears on Zero.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Turn off Java-based checks in a vain attempt to get a complete build.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Turn off -Werror so s390 can build in slowdebug mode.
+- Add fix for formatting issue found by previous s390 build.
+- Resolves: rhbz#1325423
+
+* Tue Apr 12 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Revert settings to production defaults so we can at least get a build.
+- Switch to a slowdebug build to try and unearth remaining issue on s390x.
+- Resolves: rhbz#1325423
+
+* Mon Apr 11 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Disable ECDSA test for now until failure on RHEL 7 is fixed.
+- Resolves: rhbz#1325423
+
+* Mon Apr 11 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Add 8132051 port to Zero.
+- Turn on bootstrap build for all to ensure we are now good to go.
+- Resolves: rhbz#1325423
+
+* Mon Apr 11 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Add 8132051 port to AArch64.
+- Resolves: rhbz#1325423
+
+* Mon Apr 11 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Enable a full bootstrap on JIT archs. Full build held back by Zero archs anyway.
+- Resolves: rhbz#1325423
+
+* Sun Apr 10 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Use basename of test file to avoid misinterpretation of full path as a package
+- Resolves: rhbz#1325423
+
+* Sun Apr 10 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.91-1.b14
+- Update to u91b14.
+- Resolves: rhbz#1325423
+
 * Mon Apr 04 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.77-2.b03
 - added patch400  jdk8-archivedJavadoc.patch
 - added javadoc-zip(-debug) subpackage with compressed javadoc
+
+* Thu Mar 31 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-3.b03
+- Fix typo in test invocation.
+- Resolves: rhbz#1245810
+
+* Thu Mar 31 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-3.b03
+- Add ECDSA test to ensure ECC is working.
+- Resolves: rhbz#1245810
+
+* Wed Mar 30 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-2.b03
+- Avoid WithSeed versions of NSS functions as they do not fully process the seed
+- List current java.security md5sum so that java.security is replaced and ECC gets enabled.
+- Resolves: rhbz#1245810
 
 * Wed Mar 23 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.77-1.b03
 - Update to u77b03.
