@@ -28,7 +28,7 @@
 %endif
 
 # on intels, we build shenandoah htspot
-%ifarch %{ix86} x86_64
+%ifarch x86_64
 %global use_shenandoah_hotspot 1
 %else
 %global use_shenandoah_hotspot 0
@@ -1838,7 +1838,7 @@ require "copy_jdk_configs.lua"
 
 %changelog
 * Mon Apr 25 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.91-3.b14
-- included shenandoah support
+- included shenandoah support in 64b intel
 
 * Sun Apr 24 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.91-2.b14
 - added patch518 httpsFix1329342.patch
