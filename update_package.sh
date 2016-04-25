@@ -62,8 +62,6 @@ sed -i "s/^%global\s\+revision.*/%global revision        ${VERSION}/" $SPEC
 # updated sources, resetting release
 sed -i "s/^Release:.*/Release: $RELEASE.%{buildver}%{?dist}/" $SPEC
 
-git --no-pager diff $SPEC
-
 #https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Bash
 function levenshtein {
 	if [ "$#" -ne "2" ]; then
@@ -96,6 +94,32 @@ function levenshtein {
 		echo ${d[str1len+str1len*(str2len)]}
 	fi
 }
+# generate shenandoah hotspot
+# that means supply the underlying script with new values
+# to new filename.
+MAIN_VERSION=$VERSION
+if [ "x$VERSION" = "xtip" ] ; then
+    VERSION="tip"
+else
+	#hardcoding version for anything else except tip
+    VERSION="aarch64-shenandoah-jdk8u80-b00-beta01"
+fi
+MAIN_REPO_NAME=$REPO_NAME
+REPO_NAME=jdk8u-shenandoah
+MAIN_FILE_NAME_ROOT=$FILE_NAME_ROOT
+FILE_NAME_ROOT=${PROJECT_NAME}-${REPO_NAME}-${VERSION}
+FILENAME_SH=${FILE_NAME_ROOT}.tar.${COMPRESSION}
+REPOS="hotspot"
+
+if [ ! -f ${FILENAME_SH} ] ; then
+echo "Generating ${FILENAME_SH}"
+. ./generate_source_tarball.sh
+else 
+echo "${FILENAME_SH} already exists, using"
+fi
+
+sed -i "s/^Source999:.*/Source999: ${FILENAME_SH}/" $SPEC
+git --no-pager diff $SPEC
 
 # find the most similar sources name and replace it by newly generated one.
 echo "Old sources"
@@ -112,6 +136,19 @@ for x in $a_sources ; do
 done
 sum=`md5sum ${FILENAME}`
 sed -i "s;.*$winner;$sum;" sources
+# now shenandoah hotspot
+winner=""
+winnerDistance=999999
+for x in $a_sources ; do
+  distance=`levenshtein $x ${FILENAME_SH}`
+  if [ $distance -lt $winnerDistance ] ; then
+    winner=$x
+    winnerDistance=$distance
+  fi
+done
+sum=`md5sum ${FILENAME_SH}`
+sed -i "s;.*$winner;$sum;" sources
+
 echo "New sources"
 cat sources
 a_sources=`cat sources | sed "s/.*\s\+//g"`
@@ -122,12 +159,14 @@ user_gecos_field=$(echo "$user_record" | cut -d ':' -f 5)
 user_full_name=$(echo "$user_gecos_field" | cut -d ',' -f 1)
 spec_date=`date +"%a %b %d %Y"`
 # See spec:
-revision_helper=`echo ${VERSION%-*}`
+revision_helper=`echo ${MAIN_VERSION%-*}`
 updatever=`echo ${revision_helper##*u}`
-buildver=`echo ${VERSION##*-}`
+buildver=`echo ${MAIN_VERSION##*-}`
 echo "* $spec_date $user_full_name <$user_name@redhat.com> - 1:1.8.0.$updatever-$RELEASE.$buildver" 
-echo "- updated to $VERSION (from $PROJECT_NAME/$REPO_NAME)"
+echo "- updated to $MAIN_VERSION (from $PROJECT_NAME/$MAIN_REPO_NAME)"
+echo "- updated to $VERSION (from $PROJECT_NAME/$REPO_NAME) of hotspot"
 echo "- used $FILENAME as new sources"
+echo "- used $FILENAME_SH as new sources for hotspot"
 
 echo "    execute:"
 echo "fedpkg/rhpkg new-sources "$a_sources

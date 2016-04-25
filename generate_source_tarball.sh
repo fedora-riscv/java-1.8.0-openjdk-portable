@@ -87,8 +87,13 @@ echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
 hg clone ${REPO_ROOT} openjdk -r ${VERSION}
 pushd openjdk
 	
-#jdk is last for its size
-repos="hotspot corba jaxws jaxp langtools nashorn jdk"
+
+if [ "x$REPOS" = "x" ] ; then
+	#jdk is last for its size
+    repos="hotspot corba jaxws jaxp langtools nashorn jdk"
+else
+	repos=$REPOS
+fi;
 
 for subrepo in $repos
 do
@@ -96,7 +101,7 @@ do
     hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
 done
 
-
+if [ -d jdk ]; then 
 echo "Removing EC source code we don't build"
 
 mv -v jdk/src/share/native/sun/security/ec/impl/ecc_impl.h .
@@ -115,6 +120,7 @@ else
     echo "Applying ${PR2126}"
     patch -Np1 < $PR2126
 fi;
+fi
 
 popd
 echo "Compressing remaining forest"

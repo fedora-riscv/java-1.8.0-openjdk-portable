@@ -27,6 +27,13 @@
 %global include_debug_build 0
 %endif
 
+# on intels, we build shenandoah htspot
+%ifarch %{ix86} x86_64
+%global use_shenandoah_hotspot 1
+%else
+%global use_shenandoah_hotspot 0
+%endif
+
 %if %{include_debug_build}
 %global build_loop2 %{debug_suffix}
 %else
@@ -766,7 +773,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -821,6 +828,8 @@ Source20: repackReproduciblePolycies.sh
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
+# shenandoah hotpost
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u80-b00-beta01.tar.xz
 
 # RPM/distribution specific patches
 
@@ -1169,6 +1178,15 @@ if [ $prioritylength -ne 7 ] ; then
 fi
 # For old patches
 ln -s openjdk jdk8
+%if %{use_shenandoah_hotspot}
+#on intels, repalce hotpost by shenandoah-able hotspot
+pushd openjdk
+tar -xf %{SOURCE999}
+rm -rf hotspot
+cp -r openjdk/hotspot .
+rm -rf openjdk
+popd
+%endif
 
 cp %{SOURCE2} .
 
@@ -1199,13 +1217,17 @@ sh %{SOURCE12}
 %patch103
 
 # Zero fixes.
+%if %{use_shenandoah_hotspot} != 1
 %patch403
 %patch505
+%endif
 %patch606
 
 # AArch64 fixes
 %patch106
+%if %{use_shenandoah_hotspot} != 1
 %patch701
+%endif
 
 %patch603
 %patch601
@@ -1815,6 +1837,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Apr 25 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.91-3.b14
+- included shenandoah support
+
 * Sun Apr 24 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.91-2.b14
 - added patch518 httpsFix1329342.patch
 - test based on SOURCE14 enabled
