@@ -95,9 +95,6 @@
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
 %global NSS_LIBS %(pkg-config --libs nss)
 %global NSS_CFLAGS %(pkg-config --cflags nss-softokn)
-# see https://bugzilla.redhat.com/show_bug.cgi?id=1332456
-%global NSSSOFTOKN_BUILDTIME_VERSION %(pkg-config --modversion nss-softokn)
-%global NSS_BUILDTIME_VERSION %(pkg-config --modversion nss)
 
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 %global _privatelibs libmawt[.]so.*
@@ -669,9 +666,6 @@ Requires: javapackages-tools
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools
-# there is need to depnd on exact version of nss
-Requires: nss >= %{NSS_BUILDTIME_VERSION}
-Requires: nss-softokn >= %{NSSSOFTOKN_BUILDTIME_VERSION}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum eforce it, not rpm transaction and so no configs are persisted when pure rpm -u is run. I t may be consiedered as regression
 Requires:	copy-jdk-configs >= 1.1-3
 OrderWithRequires: copy-jdk-configs
@@ -779,7 +773,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1843,9 +1837,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Tue May 03 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-5.b14
+* Tue May 03 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-4.b14
 - updated to aarch64-shenandoah-jdk8u71-b15-beta02 (from aarch64-port/jdk8u-shenandoah) of hotspot
 - used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u71-b15-beta02.tar.xz as new sources for hotspot
+- reverted  nss version fix
 
 * Mon Apr 25 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.91-4.b14
 - Restricted to depend on exactly same version of nss as use dfor build
