@@ -1262,7 +1262,9 @@ sh %{SOURCE12}
 %patch517
 %patch518
 %patch400
+%if %{use_shenandoah_hotspot} == 1
 %patch401
+%endif
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
