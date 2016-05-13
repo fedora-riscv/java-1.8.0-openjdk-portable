@@ -1,0 +1,34 @@
+# HG changeset patch
+# User rkennke
+# Date 1463083411 -7200
+#      Thu May 12 22:03:31 2016 +0200
+# Node ID 632ccab070e6b8f0114f4c636508de5b9d7210ab
+# Parent  04726a0d70bbbdef63056ebfe3ef20bf21fb4be7
+Enable weak reference discovery in ShenandoahMarkCompact. Otherwise we never process any weak references in full-gc.
+
+diff --git a/src/share/vm/gc_implementation/shenandoah/shenandoahMarkCompact.cpp b/src/share/vm/gc_implementation/shenandoah/shenandoahMarkCompact.cpp
+--- openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahMarkCompact.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahMarkCompact.cpp
+@@ -126,6 +126,8 @@
+   ShenandoahMarkCompactBarrierSet bs(_heap);
+   oopDesc::set_bs(&bs);
+ 
++  _heap->set_need_update_refs(true);
++
+   OrderAccess::fence();
+ 
+   phase1_mark_heap();
+@@ -260,6 +262,12 @@
+   ShenandoahConcurrentMark* cm = _heap->concurrentMark();
+ 
+   cm->prepare_unmarked_root_objs_no_derived_ptrs(true);
++  if (ShenandoahProcessReferences) {
++    ReferenceProcessor* rp = _heap->ref_processor();
++    // enable ("weak") refs discovery
++    rp->enable_discovery(true /*verify_no_refs*/, true);
++    rp->setup_policy(true); // snapshot the soft ref policy to be used in this cycle
++  }
+   cm->shared_finish_mark_from_roots();
+ 
+   if (VerifyDuringGC) {
+

@@ -783,7 +783,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -927,6 +927,9 @@ Patch201: system-libjpeg.patch
 # Local fixes
 # see http://mail.openjdk.java.net/pipermail/build-dev/2016-March/016852.html thread
 Patch400: jdk8-archivedJavadoc.patch
+# already in shenandoah repo: http://hg.openjdk.java.net/shenandoah/jdk8u/hotspot/rev/06556235f193
+# proposed for shenandoah integration forest: http://mail.openjdk.java.net/pipermail/aarch64-port-dev/2016-May/003461.html
+Patch401: criticalShenandoahFix.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1259,6 +1262,7 @@ sh %{SOURCE12}
 %patch517
 %patch518
 %patch400
+%patch401
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1847,6 +1851,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri May 13 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-6.b14
+- Enable weak reference discovery in ShenandoahMarkCompact. Otherwise we never process any weak references in full-gc. 
+
 * Tue May 03 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-5.b14
 - Restricted to depend on exactly same version of nss as used for build
 - Resolves: rhbz#1332456
