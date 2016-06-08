@@ -905,15 +905,8 @@ Patch508: rh1176206-jdk.patch
 Patch509: rh1176206-root.patch
 
 # Patches which need adding to aarch64/8u
-# S8132051: Better byte behaviour for AArch64
-Patch701: 8132051-aarch64.patch
 
 # Patches upstream and appearing in 8u76
-# Fixes StackOverflowError on ARM32 bit Zero. See RHBZ#1206656
-# 8087120: [GCC5] java.lang.StackOverflowError on Zero JVM initialization on non x86 platforms
-Patch403: rhbz1206656_fix_current_stack_pointer.patch
-# S8143855: Bad printf formatting in frame_zero.cpp 
-Patch505: 8143855.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -924,7 +917,6 @@ Patch201: system-libjpeg.patch
 Patch400: jdk8-archivedJavadoc.patch
 # already in shenandoah repo: http://hg.openjdk.java.net/shenandoah/jdk8u/hotspot/rev/06556235f193
 # proposed for shenandoah integration forest: http://mail.openjdk.java.net/pipermail/aarch64-port-dev/2016-May/003461.html
-Patch401: criticalShenandoahFix.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1225,15 +1217,6 @@ sh %{SOURCE12}
 %patch103
 
 # Zero fixes.
-%if %{use_shenandoah_hotspot} != 1
-%patch403
-%patch505
-%endif
-
-# AArch64 fixes
-%if %{use_shenandoah_hotspot} != 1
-%patch701
-%endif
 
 %patch603
 %patch601
@@ -1256,9 +1239,6 @@ sh %{SOURCE12}
 %patch518
 %patch519
 %patch400
-%if %{use_shenandoah_hotspot} == 1
-%patch401
-%endif
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
