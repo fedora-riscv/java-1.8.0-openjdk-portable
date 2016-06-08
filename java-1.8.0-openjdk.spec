@@ -170,7 +170,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u91-b14
+%global revision        aarch64-jdk8u92-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -783,7 +783,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 8.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -839,7 +839,7 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 # shenandoah hotpost
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u71-b15-beta02.tar.xz
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u92-b14.tar.xz
 
 # RPM/distribution specific patches
 
@@ -879,10 +879,6 @@ Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
 
-# AArch64-specific upstreamable patches
-# Remove template in AArch64 port which causes issues with GCC 6
-Patch106: remove_aarch64_template_for_gcc6.patch
-
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
 Patch601: %{name}-rh1191652-root.patch
@@ -907,8 +903,6 @@ Patch507: pr2842-02.patch
 # In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
 Patch508: rh1176206-jdk.patch
 Patch509: rh1176206-root.patch
-# S8132051: Better byte behaviour for Zero
-Patch606: 8132051-zero.patch
 
 # Patches which need adding to aarch64/8u
 # S8132051: Better byte behaviour for AArch64
@@ -1235,10 +1229,8 @@ sh %{SOURCE12}
 %patch403
 %patch505
 %endif
-%patch606
 
 # AArch64 fixes
-%patch106
 %if %{use_shenandoah_hotspot} != 1
 %patch701
 %endif
