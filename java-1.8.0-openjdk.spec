@@ -803,7 +803,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u91-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=aarch64-jdk8u92-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -863,13 +863,19 @@ Patch512: no_strict_overflow.patch
 # PR2127: SunEC provider crashes when built using system NSS
 # PR2815: Race condition in SunEC provider with system NSS
 # PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
+# PR2934: SunEC provider throwing KeyException with current NSS
 Patch513: pr1983-jdk.patch
 Patch514: pr1983-root.patch
 Patch515: pr2127.patch
 Patch516: pr2815.patch
 Patch517: pr2899.patch
-Patch518: httpsFix1329342.patch
-Patch519: jdwpCrash.abrt.patch
+Patch518: pr2934.patch
+# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
+# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
+Patch508: rh1176206-jdk.patch
+Patch509: rh1176206-root.patch
+# RH1337583, PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
+Patch523: pr2974-rh1337583.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -878,6 +884,8 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
+# PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
+Patch524: pr2991-rh1341258.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -899,14 +907,20 @@ Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
-# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
-# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
-Patch508: rh1176206-jdk.patch
-Patch509: rh1176206-root.patch
 
-# Patches which need adding to aarch64/8u
+# Patches upstream and appearing in 8u102
+# S8148752, PR2943, RH1330188: Compiled StringBuilder code throws StringIndexOutOfBoundsException
+Patch519: 8148752-pr2943-rh1330188.patch
+# S6961123, PR2972, RH1339740:  Java application name in GNOME Shell contains funny characters
+Patch520: 6961123-pr2972-rh1339740.patch
 
-# Patches upstream and appearing in 8u76
+# Patches upstream and appearing in 8u112
+# S8044762, PR2960: com/sun/jdi/OptionTest.java test time out
+Patch521: 8044762-pr2960.patch
+# S8049226, PR2960: com/sun/jdi/OptionTest.java test times out again
+Patch522: 8049226-pr2960.patch
+# 8154210: Zero: Better byte behaviour
+Patch606: 8154210.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -915,8 +929,8 @@ Patch201: system-libjpeg.patch
 # Local fixes
 # see http://mail.openjdk.java.net/pipermail/build-dev/2016-March/016852.html thread
 Patch400: jdk8-archivedJavadoc.patch
-# already in shenandoah repo: http://hg.openjdk.java.net/shenandoah/jdk8u/hotspot/rev/06556235f193
-# proposed for shenandoah integration forest: http://mail.openjdk.java.net/pipermail/aarch64-port-dev/2016-May/003461.html
+# PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
+Patch525: pr1834-rh1022017.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1216,7 +1230,11 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
+# ppc64le fixes
+%patch524
+
 # Zero fixes.
+%patch606
 
 %patch603
 %patch601
@@ -1239,6 +1257,11 @@ sh %{SOURCE12}
 %patch518
 %patch519
 %patch400
+%patch520
+%patch521
+%patch522
+%patch523
+%patch525
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1827,6 +1850,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Jun 07 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.92-1.b14
+- updated to u92
+- removed upstreamed patches 8132051-aarch64.patch, 8143855.patch, criticalShenandoahFix.patch, rhbz1206656_fix_current_stack_pointer.patch
+- 8132051-zero.patch, remove_aarch64_template_for_gcc6.patch
+- jdwpCrash.abrt.patch renamed to 8044762-pr2960.patch
+- httpsFix1329342.patch renamed to pr2934.patch
+- added known regresisonos fixes for u92 scheduled for next u (519-525)
+
 * Thu May 19 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-7.b14
 - added patch519, jdwpCrash.abrt.patch to fix trasnportation error
 

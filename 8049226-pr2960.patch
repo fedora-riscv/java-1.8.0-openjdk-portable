@@ -1,56 +1,14 @@
 # HG changeset patch
 # User dsamersoff
-# Date 1403087398 25200
-# Node ID 7eb9656224049bee9ca32cca8217fb12e8686b76
-# Parent  66c61047f119f2919f4087f49189ee7171e7205d
-8044762: com/sun/jdi/OptionTest.java test time out
-Summary: gdata could be NULL in debugInit_exit
-Reviewed-by: dcubed
-# HG changeset patch
-# User dsamersoff
 # Date 1409228402 25200
-# Node ID 66199a53c7f9b21032666a7e3655daab408d9881
-# Parent  7eb9656224049bee9ca32cca8217fb12e8686b76
-8049226: com/sun/jdi/OptionTest.java test times out again
+#      Thu Aug 28 05:20:02 2014 -0700
+# Node ID f4c9545cd8a56a5fab74c95de3573623ba2b83c4
+# Parent  13411144d46b50d0087f35eca2b8e827aae558f1
+8049226, PR2960: com/sun/jdi/OptionTest.java test times out again
 Summary: Don't call jni_FatalError if transport initialization fails
 Reviewed-by: sspitsyn, sla
 
-diff -r 66c61047f119 -r 7eb965622404 src/share/back/debugInit.c
---- openjdk/jdk/src/share/back/debugInit.c	Mon May 16 09:54:50 2016 +0300
-+++ openjdk/jdk/src/share/back/debugInit.c	Wed Jun 18 03:29:58 2014 -0700
-@@ -1307,22 +1307,26 @@
-     if ( error != JVMTI_ERROR_NONE ) {
-         exit_code = 1;
-         if ( docoredump ) {
-+            LOG_MISC(("Dumping core as requested by command line"));
-             finish_logging(exit_code);
-             abort();
-         }
-     }
-+
-     if ( msg==NULL ) {
-         msg = "";
-     }
- 
-     LOG_MISC(("Exiting with error %s(%d): %s", jvmtiErrorText(error), error, msg));
- 
--    gdata->vmDead = JNI_TRUE;
-+    if (gdata != NULL) {
-+        gdata->vmDead = JNI_TRUE;
- 
--    /* Let's try and cleanup the JVMTI, if we even have one */
--    if ( gdata->jvmti != NULL ) {
--        /* Dispose of jvmti (gdata->jvmti becomes NULL) */
--        disposeEnvironment(gdata->jvmti);
-+        /* Let's try and cleanup the JVMTI, if we even have one */
-+        if ( gdata->jvmti != NULL ) {
-+            /* Dispose of jvmti (gdata->jvmti becomes NULL) */
-+            disposeEnvironment(gdata->jvmti);
-+        }
-     }
- 
-     /* Finish up logging. We reach here if JDWP is doing the exiting. */
-diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/debugInit.c
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/debugInit.c
 --- openjdk/jdk/src/share/back/debugInit.c	Wed Jun 18 03:29:58 2014 -0700
 +++ openjdk/jdk/src/share/back/debugInit.c	Thu Aug 28 05:20:02 2014 -0700
 @@ -1013,7 +1013,7 @@
@@ -139,7 +97,7 @@ diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/debugInit.c
 +    // Last chance to die, this kills the entire process.
 +    forceExit(EXIT_JVMTI_ERROR);
  }
-diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/log_messages.c
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/log_messages.c
 --- openjdk/jdk/src/share/back/log_messages.c	Wed Jun 18 03:29:58 2014 -0700
 +++ openjdk/jdk/src/share/back/log_messages.c	Thu Aug 28 05:20:02 2014 -0700
 @@ -230,7 +230,7 @@
@@ -151,7 +109,7 @@ diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/log_messages.c
  {
  #ifdef JDWP_LOGGING
      MUTEX_LOCK(my_mutex);
-diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/log_messages.h
+diff -r 13411144d46b -r f4c9545cd8a5 src/share/back/log_messages.h
 --- openjdk/jdk/src/share/back/log_messages.h	Wed Jun 18 03:29:58 2014 -0700
 +++ openjdk/jdk/src/share/back/log_messages.h	Thu Aug 28 05:20:02 2014 -0700
 @@ -29,7 +29,7 @@
@@ -163,4 +121,3 @@ diff -r 7eb965622404 -r 66199a53c7f9 src/share/back/log_messages.h
  
  #define LOG_NULL ((void)0)
  
-
