@@ -485,7 +485,7 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir %%1}/api \\
-  $PRIORITY  --family %{name}.%{_arch} 
+  $PRIORITY  --family %{name}
 exit 0
 }
 
@@ -503,7 +503,7 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java-zip javadoczip %{_javadocdir}/%{uniquejavadocdir %%1}.zip \\
-  $PRIORITY  --family %{name}.%{_arch}
+  $PRIORITY  --family %{name}
 exit 0
 }
 
