@@ -658,6 +658,8 @@ Provides: java-%{origin}%1 = %{epoch}:%{version}-%{release}
 Provides: java%1 = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
 Provides: java-fonts%1 = %{epoch}:%{version}
+#https://bugzilla.redhat.com/show_bug.cgi?id=1312019
+Provides: /usr/bin/jjs
 
 Obsoletes: java-1.7.0-openjdk%1
 Obsoletes: java-1.5.0-gcj%1
@@ -783,7 +785,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1850,6 +1852,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Jul 12 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.92-5.b14
+- added Provides: /usr/bin/jjs
+
 * Tue Jun 21 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.92-2.b14
 - family restricted by arch
 
