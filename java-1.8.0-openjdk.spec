@@ -170,7 +170,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u92-b14
+%global revision        aarch64-jdk8u101-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -178,7 +178,7 @@
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{revision}; echo ${VERSION##*-})
 # priority must be 7 digits in total. The expression is workarounding tip
-%global priority        %(TIP=18000%{updatever};  echo ${TIP/tip/99})
+%global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
 
 %global javaver         1.8.0
 
@@ -785,7 +785,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -805,7 +805,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u92-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=aarch64-jdk8u101-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -841,7 +841,7 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 # shenandoah hotpost
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u92-b14.tar.xz
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25.tar.xz
 
 # RPM/distribution specific patches
 
@@ -878,6 +878,8 @@ Patch508: rh1176206-jdk.patch
 Patch509: rh1176206-root.patch
 # RH1337583, PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
 Patch523: pr2974-rh1337583.patch
+# PR3083, RH1346460: Regression in SSL debug output without an ECC provider
+Patch528: pr3083-rh1346460.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -886,8 +888,6 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
-# PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
-Patch524: pr2991-rh1341258.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -909,12 +909,20 @@ Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
+# S8158260, PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
+Patch524: 8158260-pr2991-rh1341258.patch
+# S8154313: Generated javadoc scattered all over the place
+Patch400: 8154313.patch
+# S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
+Patch526: 6260348-pr3066.patch
 
 # Patches upstream and appearing in 8u102
 # S8148752, PR2943, RH1330188: Compiled StringBuilder code throws StringIndexOutOfBoundsException
 Patch519: 8148752-pr2943-rh1330188.patch
 # S6961123, PR2972, RH1339740:  Java application name in GNOME Shell contains funny characters
 Patch520: 6961123-pr2972-rh1339740.patch
+# S8159244, PR3074: Partially initialized string object created by C2's string concat optimization may escape
+Patch527: 8159244-pr3074.patch
 
 # Patches upstream and appearing in 8u112
 # S8044762, PR2960: com/sun/jdi/OptionTest.java test time out
@@ -929,10 +937,11 @@ Patch606: 8154210.patch
 Patch201: system-libjpeg.patch
 
 # Local fixes
-# see http://mail.openjdk.java.net/pipermail/build-dev/2016-March/016852.html thread
-Patch400: jdk8-archivedJavadoc.patch
+Patch531: hotspot-8157306.changeset
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 Patch525: pr1834-rh1022017.patch
+# Temporary fix for typo in CORBA security patch
+Patch529: corba_typo_fix.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
@@ -1264,6 +1273,13 @@ sh %{SOURCE12}
 %patch522
 %patch523
 %patch525
+%patch526
+%patch527
+%patch528
+%patch529
+%ifarch %{aarch64}
+%patch531
+%endif
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1852,6 +1868,16 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.101-1.b14
+- updated to aarch64-jdk8u101-b14 (from aarch64-port/jdk8u)
+- updated to aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25 (from aarch64-port/jdk8u-shenandoah) of hotspot
+- used aarch64-port-jdk8u-aarch64-jdk8u101-b14.tar.xz as new sources
+- used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25.tar.xz as new sources for hotspot
+- priority lowered for ine zero digit, tip moved to 999
+- added 6260348-pr3066.patch, pr3083-rh1346460.patch, 8159244-pr3074.patch, corba_typo_fix.patch
+renamed: jdk8-archivedJavadoc.patch -> 8154313.patch, pr2991-rh1341258.patch -> 8158260-pr2991-rh1341258.patch
+- not added 8147771-additional_hunk.patch, already in b14
+
 * Tue Jul 12 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.92-5.b14
 - added Provides: /usr/bin/jjs
 

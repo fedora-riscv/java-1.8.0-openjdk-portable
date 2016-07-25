@@ -1,0 +1,55 @@
+# HG changeset patch
+# User aph
+# Date 1466704739 0
+#      Thu Jun 23 17:58:59 2016 +0000
+# Node ID 89b3911c92aef18f2fd24ab4a31fbb47954462fa
+# Parent  9febe12cbce4c6aa428a78f6a78906909e2954a4
+8157306: Random infrequent null pointer exceptions in javac
+Reviewed-by: kvn
+
+diff --git openjdk/hotspot/src/share/vm/opto/block.cpp b/src/share/vm/opto/block.cpp
+--- openjdk/hotspot/src/share/vm/opto/block.cpp
++++ openjdk/hotspot/src/share/vm/opto/block.cpp
+@@ -1212,6 +1212,9 @@
+       if (j >= 1 && n->is_Mach() && n->as_Mach()->ideal_Opcode() == Op_CreateEx) {
+         assert(j == 1 || block->get_node(j-1)->is_Phi(), "CreateEx must be first instruction in block");
+       }
++      if (n->needs_anti_dependence_check()) {
++        verify_anti_dependences(block, n);
++      }
+       for (uint k = 0; k < n->req(); k++) {
+         Node *def = n->in(k);
+         if (def && def != n) {
+diff --git a/src/share/vm/opto/block.hpp b/src/share/vm/opto/block.hpp
+--- openjdk/hotspot/src/share/vm/opto/block.hpp
++++ openjdk/hotspot/src/share/vm/opto/block.hpp
+@@ -481,9 +481,9 @@
+   MachNode* _goto;
+ 
+   Block* insert_anti_dependences(Block* LCA, Node* load, bool verify = false);
+-  void verify_anti_dependences(Block* LCA, Node* load) {
++  void verify_anti_dependences(Block* LCA, Node* load) const {
+     assert(LCA == get_block_for_node(load), "should already be scheduled");
+-    insert_anti_dependences(LCA, load, true);
++    const_cast<PhaseCFG*>(this)->insert_anti_dependences(LCA, load, true);
+   }
+ 
+   bool move_to_next(Block* bx, uint b_index);
+diff --git a/src/share/vm/opto/lcm.cpp b/src/share/vm/opto/lcm.cpp
+--- openjdk/hotspot/src/share/vm/opto/lcm.cpp
++++ openjdk/hotspot/src/share/vm/opto/lcm.cpp
+@@ -1293,11 +1293,12 @@
+     Block *sb = block->_succs[i];
+     // Clone the entire area; ignoring the edge fixup for now.
+     for( uint j = end; j > beg; j-- ) {
+-      // It is safe here to clone a node with anti_dependence
+-      // since clones dominate on each path.
+       Node *clone = block->get_node(j-1)->clone();
+       sb->insert_node(clone, 1);
+       map_node_to_block(clone, sb);
++      if (clone->needs_anti_dependence_check()) {
++        insert_anti_dependences(sb, clone);
++      }
+     }
+   }
+ 

@@ -1,0 +1,24 @@
+diff -r 5c43ac1f2a59 src/share/classes/javax/rmi/CORBA/Util.java
+--- openjdk.orig/corba/src/share/classes/javax/rmi/CORBA/Util.java	Fri Jul 01 04:11:22 2016 +0100
++++ openjdk/corba/src/share/classes/javax/rmi/CORBA/Util.java	Mon Jul 04 16:04:39 2016 +0100
+@@ -413,8 +413,18 @@
+                 // check that a serialization permission has been
+                 // set to allow the loading of the Util delegate
+                 // which provides access to custom ValueHandler
+-                sm.checkPermission(new SerializablePermission(
+-                        "enableCustomValueHanlder"));
++                try {
++                    sm.checkPermission(new SerializablePermission(
++                        "enableCustomValueHandler"));
++                } catch (SecurityException ex1) {
++                    // Fallback: See if the permission is mis-spelt
++                    try {
++                        sm.checkPermission(new SerializablePermission(
++                            "enableCustomValueHanlder"));
++                    } catch (SecurityException ex2) {
++                        throw ex1; // Throw original exception
++                    }
++                }
+             }
+         }
+     }

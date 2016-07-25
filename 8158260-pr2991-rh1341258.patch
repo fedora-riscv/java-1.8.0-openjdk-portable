@@ -1,0 +1,32 @@
+# HG changeset patch
+# User simonis
+# Date 1466155884 -7200
+#      Fri Jun 17 11:31:24 2016 +0200
+# Node ID 74081c30fede694b547c8b3386b9887ff14e8775
+# Parent  3fc29347b27fdd2075e6ec6d80bb26ab2bf667c1
+8158260, PR2991, RH1341258: PPC64: unaligned Unsafe.getInt can lead to the generation of illegal instructions
+Summary: Adjust instruction generation.
+Reviewed-by: goetz
+Contributed-by: gromero@linux.vnet.ibm.com, horii@jp.ibm.com
+
+diff -r 3fc29347b27f -r 74081c30fede src/cpu/ppc/vm/ppc.ad
+--- openjdk/hotspot/src/cpu/ppc/vm/ppc.ad	Fri May 20 19:42:15 2016 +0100
++++ openjdk/hotspot/src/cpu/ppc/vm/ppc.ad	Fri Jun 17 11:31:24 2016 +0200
+@@ -5461,7 +5461,7 @@
+ %}
+ 
+ // Match loading integer and casting it to long.
+-instruct loadI2L(iRegLdst dst, memory mem) %{
++instruct loadI2L(iRegLdst dst, memoryAlg4 mem) %{
+   match(Set dst (ConvI2L (LoadI mem)));
+   predicate(_kids[0]->_leaf->as_Load()->is_unordered());
+   ins_cost(MEMORY_REF_COST);
+@@ -5477,7 +5477,7 @@
+ %}
+ 
+ // Match loading integer and casting it to long - acquire.
+-instruct loadI2L_ac(iRegLdst dst, memory mem) %{
++instruct loadI2L_ac(iRegLdst dst, memoryAlg4 mem) %{
+   match(Set dst (ConvI2L (LoadI mem)));
+   ins_cost(3*MEMORY_REF_COST);
+ 
