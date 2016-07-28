@@ -785,7 +785,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -938,6 +938,7 @@ Patch201: system-libjpeg.patch
 
 # Local fixes
 Patch531: hotspot-8157306.changeset
+Patch532: hotspot-1358661.patch
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 Patch525: pr1834-rh1022017.patch
 # Temporary fix for typo in CORBA security patch
@@ -945,6 +946,7 @@ Patch529: corba_typo_fix.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
+Patch301: bz1204159_java8.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1280,11 +1282,13 @@ sh %{SOURCE12}
 %ifarch %{aarch64}
 %patch531
 %endif
+%patch532
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
 tar xzf %{SOURCE8}
 %patch300
+%patch301
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
 %endif
@@ -1868,6 +1872,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.101-2.b14
+- added patch532 hotspot-1358661.patch - to fix performance of bimorphic inlining may be bypassed by type speculation
+- added patch301 bz1204159_java8.patch - to fix systemtap on multiple jdks
+
 * Mon Jul 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.101-1.b14
 - updated to aarch64-jdk8u101-b14 (from aarch64-port/jdk8u)
 - updated to aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25 (from aarch64-port/jdk8u-shenandoah) of hotspot
