@@ -785,7 +785,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -915,6 +915,10 @@ Patch524: 8158260-pr2991-rh1341258.patch
 Patch400: 8154313.patch
 # S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
 Patch526: 6260348-pr3066.patch
+# S8157306, PR3121, RH1360863: Random infrequent null pointer exceptions in javac
+Patch531: 8157306-pr3121-rh1360863.patch
+# S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
+Patch532: 8162384-pr3122-rh1358661.patch
 
 # Patches upstream and appearing in 8u102
 # S8148752, PR2943, RH1330188: Compiled StringBuilder code throws StringIndexOutOfBoundsException
@@ -937,8 +941,6 @@ Patch606: 8154210.patch
 Patch201: system-libjpeg.patch
 
 # Local fixes
-Patch531: hotspot-8157306.changeset
-Patch532: hotspot-1358661.patch
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 Patch525: pr1834-rh1022017.patch
 # Temporary fix for typo in CORBA security patch
@@ -946,6 +948,7 @@ Patch529: corba_typo_fix.patch
 
 # Non-OpenJDK fixes
 Patch300: jstack-pr1845.patch
+# PR3090, RH1204159: SystemTap is heavily confused by multiple JDKs
 Patch301: bz1204159_java8.patch
 
 BuildRequires: autoconf
@@ -1279,9 +1282,7 @@ sh %{SOURCE12}
 %patch527
 %patch528
 %patch529
-%ifarch %{aarch64}
 %patch531
-%endif
 %patch532
 
 # Extract systemtap tapsets
@@ -1872,6 +1873,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Aug 01 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.101-3.b14
+- Replace patch for S8162384 with upstream version. Document correctly along with SystemTap RH1204159 patch.
+- Resolves: rhbz#1358661
+- Replace patch for S8157306 with upstream version, documented & applied on all archs with conditional in patch
+- Resolves: rhbz#1360863
+
 * Mon Jul 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.101-2.b14
 - added patch532 hotspot-1358661.patch - to fix performance of bimorphic inlining may be bypassed by type speculation
 - added patch301 bz1204159_java8.patch - to fix systemtap on multiple jdks
