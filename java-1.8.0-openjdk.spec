@@ -817,7 +817,7 @@ Source2:  README.src
 # They are based on code contained in the IcedTea7 project.
 
 # Systemtap tapsets. Zipped up to keep it small.
-Source8: systemtap-tapset.tar.gz
+Source8: systemtap-tapset-3.1.0.tar.xz
 
 # Desktop files. Adapated from IcedTea.
 Source9: jconsole.desktop.in
@@ -943,9 +943,6 @@ Patch525: pr1834-rh1022017.patch
 Patch529: corba_typo_fix.patch
 
 # Non-OpenJDK fixes
-Patch300: jstack-pr1845.patch
-# PR3090, RH1204159: SystemTap is heavily confused by multiple JDKs
-Patch301: bz1204159_java8.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1281,9 +1278,7 @@ sh %{SOURCE12}
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
-tar xzf %{SOURCE8}
-%patch300
-%patch301
+tar -x -I xz -f %{SOURCE8}
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
 %endif
@@ -1873,6 +1868,7 @@ require "copy_jdk_configs.lua"
 - used aarch64-port-jdk8u-aarch64-jdk8u102-b14.tar.xz as new sources
 - used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u102-b14.tar.xz as new sources for hotspot
 - removed upstreamed patches 519 and 520
+- updated to systemtap 3, removed related patches 300 and 301
 
 * Mon Aug 01 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.101-3.b14
 - Replace patch for S8162384 with upstream version. Document correctly along with SystemTap RH1204159 patch.
