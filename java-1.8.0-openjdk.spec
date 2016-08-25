@@ -903,9 +903,6 @@ Patch203: system-lcms.patch
 # PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
-# S8140620, PR2769: Find and load default.sf2 as the default soundbank on Linux
-# waiting on upstream: http://mail.openjdk.java.net/pipermail/jdk8u-dev/2016-January/004916.html
-Patch605: soundFontPatch.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
@@ -1248,7 +1245,6 @@ sh %{SOURCE12}
 %patch603
 %patch601
 %patch602
-%patch605
 
 %patch502
 %patch504
@@ -1867,7 +1863,7 @@ require "copy_jdk_configs.lua"
 - updated to aarch64-shenandoah-jdk8u102-b14 (from aarch64-port/jdk8u-shenandoah) of hotspot
 - used aarch64-port-jdk8u-aarch64-jdk8u102-b14.tar.xz as new sources
 - used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u102-b14.tar.xz as new sources for hotspot
-- removed upstreamed patches 519 and 520
+- removed upstreamed patches 519, 520 and 605
 - updated to systemtap 3, removed related patches 300 and 301
 
 * Mon Aug 01 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.101-3.b14
