@@ -23,6 +23,8 @@ set -e
 
 OPENJDK_URL_DEFAULT=http://hg.openjdk.java.net
 COMPRESSION_DEFAULT=xz
+# jdk is last for its size
+REPOS_DEFAULT="hotspot corba jaxws jaxp langtools nashorn jdk"
 
 if [ "x$1" = "xhelp" ] ; then
     echo -e "Behaviour may be specified by setting the following variables:\n"
@@ -34,6 +36,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
     echo "PR2126 - the path to the PR2126 patch to apply (optional; downloaded if unavailable)"
+    echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
 
@@ -89,10 +92,11 @@ pushd openjdk
 	
 
 if [ "x$REPOS" = "x" ] ; then
-	#jdk is last for its size
-    repos="hotspot corba jaxws jaxp langtools nashorn jdk"
+    repos=${REPOS_DEFAULT}
+    echo "No repositories specified; defaulting to ${repos}"
 else
-	repos=$REPOS
+    repos=$REPOS
+    echo "Repositories: ${repos}"
 fi;
 
 for subrepo in $repos
