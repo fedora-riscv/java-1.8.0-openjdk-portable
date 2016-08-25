@@ -170,7 +170,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u101-b14
+%global revision        aarch64-jdk8u102-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -785,7 +785,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -841,7 +841,7 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 # shenandoah hotpost
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25.tar.xz
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u102-b14.tar.xz
 
 # RPM/distribution specific patches
 
@@ -921,10 +921,6 @@ Patch531: 8157306-pr3121-rh1360863.patch
 Patch532: 8162384-pr3122-rh1358661.patch
 
 # Patches upstream and appearing in 8u102
-# S8148752, PR2943, RH1330188: Compiled StringBuilder code throws StringIndexOutOfBoundsException
-Patch519: 8148752-pr2943-rh1330188.patch
-# S6961123, PR2972, RH1339740:  Java application name in GNOME Shell contains funny characters
-Patch520: 6961123-pr2972-rh1339740.patch
 # S8159244, PR3074: Partially initialized string object created by C2's string concat optimization may escape
 Patch527: 8159244-pr3074.patch
 
@@ -1271,9 +1267,7 @@ sh %{SOURCE12}
 %patch516
 %patch517
 %patch518
-%patch519
 %patch400
-%patch520
 %patch521
 %patch522
 %patch523
@@ -1873,6 +1867,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Aug 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-1.b14
+- updated to aarch64-jdk8u102-b14 (from aarch64-port/jdk8u)
+- updated to aarch64-shenandoah-jdk8u102-b14 (from aarch64-port/jdk8u-shenandoah) of hotspot
+- used aarch64-port-jdk8u-aarch64-jdk8u102-b14.tar.xz as new sources
+- used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u102-b14.tar.xz as new sources for hotspot
+- removed upstreamed patches 519 and 520
+
 * Mon Aug 01 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.101-3.b14
 - Replace patch for S8162384 with upstream version. Document correctly along with SystemTap RH1204159 patch.
 - Resolves: rhbz#1358661
