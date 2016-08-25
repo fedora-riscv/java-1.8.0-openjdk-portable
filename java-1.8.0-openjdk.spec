@@ -658,8 +658,6 @@ Provides: java-%{origin}%1 = %{epoch}:%{version}-%{release}
 Provides: java%1 = %{epoch}:%{javaver}
 # Standard JPackage extensions provides.
 Provides: java-fonts%1 = %{epoch}:%{version}
-#https://bugzilla.redhat.com/show_bug.cgi?id=1312019
-Provides: /usr/bin/jjs
 
 Obsoletes: java-1.7.0-openjdk%1
 Obsoletes: java-1.5.0-gcj%1
@@ -709,6 +707,9 @@ Provides: jsse%1 = %{epoch}:%{version}
 Provides: jce%1 = %{epoch}:%{version}
 Provides: jdbc-stdext%1 = 4.1
 Provides: java-sasl%1 = %{epoch}:%{version}
+
+#https://bugzilla.redhat.com/show_bug.cgi?id=1312019
+Provides: /usr/bin/jjs
 
 Obsoletes: java-1.7.0-openjdk-headless%1
 }
@@ -1865,6 +1866,7 @@ require "copy_jdk_configs.lua"
 - used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u102-b14.tar.xz as new sources for hotspot
 - removed upstreamed patches 519, 520 and 605
 - updated to systemtap 3, removed related patches 300 and 301
+- jjs provides moved to headless
 
 * Mon Aug 01 2016 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.101-3.b14
 - Replace patch for S8162384 with upstream version. Document correctly along with SystemTap RH1204159 patch.
