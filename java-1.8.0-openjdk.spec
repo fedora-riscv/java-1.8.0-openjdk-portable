@@ -246,7 +246,8 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = '5463aef7dbf0bbcfe79e0336a7f92701' -o \\
        "${sum}" = '400cc64d4dd31f36dc0cc2c701d603db' -o \\
        "${sum}" = '321342219bb130d238ff144b9e5dbfc1' -o \\
-       "${sum}" = '134a37a84983b620f4d8d51a550c0c38' ]; then
+       "${sum}" = '134a37a84983b620f4d8d51a550c0c38' -o \\
+       "${sum}" = '5ea976e209d0d0b5b6ab148416123e02' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
