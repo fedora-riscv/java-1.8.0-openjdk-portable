@@ -220,6 +220,13 @@
 # not-duplicated scriplets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
+%global check_sum_presented_in_spec() %{expand:
+md5sum %1
+currentMd5sum=`md5sum %1 | sed "s;\\s.*;;"`
+specfile=%{_specdir}/%{name}.spec
+grep -e md5sum -A 20 $specfile  | grep $currentMd5sum
+}
+
 %global post_script() %{expand:
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
@@ -787,7 +794,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1313,6 +1320,10 @@ for file in %{SOURCE9} %{SOURCE10} ; do
 done
 done
 
+# this is check which controls, that latest java.security is included in post(_headless)
+%{check_sum_presented_in_spec openjdk/jdk/src/share/lib/security/java.security-linux}
+
+
 %build
 # How many cpu's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
@@ -1430,6 +1441,9 @@ done
 for suffix in %{rev_build_loop} ; do
 
 export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
+
+# check java.security in this build is also in this specfile
+%{check_sum_presented_in_spec $JAVA_HOME/jre/lib/security/java.security}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1861,6 +1875,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Aug 31 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-2.b14
+- declared check_sum_presented_in_spec and used in prep and check
+- it is checking that latest packed java.security is mentioned in listing
+- fixed tapset
+
 * Thu Aug 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-1.b14
 - updated to aarch64-jdk8u102-b14 (from aarch64-port/jdk8u)
 - updated to aarch64-shenandoah-jdk8u102-b14 (from aarch64-port/jdk8u-shenandoah) of hotspot
