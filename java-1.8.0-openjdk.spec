@@ -915,8 +915,6 @@ Patch502: pr2462.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Patch506: pr2842-01.patch
 Patch507: pr2842-02.patch
-# S8158260, PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
-Patch524: 8158260-pr2991-rh1341258.patch
 # S8154313: Generated javadoc scattered all over the place
 Patch400: 8154313.patch
 # S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
@@ -926,7 +924,7 @@ Patch531: 8157306-pr3121-rh1360863.patch
 # S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
 
-# Patches upstream and appearing in 8u102
+# Patches upstream and appearing in 8u111
 # S8159244, PR3074: Partially initialized string object created by C2's string concat optimization may escape
 Patch527: 8159244-pr3074.patch
 
@@ -937,6 +935,8 @@ Patch521: 8044762-pr2960.patch
 Patch522: 8049226-pr2960.patch
 # 8154210: Zero: Better byte behaviour
 Patch606: 8154210.patch
+# S8158260, PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
+Patch524: 8158260-pr2991-rh1341258.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1875,10 +1875,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Thu Aug 31 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-2.b14
+* Wed Aug 31 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-2.b14
 - declared check_sum_presented_in_spec and used in prep and check
 - it is checking that latest packed java.security is mentioned in listing
-- fixed tapset
+- @prefix@ in tapsetfiles substitued by prefix as necessary to work with systemtap3 (rhbz1371005)
 
 * Thu Aug 25 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-1.b14
 - updated to aarch64-jdk8u102-b14 (from aarch64-port/jdk8u)
