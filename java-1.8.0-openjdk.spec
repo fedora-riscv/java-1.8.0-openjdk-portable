@@ -528,9 +528,9 @@ exit 0
 
 %global files_jre_headless() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/ASSEMBLY_EXCEPTION
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir %%1}
 %{_jvmdir}/%{jrelnk %%1}
 %{_jvmjardir}/%{jrelnk %%1}
@@ -568,9 +568,9 @@ exit 0
 
 %global files_devel() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/ASSEMBLY_EXCEPTION
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/LICENSE
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/THIRD_PARTY_README
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/ASSEMBLY_EXCEPTION
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/LICENSE
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir %%1}/bin
 %dir %{_jvmdir}/%{sdkdir %%1}/include
 %dir %{_jvmdir}/%{sdkdir %%1}/lib
@@ -619,7 +619,7 @@ exit 0
 
 %global files_demo() %{expand:
 %defattr(-,root,root,-)
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
 %global files_src() %{expand:
@@ -631,13 +631,13 @@ exit 0
 %global files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir %%1}
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
 %global files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir %%1}.zip
-%doc %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/LICENSE
 }
 
 %global files_accessibility() %{expand:
