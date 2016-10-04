@@ -21,7 +21,7 @@
 %endif
 
 # by default we build debug build during main build only on intel arches
-%ifarch %{ix86} x86_64
+%ifarch %{ix86} x86_64 %{aarch64} %{ppc64le}
 %global include_debug_build 1
 %else
 %global include_debug_build 0
@@ -648,7 +648,7 @@ exit 0
 
 # not-duplicated requires/provides/obsolate for normal/debug packages
 %global java_rpo() %{expand:
-Requires: fontconfig
+Requires: fontconfig%{?_isa}
 Requires: xorg-x11-fonts-Type1
 
 # Requires rest of java
@@ -680,10 +680,10 @@ Requires: javapackages-tools
 # Require zoneinfo data provided by tzdata-java subpackage.
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
-Requires: lksctp-tools
-# there is need to depnd on exact version of nss
-Requires: nss %{NSS_BUILDTIME_VERSION}
-Requires: nss-softokn %{NSSSOFTOKN_BUILDTIME_VERSION}
+Requires: lksctp-tools%{?_isa}
+# there is a need to depend on the exact version of NSS
+Requires: nss%{?_isa} %{NSS_BUILDTIME_VERSION}
+Requires: nss-softokn%{?_isa} %{NSSSOFTOKN_BUILDTIME_VERSION}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum eforce it, not rpm transaction and so no configs are persisted when pure rpm -u is run. I t may be consiedered as regression
 Requires:	copy-jdk-configs >= 1.1-3
 OrderWithRequires: copy-jdk-configs
@@ -794,7 +794,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1875,6 +1875,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Oct 5 2016  Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.102-3.b14
+- debug subpackages allowed on aarch64 and ppc64le
+- fontconfig and nss restricted by isa
+
 * Wed Aug 31 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.102-2.b14
 - declared check_sum_presented_in_spec and used in prep and check
 - it is checking that latest packed java.security is mentioned in listing
