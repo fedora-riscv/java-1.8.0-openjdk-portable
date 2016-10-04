@@ -20,6 +20,13 @@
 %global build_loop1 %{nil}
 %endif
 
+%global aarch64         aarch64 arm64 armv8
+# sometimes we need to distinguish big and little endian PPC64
+%global ppc64le         ppc64le
+%global ppc64be         ppc64 ppc64p7
+%global multilib_arches %{power64} sparc64 x86_64
+%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+
 # by default we build debug build during main build only on intel arches
 %ifarch %{ix86} x86_64 %{aarch64} %{ppc64le}
 %global include_debug_build 1
@@ -57,13 +64,6 @@
 %else
 %global targets all
 %endif
-
-%global aarch64         aarch64 arm64 armv8
-# sometimes we need to distinguish big and little endian PPC64
-%global ppc64le         ppc64le
-%global ppc64be         ppc64 ppc64p7
-%global multilib_arches %{power64} sparc64 x86_64
-%global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 
 %ifnarch %{jit_arches}
 # Disable hardened build on non-jit arches. Work-around for RHBZ#1290936.
