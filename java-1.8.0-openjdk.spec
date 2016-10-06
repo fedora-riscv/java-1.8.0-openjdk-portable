@@ -794,7 +794,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -937,6 +937,9 @@ Patch522: 8049226-pr2960.patch
 Patch606: 8154210.patch
 # S8158260, PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
 Patch524: 8158260-pr2991-rh1341258.patch
+
+# Patches upstream and appearing in 8u122
+Patch607: 8167200.hotspotAarch64.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1280,6 +1283,8 @@ sh %{SOURCE12}
 %patch529
 %patch531
 %patch532
+
+%patch607
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1875,6 +1880,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Oct 5 2016  Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.102-4.b14
+- added patch for failing scala stuff
+
 * Wed Oct 5 2016  Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.102-3.b14
 - debug subpackages allowed on aarch64 and ppc64le
 - fontconfig and nss restricted by isa
