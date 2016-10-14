@@ -794,7 +794,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -944,6 +944,7 @@ Patch607: 8167200.hotspotAarch64.patch
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
+Patch204: hotspot-remove-debuglink.patch
 
 # Local fixes
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
@@ -959,6 +960,7 @@ BuildRequires: alsa-lib-devel
 BuildRequires: binutils
 BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
+Buildrequires: elfutils
 BuildRequires: fontconfig
 BuildRequires: freetype-devel
 BuildRequires: giflib-devel
@@ -1237,6 +1239,7 @@ sh %{SOURCE12}
 %patch201
 %patch202
 %patch203
+%patch204
 
 %patch1
 %patch3
@@ -1460,17 +1463,36 @@ $JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 
 # Check debug symbols are present and can identify code
 SERVER_JVM="$JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so"
-if [ -f "$SERVER_JVM" ] ; then
-  nm -aCl "$SERVER_JVM" | grep javaCalls.cpp
-fi
 CLIENT_JVM="$JAVA_HOME/jre/lib/%{archinstall}/client/libjvm.so"
-if [ -f "$CLIENT_JVM" ] ; then
-  nm -aCl "$CLIENT_JVM" | grep javaCalls.cpp
-fi
 ZERO_JVM="$JAVA_HOME/jre/lib/%{archinstall}/zero/libjvm.so"
-if [ -f "$ZERO_JVM" ] ; then
-  nm -aCl "$ZERO_JVM" | grep javaCalls.cpp
-fi
+jvms=("$SERVER_JVM" "$CLIENT_JVM" "$ZERO_JVM")
+for lib in "${jvms[@]}"; do
+  if [ -f "$lib" ] ; then
+    echo "Testing $lib for debug symbols"
+    # All these tests rely on RPM failing the build if the exit code of any set
+    # of piped commands is non-zero.
+
+    # Test for .debug_* sections in the shared object. This is the  main test.
+    # Stripped objects will not contain these.
+    eu-readelf -S "$lib" | grep "] .debug_"
+    test $(eu-readelf -S "$lib" | egrep "\]\ .debug_(info|abbrev)" | wc --lines) == 2
+
+    # Test FILE symbols. These will most likely be removed by anyting that
+    # manipulates symbol tables because it's generally useless. So a nice test
+    # that nothing has messed with symbols.
+    eu-readelf -s "$lib" | grep "00000000      0 FILE    LOCAL  DEFAULT      ABS javaCalls.cpp"
+
+    # Test that there are no .gnu_debuglink sections pointing to another
+    # debuginfo file. There shouldn't be any debuginfo files, so the link makes
+    # no sense either.
+    eu-readelf -S "$lib" | grep 'gnu'
+    if eu-readelf -S "$lib" | grep '] .gnu_debuglink' | grep PROGBITS; then
+        echo "bad .gnu_debuglink section."
+        eu-readelf -x .gnu_debuglink "$lib"
+        false
+    fi
+  fi
+done
 
 # Check src.zip has all sources. See RHBZ#1130490
 jar -tf $JAVA_HOME/src.zip | grep 'sun.misc.Unsafe'
@@ -1880,6 +1902,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Oct 14 2016 Omair Majid <omajid@redhat.com> - 1:1.8.0.102-5.b14
+- added hotspot-remove-debuglink.patch
+- removed grep on javaCalls, and replace by eu-readelfs on libraries
+
 * Wed Oct 5 2016  Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.102-4.b14
 - added patch for failing scala stuff
 
