@@ -24,7 +24,7 @@ if [ "x$REPO_NAME" = "x" ] ; then
     REPO_NAME="jdk8u"
 fi
 if [ "x$VERSION" = "x" ] ; then
-    VERSION="aarch64-jdk8u102-b14"
+    VERSION="aarch64-jdk8u111-b16"
 fi
 
 if [ "x$COMPRESSION" = "x" ] ; then
@@ -102,7 +102,7 @@ if [ "x$VERSION" = "xtip" ] ; then
     VERSION="tip"
 else
 	#hardcoding version for anything else except tip
-    VERSION="aarch64-shenandoah-jdk8u102-b14"
+    VERSION="aarch64-shenandoah-jdk8u111-b16"
 fi
 MAIN_REPO_NAME=$REPO_NAME
 REPO_NAME=jdk8u-shenandoah
