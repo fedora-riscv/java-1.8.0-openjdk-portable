@@ -795,7 +795,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -940,6 +940,10 @@ Patch524: 8158260-pr2991-rh1341258.patch
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
+# Pathces 204-206 are serving for better check of debug symbols in native liraries
+Patch204: hotspot-remove-debuglink.patch
+Patch205: dont-add-unnecessary-debug-links.patch
+Patch206: hotspot-assembler-debuginfo.patch
 
 # Local fixes
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
@@ -957,10 +961,12 @@ BuildRequires: alsa-lib-devel
 BuildRequires: binutils
 BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
+BuildRequires: elfutils
 BuildRequires: fontconfig
 BuildRequires: freetype-devel
 BuildRequires: giflib-devel
 BuildRequires: gcc-c++
+BuildRequires: gdb
 BuildRequires: gtk2-devel
 BuildRequires: lcms2-devel
 BuildRequires: libjpeg-devel
@@ -1235,6 +1241,9 @@ sh %{SOURCE12}
 %patch201
 %patch202
 %patch203
+%patch204
+%patch205
+%patch206
 
 %patch1
 %patch3
@@ -1459,18 +1468,61 @@ $JAVA_HOME/bin/javac -d . %{SOURCE14}
 $JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 
 # Check debug symbols are present and can identify code
-SERVER_JVM="$JAVA_HOME/jre/lib/%{archinstall}/server/libjvm.so"
-if [ -f "$SERVER_JVM" ] ; then
-  nm -aCl "$SERVER_JVM" | grep javaCalls.cpp
-fi
-CLIENT_JVM="$JAVA_HOME/jre/lib/%{archinstall}/client/libjvm.so"
-if [ -f "$CLIENT_JVM" ] ; then
-  nm -aCl "$CLIENT_JVM" | grep javaCalls.cpp
-fi
-ZERO_JVM="$JAVA_HOME/jre/lib/%{archinstall}/zero/libjvm.so"
-if [ -f "$ZERO_JVM" ] ; then
-  nm -aCl "$ZERO_JVM" | grep javaCalls.cpp
-fi
+find "$JAVA_HOME" -iname '*.so' -print0 | while read -d $'\0' lib
+do
+  if [ -f "$lib" ] ; then
+    echo "Testing $lib for debug symbols"
+    # All these tests rely on RPM failing the build if the exit code of any set
+    # of piped commands is non-zero.
+
+    # Test for .debug_* sections in the shared object. This is the  main test.
+    # Stripped objects will not contain these.
+    eu-readelf -S "$lib" | grep "] .debug_"
+    test $(eu-readelf -S "$lib" | egrep "\]\ .debug_(info|abbrev)" | wc --lines) == 2
+
+    # Test FILE symbols. These will most likely be removed by anyting that
+    # manipulates symbol tables because it's generally useless. So a nice test
+    # that nothing has messed with symbols.
+    old_IFS="$IFS"
+    IFS=$'\n'
+    for line in $(eu-readelf -s "$lib" | grep "00000000      0 FILE    LOCAL  DEFAULT")
+    do
+     # We expect to see .cpp files, except for architectures like aarch64 and
+     # s390 where we expect .o and .oS files
+      echo "$line" | egrep "ABS ((.*/)?[-_a-zA-Z0-9]+\.(c|cc|cpp|cxx|o|oS))?$"
+    done
+    IFS="$old_IFS"
+
+    # If this is the JVM, look for javaCalls.(cpp|o) in FILEs, for extra sanity checking.
+    if [ "`basename $lib`" = "libjvm.so" ]; then
+      eu-readelf -s "$lib" | \
+        egrep "00000000      0 FILE    LOCAL  DEFAULT      ABS javaCalls.(cpp|o)$"
+    fi
+
+    # Test that there are no .gnu_debuglink sections pointing to another
+    # debuginfo file. There shouldn't be any debuginfo files, so the link makes
+    # no sense either.
+    eu-readelf -S "$lib" | grep 'gnu'
+    if eu-readelf -S "$lib" | grep '] .gnu_debuglink' | grep PROGBITS; then
+      echo "bad .gnu_debuglink section."
+      eu-readelf -x .gnu_debuglink "$lib"
+      false
+    fi
+  fi
+done
+
+# Make sure gdb can do a backtrace based on line numbers on libjvm.so
+gdb -q "$JAVA_HOME/bin/java" <<EOF | tee gdb.out
+handle SIGSEGV pass nostop noprint
+set breakpoint pending on
+break javaCalls.cpp:1
+commands 1
+backtrace
+quit
+end
+run -version
+EOF
+grep 'JavaCallWrapper::JavaCallWrapper' gdb.out
 
 # Check src.zip has all sources. See RHBZ#1130490
 jar -tf $JAVA_HOME/src.zip | grep 'sun.misc.Unsafe'
@@ -1880,6 +1932,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Oct 21 2016 Omair Majid <omajid@redhat.com> - 1:1.8.0.111-2.b16
+- added dont-add-unnecessary-debug-links.patch
+- added hotspot-assembler-debuginfo.patch
+- returned accidentally removed  hotspot-remove-debuglink.patch
+- eu-readelfs on libraries improved, added gdb call
+
 * Wed Oct 19 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.111-1.b16
 - updated to aarch64-jdk8u111-b16 (from aarch64-port/jdk8u)
 - updated to aarch64-shenandoah-jdk8u111-b16 (from aarch64-port/jdk8u-shenandoah) of hotspot
