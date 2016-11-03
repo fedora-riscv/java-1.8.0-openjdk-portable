@@ -255,6 +255,7 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = '321342219bb130d238ff144b9e5dbfc1' -o \\
        "${sum}" = '134a37a84983b620f4d8d51a550c0c38' -o \\
        "${sum}" = '5ea976e209d0d0b5b6ab148416123e02' -o \\
+       "${sum}" = '059d61cfbb47e337b011ecda9350db9b' -o \\
        "${sum}" = '5ab4c77cf14fbd7f7ee6f51a7a73d88c' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
@@ -795,7 +796,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -944,6 +945,7 @@ Patch201: system-libjpeg.patch
 Patch204: hotspot-remove-debuglink.patch
 Patch205: dont-add-unnecessary-debug-links.patch
 Patch206: hotspot-assembler-debuginfo.patch
+Patch207: PR3183.patch
 
 # Local fixes
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
@@ -1244,6 +1246,7 @@ sh %{SOURCE12}
 %patch204
 %patch205
 %patch206
+%patch207
 
 %patch1
 %patch3
@@ -1932,6 +1935,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Nov 03 2016 jvanek <jvanek@redhat.com - 1:1.8.0.111-3.b16
+- added patch207 - PR3183.patch
+- java SSL/TLS implementation: should follow the policies of system-wide crypto policy 
+
 * Fri Oct 21 2016 Omair Majid <omajid@redhat.com> - 1:1.8.0.111-2.b16
 - added dont-add-unnecessary-debug-links.patch
 - added hotspot-assembler-debuginfo.patch
