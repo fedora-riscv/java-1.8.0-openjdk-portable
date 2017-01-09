@@ -797,7 +797,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1936,6 +1936,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jan 09 2016 jvanek <jvanek@redhat.com - 1:1.8.0.111-5.b16
+- Added arched dependencies to headless/main package
+
 * Thu Nov 03 2016 jvanek <jvanek@redhat.com - 1:1.8.0.111-3.b16
 - added patch207 - PR3183.patch
 - java SSL/TLS implementation: should follow the policies of system-wide crypto policy 
