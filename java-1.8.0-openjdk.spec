@@ -655,8 +655,8 @@ Requires: fontconfig%{?_isa}
 Requires: xorg-x11-fonts-Type1
 
 # Requires rest of java
-Requires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+Requires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
 
 # Standard JPackage base provides.
@@ -727,8 +727,8 @@ Obsoletes: java-1.7.0-openjdk-headless%1
 
 %global java_devel_rpo() %{expand:
 # Require base package.
-Requires:         %{name}%1 = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+Requires:         %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install tool alternatives.
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
@@ -753,14 +753,14 @@ Obsoletes: java-1.5.0-gcj-devel%1
 
 
 %global java_demo_rpo() %{expand:
-Requires: %{name}%1 = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+Requires: %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-demo%1
 }
 
 %global java_javadoc_rpo() %{expand:
-OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install javadoc alternative.
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
@@ -779,15 +779,15 @@ Obsoletes: java-1.7.0-openjdk-javadoc%1
 }
 
 %global java_src_rpo() %{expand:
-Requires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+Requires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-src%1
 }
 
 %global java_accessibility_rpo() %{expand:
-Requires: java-atk-wrapper
-Requires: %{name}%1 = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless%1 = %{epoch}:%{version}-%{release}
+Requires: java-atk-wrapper%{?_isa}
+Requires: %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
+OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-accessibility%1
 }
