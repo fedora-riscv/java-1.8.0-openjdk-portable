@@ -256,6 +256,7 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = '134a37a84983b620f4d8d51a550c0c38' -o \\
        "${sum}" = '5ea976e209d0d0b5b6ab148416123e02' -o \\
        "${sum}" = '059d61cfbb47e337b011ecda9350db9b' -o \\
+       "${sum}" = '0dd41ddb4d1fb25975f7faab2c23e151' -o \\
        "${sum}" = '59dafb237e5def3ccf8a3ad589fb2777' -o \\
        "${sum}" = '84d16306cd4c2ae76ba81a3775e92cee' -o \\
        "${sum}" = '5ab4c77cf14fbd7f7ee6f51a7a73d88c' -o \\
