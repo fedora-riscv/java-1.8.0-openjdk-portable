@@ -56,7 +56,7 @@
 %ifarch %{jit_arches}
 %global bootstrap_build 1
 %else
-%global bootstrap_build 0
+%global bootstrap_build 1
 %endif
 
 %if %{bootstrap_build}
@@ -168,9 +168,9 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
-%global project         aarch64-port
-%global repo            jdk8u
-%global revision        aarch64-jdk8u111-b16
+%global project         openjdk8-forests
+%global repo            latest-aarch64
+%global revision        aarch64-jdk8u121-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -257,7 +257,10 @@ if [ "$1" -gt 1 ]; then
        "${sum}" = '5ea976e209d0d0b5b6ab148416123e02' -o \\
        "${sum}" = '059d61cfbb47e337b011ecda9350db9b' -o \\
        "${sum}" = '59dafb237e5def3ccf8a3ad589fb2777' -o \\
-       "${sum}" = '5ab4c77cf14fbd7f7ee6f51a7a73d88c' ]; then
+       "${sum}" = '84d16306cd4c2ae76ba81a3775e92cee' -o \\
+       "${sum}" = '5ab4c77cf14fbd7f7ee6f51a7a73d88c' -o \\
+       "${sum}" = 'b727442b4ac0e3b8a26ec9741ad463e5' -o \\
+       "${sum}" = 'a59c6d96aeae1303fb8ba85e97588e9d' ]; then
     if [ -f "${javasecurity}.rpmnew" ]; then
       mv -f "${javasecurity}.rpmnew" "${javasecurity}"
     fi
@@ -797,7 +800,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -853,7 +856,7 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 # shenandoah hotpost
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u111-b16.tar.xz
+Source999: openjdk8-forests-latest-shenandoah-aarch64-shenandoah-jdk8u121-b14.tar.xz
 
 # RPM/distribution specific patches
 
@@ -924,20 +927,6 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
-
-# Patches upstream and appearing in 8u111
-# S8159244, PR3074: Partially initialized string object created by C2's string concat optimization may escape
-Patch527: 8159244-pr3074.patch
-
-# Patches upstream and appearing in 8u112
-# S8044762, PR2960: com/sun/jdi/OptionTest.java test time out
-Patch521: 8044762-pr2960.patch
-# S8049226, PR2960: com/sun/jdi/OptionTest.java test times out again
-Patch522: 8049226-pr2960.patch
-# 8154210: Zero: Better byte behaviour
-Patch606: 8154210.patch
-# S8158260, PR2991, RH1341258: JVM on PPC64 LE crashes due to an illegal instruction in JITed code
-Patch524: 8158260-pr2991-rh1341258.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1260,10 +1249,8 @@ sh %{SOURCE12}
 %patch103
 
 # ppc64le fixes
-%patch524
 
 # Zero fixes.
-%patch606
 
 %patch603
 %patch601
@@ -1284,12 +1271,9 @@ sh %{SOURCE12}
 %patch517
 %patch518
 %patch400
-%patch521
-%patch522
 %patch523
 %patch525
 %patch526
-%patch527
 %patch528
 %patch532
 %patch533
@@ -1936,6 +1920,21 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Jan 24 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-1.b14
+- updated to aarch64-jdk8u121-b14 (from openjdk8-forests/latest-aarch64)
+- updated to aarch64-shenandoah-jdk8u121-b14 (from openjdk8-forests/latest-shenandoah) of hotspot
+- used openjdk8-forests-latest-aarch64-aarch64-jdk8u121-b14.tar.xz as new sources
+- used openjdk8-forests-latest-shenandoah-aarch64-shenandoah-jdk8u121-b14.tar.xz as new sources for hotspot
+- deleted:    8044762-pr2960.patch 8049226-pr2960.patch 8154210.patch 8158260-pr2991-rh1341258.patch 8159244-pr3074.patch
+- adapted java-1.8.0-openjdk-size_t.patch pr1834-rh1022017.patch rh1163501.patch
+- updated from internal (rhel) repo  OPENJDK_URL_DEFAULT=ssh://t...redhat.com//...ty/
+- with custom PR2126=/.../pr2126.patch (removed newly added brainpool curves)
+- withspecial values of PROJECT_NAME="openjdk8-forests", REPO_NAME="latest-aarch64"
+- with correct tag VERSION="aarch64-jdk8u121-b14"
+- and for shenandoah hotspot used custom repo REPO_NAME=latest-shenandoah
+- with correct tag VERSION="aarch64-shenandoah-jdk8u121-b14"
+- complete changes to  generate_source_tarball.sh  update_package.sh NOT commited (willbe regenerated from official repos soon)
+
 * Mon Jan 09 2017 jvanek <jvanek@redhat.com - 1:1.8.0.111-5.b16
 - Added arched dependencies to headless/main package
 
