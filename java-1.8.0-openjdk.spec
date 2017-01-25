@@ -801,7 +801,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1921,6 +1921,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 25 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-2.b14
+- revertrd patch535, excludeECDHE-1415137.patch and related changes
+- issue casued by nss, see rhbz#1415137 c#35
+
+* Tue Jan 24 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-2.b14
+- added patch535, excludeECDHE-1415137.patch to tmp-worakround crash with nss
+
 * Tue Jan 24 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-1.b14
 - updated to aarch64-jdk8u121-b14 (from openjdk8-forests/latest-aarch64)
 - updated to aarch64-shenandoah-jdk8u121-b14 (from openjdk8-forests/latest-shenandoah) of hotspot
