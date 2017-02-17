@@ -1933,6 +1933,9 @@ require "copy_jdk_configs.lua"
 - added Patch535 and 526
 - tweeked debugsymbols check for sigill
 
+* Fri Feb 10 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.121-4.b14
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_26_Mass_Rebuild
+
 * Wed Jan 25 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-2.b14
 - revertrd patch535, excludeECDHE-1415137.patch and related changes
 - issue casued by nss, see rhbz#1415137 c#35
