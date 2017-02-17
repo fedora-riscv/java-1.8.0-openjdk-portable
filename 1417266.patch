@@ -1,0 +1,130 @@
+
+# HG changeset patch
+# User roland
+# Date 1487208397 28800
+# Node ID 35db0413819a18edd6718dd42e7536182c42aa8b
+# Parent  ac559f3ccca81de373f18ac7c4b2d813d0278920
+8174164: SafePointNode::_replaced_nodes breaks with irreducible loops
+Reviewed-by: kvn
+
+diff -r ac559f3ccca8 -r 35db0413819a src/share/vm/opto/callnode.hpp
+--- openjdk/hotspot/src/share/vm/opto/callnode.hpp	Wed Feb 15 11:14:45 2017 +0100
++++ openjdk/hotspot/src/share/vm/opto/callnode.hpp	Wed Feb 15 17:26:37 2017 -0800
+@@ -452,8 +452,8 @@
+   void delete_replaced_nodes() {
+     _replaced_nodes.reset();
+   }
+-  void apply_replaced_nodes() {
+-    _replaced_nodes.apply(this);
++  void apply_replaced_nodes(uint idx) {
++    _replaced_nodes.apply(this, idx);
+   }
+   void merge_replaced_nodes_with(SafePointNode* sfpt) {
+     _replaced_nodes.merge_with(sfpt->_replaced_nodes);
+# I was informed that this hunk is not necessary in jdk8
+#diff -r ac559f3ccca8 -r 35db0413819a src/share/vm/opto/library_call.cpp
+#--- openjdk/hotspot/src/share/vm/opto/library_call.cpp	Wed Feb 15 11:14:45 2017 +0100
+#+++ openjdk/hotspot/src/share/vm/opto/library_call.cpp	Wed Feb 15 17:26:37 2017 -0800
+#@@ -277,7 +277,8 @@
+#   AllocateArrayNode* tightly_coupled_allocation(Node* ptr,
+#                                                 RegionNode* slow_region);
+#   JVMState* arraycopy_restore_alloc_state(AllocateArrayNode* alloc, int& saved_reexecute_sp);
+#-  void arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp);
+#+  void arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp,
+#+                                      uint new_idx);
+# 
+#   typedef enum { LS_get_add, LS_get_set, LS_cmp_swap, LS_cmp_swap_weak, LS_cmp_exchange } LoadStoreKind;
+#   MemNode::MemOrd access_kind_to_memord_LS(AccessKind access_kind, bool is_store);
+#@@ -4882,7 +4883,8 @@
+# // deoptimize. This is possible because tightly_coupled_allocation()
+# // guarantees there's no observer of the allocated array at this point
+# // and the control flow is simple enough.
+#-void LibraryCallKit::arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp) {
+#+void LibraryCallKit::arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms,
+#+                                                    int saved_reexecute_sp, uint new_idx) {
+#   if (saved_jvms != NULL && !stopped()) {
+#     assert(alloc != NULL, "only with a tightly coupled allocation");
+#     // restore JVM state to the state at the arraycopy
+#@@ -4891,7 +4893,7 @@
+#     assert(saved_jvms->map()->i_o() == map()->i_o(), "IO state changed?");
+#     // If we've improved the types of some nodes (null check) while
+#     // emitting the guards, propagate them to the current state
+#-    map()->replaced_nodes().apply(saved_jvms->map());
+#+    map()->replaced_nodes().apply(saved_jvms->map(), new_idx);
+#     set_jvms(saved_jvms);
+#     _reexecute_sp = saved_reexecute_sp;
+# 
+#@@ -4949,6 +4951,7 @@
+#   Node* dest_offset = argument(3);  // type: int
+#   Node* length      = argument(4);  // type: int
+# 
+#+  uint new_idx = C->unique();
+# 
+#   // Check for allocation before we add nodes that would confuse
+#   // tightly_coupled_allocation()
+#@@ -5164,7 +5167,7 @@
+#     }
+#   }
+# 
+#-  arraycopy_move_allocation_here(alloc, dest, saved_jvms, saved_reexecute_sp);
+#+  arraycopy_move_allocation_here(alloc, dest, saved_jvms, saved_reexecute_sp, new_idx);
+# 
+#   if (stopped()) {
+#     return true;
+diff -r ac559f3ccca8 -r 35db0413819a src/share/vm/opto/parse1.cpp
+--- openjdk/hotspot/src/share/vm/opto/parse1.cpp	Wed Feb 15 11:14:45 2017 +0100
++++ openjdk/hotspot/src/share/vm/opto/parse1.cpp	Wed Feb 15 17:26:37 2017 -0800
+@@ -1086,7 +1086,7 @@
+         kit.make_dtrace_method_exit(method());
+       }
+       if (_replaced_nodes_for_exceptions) {
+-        kit.map()->apply_replaced_nodes();
++        kit.map()->apply_replaced_nodes(_new_idx);
+       }
+       // Done with exception-path processing.
+       ex_map = kit.make_exception_state(ex_oop);
+@@ -1107,7 +1107,7 @@
+       _exits.add_exception_state(ex_map);
+     }
+   }
+-  _exits.map()->apply_replaced_nodes();
++  _exits.map()->apply_replaced_nodes(_new_idx);
+ }
+ 
+ //-----------------------------create_entry_map-------------------------------
+diff -r ac559f3ccca8 -r 35db0413819a src/share/vm/opto/replacednodes.cpp
+--- openjdk/hotspot/src/share/vm/opto/replacednodes.cpp	Wed Feb 15 11:14:45 2017 +0100
++++ openjdk/hotspot/src/share/vm/opto/replacednodes.cpp	Wed Feb 15 17:26:37 2017 -0800
+@@ -92,13 +92,17 @@
+ }
+ 
+ // Perfom node replacement (used when returning to caller)
+-void ReplacedNodes::apply(Node* n) {
++void ReplacedNodes::apply(Node* n, uint idx) {
+   if (is_empty()) {
+     return;
+   }
+   for (int i = 0; i < _replaced_nodes->length(); i++) {
+     ReplacedNode replaced = _replaced_nodes->at(i);
+-    n->replace_edge(replaced.initial(), replaced.improved());
++    // Only apply if improved node was created in a callee to avoid
++    // issues with irreducible loops in the caller
++    if (replaced.improved()->_idx >= idx) {
++      n->replace_edge(replaced.initial(), replaced.improved());
++    }
+   }
+ }
+ 
+diff -r ac559f3ccca8 -r 35db0413819a src/share/vm/opto/replacednodes.hpp
+--- openjdk/hotspot/src/share/vm/opto/replacednodes.hpp	Wed Feb 15 11:14:45 2017 +0100
++++ openjdk/hotspot/src/share/vm/opto/replacednodes.hpp	Wed Feb 15 17:26:37 2017 -0800
+@@ -71,7 +71,7 @@
+   void record(Node* initial, Node* improved);
+   void transfer_from(const ReplacedNodes& other, uint idx);
+   void reset();
+-  void apply(Node* n);
++  void apply(Node* n, uint idx);
+   void merge_with(const ReplacedNodes& other);
+   bool is_empty() const;
+   void dump(outputStream *st) const;
+

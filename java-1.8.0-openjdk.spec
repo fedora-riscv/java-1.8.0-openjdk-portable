@@ -801,7 +801,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -928,6 +928,11 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
+
+# Patches upstream and appearing in 8u152
+# 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
+Patch535: 8153711-pr3313-rh1284948.patch
+Patch536: 1417266.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1278,6 +1283,8 @@ sh %{SOURCE12}
 %patch528
 %patch532
 %patch533
+%patch535
+%patch536
 
 # RHEL-only patches
 %if 0%{?rhel}
@@ -1503,6 +1510,7 @@ done
 # Make sure gdb can do a backtrace based on line numbers on libjvm.so
 gdb -q "$JAVA_HOME/bin/java" <<EOF | tee gdb.out
 handle SIGSEGV pass nostop noprint
+handle SIGILL pass nostop noprint
 set breakpoint pending on
 break javaCalls.cpp:1
 commands 1
@@ -1921,6 +1929,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Feb 17 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-4.b14
+- added Patch535 and 526
+- tweeked debugsymbols check for sigill
+
 * Wed Jan 25 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-2.b14
 - revertrd patch535, excludeECDHE-1415137.patch and related changes
 - issue casued by nss, see rhbz#1415137 c#35
