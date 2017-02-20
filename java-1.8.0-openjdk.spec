@@ -801,7 +801,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -929,10 +929,15 @@ Patch526: 6260348-pr3066.patch
 # S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
 
+# Patches upstream and appearing in 8u131
+# 8170888, PR3314, RH1390708: [linux] Experimental support for cgroup memory limits in container (ie Docker) environments
+Patch536: 8170888-pr3314-rh1390708.patch
+
 # Patches upstream and appearing in 8u152
 # 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
 Patch535: 8153711-pr3313-rh1284948.patch
-Patch536: 1417266.patch
+Patch537: 1417266.patch
+Patch538: 1423421.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1285,6 +1290,8 @@ sh %{SOURCE12}
 %patch533
 %patch535
 %patch536
+%patch537
+%patch538
 
 # RHEL-only patches
 %if 0%{?rhel}
@@ -1929,6 +1936,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 20 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-5.b14
+- patch 536 reordered to 537
+- added patch 536 - Backport "8170888: [linux] Experimental support for cgroup memory limits in container (ie Docker) environments"
+- added patch 538 - 1423421: Javadoc crashes when method name ends with "Property"
+
 * Fri Feb 17 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-4.b14
 - added Patch535 and 526
 - tweeked debugsymbols check for sigill
