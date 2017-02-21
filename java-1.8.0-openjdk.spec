@@ -220,12 +220,6 @@
 # not-duplicated scriplets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
-%global check_sum_presented_in_spec() %{expand:
-md5sum %1
-currentMd5sum=`md5sum %1 | sed "s;\\s.*;;"`
-specfile=%{_specdir}/%{name}.spec
-grep -e md5sum -A 20 $specfile  | grep $currentMd5sum
-}
 
 %global post_script() %{expand:
 update-desktop-database %{_datadir}/applications &> /dev/null || :
@@ -777,7 +771,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1313,9 +1307,6 @@ for file in %{SOURCE9} %{SOURCE10} ; do
 done
 done
 
-# this is check which controls, that latest java.security is included in post(_headless)
-%{check_sum_presented_in_spec openjdk/jdk/src/share/lib/security/java.security-linux}
-
 
 %build
 # How many cpu's do we have?
@@ -1434,9 +1425,6 @@ done
 for suffix in %{rev_build_loop} ; do
 
 export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
-
-# check java.security in this build is also in this specfile
-%{check_sum_presented_in_spec $JAVA_HOME/jre/lib/security/java.security}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1915,6 +1903,7 @@ require "copy_jdk_configs.lua"
 * Tue Feb 21 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-7.b14
 - fixed the config(noreplace) issue with various left files lke java.security (rhbz#1183793)
 - by calling new c-j-c hooks
+- removed self-tail-bitting check check_sum_presented_in_spec
 - release 6+7 to verify update path
 
 * Mon Feb 20 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-5.b14
