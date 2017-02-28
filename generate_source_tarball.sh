@@ -19,6 +19,12 @@
 # level folder, name is created, based on parameter
 #
 
+if [ ! "x$PR2126" = "x" ] ; then
+  if [ ! -f "$PR2126" ] ; then
+    echo "You have specified PR2126 as $PR2126 but it does not exists. exiting"
+    exit 1
+  fi
+fi
 set -e
 
 OPENJDK_URL_DEFAULT=http://hg.openjdk.java.net

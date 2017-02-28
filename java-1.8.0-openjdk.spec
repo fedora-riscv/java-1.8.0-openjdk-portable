@@ -168,8 +168,8 @@
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
-%global project         openjdk8-forests
-%global repo            latest-aarch64
+%global project         aarch64-port
+%global repo            jdk8u
 %global revision        aarch64-jdk8u121-b14
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
@@ -771,7 +771,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 8.%{buildver}%{?dist}
+Release: 9.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -827,7 +827,7 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 # shenandoah hotpost
-Source999: openjdk8-forests-latest-shenandoah-aarch64-shenandoah-jdk8u121-b14.tar.xz
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-02-20.tar.xz
 
 # RPM/distribution specific patches
 
@@ -1900,6 +1900,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Feb 28 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-9.b14
+- updated to latest stable shenandoah hotspot
+- updated to properly tagged upstream forest (no update, just rename)
+- fixed update package to verify PR2126 patch and work with sha512
+
+* Tue Feb 28 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-8.b14
+- rebuild because of NSS
+
 * Tue Feb 21 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-7.b14
 - fixed the config(noreplace) issue with various left files lke java.security (rhbz#1183793)
 - by calling new c-j-c hooks

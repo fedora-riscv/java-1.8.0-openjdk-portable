@@ -15,6 +15,13 @@
 #
 # the used values are then substituted to spec and sources
 
+if [ ! "x$PR2126" = "x" ] ; then
+  if [ ! -f "$PR2126" ] ; then
+    echo "You have specified PR2126 as $PR2126 but it does not exists. exiting"
+    exit 1
+  fi
+fi
+
 set -e
 
 if [ "x$PROJECT_NAME" = "x" ] ; then
@@ -102,7 +109,7 @@ if [ "x$VERSION" = "xtip" ] ; then
     VERSION="tip"
 else
 	#hardcoding version for anything else except tip
-    VERSION="aarch64-shenandoah-jdk8u121-b14"
+    VERSION="aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-02-20"
 fi
 MAIN_REPO_NAME=$REPO_NAME
 REPO_NAME=jdk8u-shenandoah
@@ -124,7 +131,7 @@ git --no-pager diff $SPEC
 # find the most similar sources name and replace it by newly generated one.
 echo "Old sources"
 cat sources
-a_sources=`cat sources | sed "s/.*\s\+//g"`
+a_sources=`cat sources | sed "s/.*(//g" | sed "s/).*//g" | sed "s/.*\s\+//g"`
 winner=""
 winnerDistance=999999
 for x in $a_sources ; do
@@ -151,7 +158,7 @@ sed -i "s;.*$winner;$sum;" sources
 
 echo "New sources"
 cat sources
-a_sources=`cat sources | sed "s/.*\s\+//g"`
+a_sources=`cat sources | sed "s/.*(//g" | sed "s/).*//g" | sed "s/.*\s\+//g"`
 echo "    you can get inspired by following %changelog template:"
 user_name=`whoami`
 user_record=$(getent passwd $user_name)
