@@ -109,7 +109,7 @@ if [ "x$VERSION" = "xtip" ] ; then
     VERSION="tip"
 else
 	#hardcoding version for anything else except tip
-    VERSION="aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-02-20"
+    VERSION="aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-03-09"
 fi
 MAIN_REPO_NAME=$REPO_NAME
 REPO_NAME=jdk8u-shenandoah

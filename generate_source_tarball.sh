@@ -121,7 +121,7 @@ mv -v ecc_impl.h jdk/src/share/native/sun/security/ec/impl
 
 echo "Syncing EC list with NSS"
 if [ "x$PR2126" = "x" ] ; then
-# get pr2126.patch (from http://icedtea.classpath.org//hg/icedtea?cmd=changeset;node=8d2c9a898f50) from most correct tag
+# get pr2126.patch (from http://icedtea.classpath.org/hg/icedtea?cmd=changeset;node=8d2c9a898f50) from most correct tag
 # Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=2126)
     wget http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr2126.patch
     patch -Np1 < pr2126.patch

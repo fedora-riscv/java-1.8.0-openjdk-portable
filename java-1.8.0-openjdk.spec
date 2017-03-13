@@ -35,7 +35,7 @@
 %endif
 
 # on intels, we build shenandoah htspot
-%ifarch x86_64
+%ifarch x86_64 %{aarch64}
 %global use_shenandoah_hotspot 1
 %else
 %global use_shenandoah_hotspot 0
@@ -514,7 +514,6 @@ exit 0
 %{_jvmprivdir}/*
 %{jvmjardir %%1}
 %dir %{_jvmdir}/%{jredir %%1}/lib/security
-%{_jvmdir}/%{jredir %%1}/lib/security/cacerts
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/US_export_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/local_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/java.policy
@@ -791,7 +790,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u101-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=aarch64-jdk8u121-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -826,8 +825,9 @@ Source20: repackReproduciblePolycies.sh
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
-# shenandoah hotpost
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-02-20.tar.xz
+
+# Shenandoah HotSpot
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-03-09.tar.xz
 
 # RPM/distribution specific patches
 
@@ -866,6 +866,11 @@ Patch509: rh1176206-root.patch
 Patch523: pr2974-rh1337583.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460.patch
+# Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
+Patch204: hotspot-remove-debuglink.patch
+Patch205: dont-add-unnecessary-debug-links.patch
+# Enable debug information for assembly code files
+Patch206: hotspot-assembler-debuginfo.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -898,6 +903,10 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
+# 8174164, PR3334, RH1417266: SafePointNode::_replaced_nodes breaks with irreducible loops"
+Patch537: 8174164-pr3334-rh1417266.patch
+# 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
+Patch538: 8061305-pr3335-rh1423421.patch
 
 # Patches upstream and appearing in 8u131
 # 8170888, PR3314, RH1390708: [linux] Experimental support for cgroup memory limits in container (ie Docker) environments
@@ -906,16 +915,11 @@ Patch536: 8170888-pr3314-rh1390708.patch
 # Patches upstream and appearing in 8u152
 # 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
 Patch535: 8153711-pr3313-rh1284948.patch
-Patch537: 1417266.patch
-Patch538: 1423421.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
-# Pathces 204-206 are serving for better check of debug symbols in native liraries
-Patch204: hotspot-remove-debuglink.patch
-Patch205: dont-add-unnecessary-debug-links.patch
-Patch206: hotspot-assembler-debuginfo.patch
+# custom securities
 Patch207: PR3183.patch
 
 # Local fixes
@@ -925,6 +929,8 @@ Patch525: pr1834-rh1022017.patch
 Patch533: rh1367357.patch
 # Turn on AssumeMP by default on RHEL systems
 Patch534: always_assumemp.patch
+# PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
+Patch539: pr2888.patch
 
 # Non-OpenJDK fixes
 
@@ -955,7 +961,13 @@ BuildRequires: nss-devel
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
+# Use OpenJDK 7 where available (on RHEL) to avoid
+# having to use the rhel-7.x-java-unsafe-candidate hack
+%if 0%{?rhel}
+BuildRequires: java-1.7.0-openjdk-devel
+%else
 BuildRequires: java-1.8.0-openjdk-devel
+%endif
 # Zero-assembler build requirement.
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
@@ -966,8 +978,6 @@ BuildRequires: gcc >= 4.8.3-8
 # Build requirements for SunEC system NSS support
 BuildRequires: nss-softokn-freebl-devel >= 3.16.1
 
-# cacerts build requirement.
-BuildRequires: openssl
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
@@ -1262,6 +1272,7 @@ sh %{SOURCE12}
 %patch536
 %patch537
 %patch538
+%patch539
 
 # RHEL-only patches
 %if 0%{?rhel}
@@ -1542,13 +1553,8 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/client/
   popd
 %endif
 
-  # Install cacerts symlink.
+  # Remove empty cacerts database.
   rm -f $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security/cacerts
-  pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security
-    RELATIVE=$(%{abs2rel} %{_sysconfdir}/pki/java \
-      %{_jvmdir}/%{jredir $suffix}/lib/security)
-    ln -sf $RELATIVE/cacerts .
-  popd
 
   # Install extension symlinks.
   install -d -m 755 $RPM_BUILD_ROOT%{jvmjardir $suffix}
@@ -1901,7 +1907,14 @@ require "copy_jdk_configs.lua"
 
 %changelog
 * Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-10.b14
-- rhbz#1423751 - removed -fno-split-loops worakround as building agaiiinst newer GCC7
+- sync from rhel, reordered patches, enabled shenanoah on aarch64
+- Patch OpenJDK to check the system cacerts database directly
+- Remove unneeded symlink to the system cacerts database
+- Drop outdated openssl dependency from when the RPM built the cacerts database
+- udpated to latest stable shenandoah hotspot
+
+* Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-10.b14
+- rhbz#1423751 - removed -fno-split-loops worakround as building against newer GCC7
 
 * Tue Feb 28 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-9.b14
 - updated to latest stable shenandoah hotspot
