@@ -770,7 +770,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1906,7 +1906,7 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-10.b14
+* Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-11.b14
 - sync from rhel, reordered patches, enabled shenanoah on aarch64
 - Patch OpenJDK to check the system cacerts database directly
 - Remove unneeded symlink to the system cacerts database
