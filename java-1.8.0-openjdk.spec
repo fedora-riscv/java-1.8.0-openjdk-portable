@@ -729,6 +729,8 @@ Obsoletes: java-1.5.0-gcj-devel%1
 Requires: %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
+Provides: java-%{javaver}-%{origin}-demo = %{epoch}:%{version}-%{release}
+
 Obsoletes: java-1.7.0-openjdk-demo%1
 }
 
@@ -746,6 +748,7 @@ Requires(postun):   chkconfig >= 1.7
 # Standard JPackage javadoc provides.
 Provides: java-javadoc%1 = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-javadoc%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-javadoc = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-javadoc%1
 
@@ -754,6 +757,10 @@ Obsoletes: java-1.7.0-openjdk-javadoc%1
 %global java_src_rpo() %{expand:
 Requires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
+# Standard JPackage javadoc provides.
+Provides: java-src%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-src%1 = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-src = %{epoch}:%{version}-%{release}
 Obsoletes: java-1.7.0-openjdk-src%1
 }
 
@@ -761,6 +768,8 @@ Obsoletes: java-1.7.0-openjdk-src%1
 Requires: java-atk-wrapper%{?_isa}
 Requires: %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
+
+Provides: java-%{javaver}-%{origin}-accessiblity = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-accessibility%1
 }
@@ -770,7 +779,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1456,7 +1465,7 @@ do
     # Test for .debug_* sections in the shared object. This is the  main test.
     # Stripped objects will not contain these.
     eu-readelf -S "$lib" | grep "] .debug_"
-    test $(eu-readelf -S "$lib" | egrep "\]\ .debug_(info|abbrev)" | wc --lines) == 2
+    test $(eu-readelf -S "$lib" | grep -E "\]\ .debug_(info|abbrev)" | wc --lines) == 2
 
     # Test FILE symbols. These will most likely be removed by anyting that
     # manipulates symbol tables because it's generally useless. So a nice test
@@ -1467,14 +1476,14 @@ do
     do
      # We expect to see .cpp files, except for architectures like aarch64 and
      # s390 where we expect .o and .oS files
-      echo "$line" | egrep "ABS ((.*/)?[-_a-zA-Z0-9]+\.(c|cc|cpp|cxx|o|oS))?$"
+      echo "$line" | grep -E "ABS ((.*/)?[-_a-zA-Z0-9]+\.(c|cc|cpp|cxx|o|oS))?$"
     done
     IFS="$old_IFS"
 
     # If this is the JVM, look for javaCalls.(cpp|o) in FILEs, for extra sanity checking.
     if [ "`basename $lib`" = "libjvm.so" ]; then
       eu-readelf -s "$lib" | \
-        egrep "00000000      0 FILE    LOCAL  DEFAULT      ABS javaCalls.(cpp|o)$"
+        grep -E "00000000      0 FILE    LOCAL  DEFAULT      ABS javaCalls.(cpp|o)$"
     fi
 
     # Test that there are no .gnu_debuglink sections pointing to another
@@ -1515,15 +1524,16 @@ $JAVA_HOME/bin/javap -l java.lang.Object | grep LocalVariableTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
+
+#build cycles check
 done
 
 %install
-rm -rf $RPM_BUILD_ROOT
 STRIP_KEEP_SYMTAB=libjvm*
 
 for suffix in %{build_loop} ; do
 
-pushd %{buildoutputdir  $suffix}/images/%{j2sdkimage}
+pushd %{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 #install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/server/
@@ -1906,6 +1916,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Mar 19 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-12.b14
+- minor tweaks, egrep replaced by grep -E, added provides for some subpackages
+
 * Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-11.b14
 - sync from rhel, reordered patches, enabled shenanoah on aarch64
 - Patch OpenJDK to check the system cacerts database directly
