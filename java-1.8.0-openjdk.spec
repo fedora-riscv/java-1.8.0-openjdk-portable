@@ -170,7 +170,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u121-b14
+%global revision        aarch64-jdk8u131-b12
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -779,7 +779,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 12.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -836,7 +836,7 @@ Source100: config.guess
 Source101: config.sub
 
 # Shenandoah HotSpot
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u121-b14-shenandoah-merge-2017-03-09.tar.xz
+Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20.tar.xz
 
 # RPM/distribution specific patches
 
@@ -1916,7 +1916,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Wed Mar 19 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-12.b14
+* Thu Apr 20 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-1.b12
+- updated to aarch64-jdk8u131-b12 (from aarch64-port/jdk8u)
+- updated to aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20 (from aarch64-port/jdk8u-shenandoah) of hotspot
+- used aarch64-port-jdk8u-aarch64-jdk8u131-b12.tar.xz as new sources
+- used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20.tar.xz as new sources for hotspot
+
+* Sun Mar 19 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-12.b14
 - minor tweaks, egrep replaced by grep -E, added provides for some subpackages
 
 * Mon Mar 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.121-11.b14
