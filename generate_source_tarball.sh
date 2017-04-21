@@ -131,6 +131,7 @@ else
     patch -Np1 < $PR2126
 fi;
 fi
+find . -name '*.orig' -exec rm -vf '{}' ';'
 
 popd
 echo "Compressing remaining forest"

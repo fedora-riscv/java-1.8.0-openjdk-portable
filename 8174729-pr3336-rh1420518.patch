@@ -1,0 +1,122 @@
+# HG changeset patch
+# User adinn
+# Date 1487931564 0
+#      Fri Feb 24 10:19:24 2017 +0000
+# Node ID d41592af9af3790fe5eee30ce686d85cff09c942
+# Parent  1ac9b0f1bf17fc5935bfa8250550eabc2ffb6785
+8174729, PR3336, RH1420518: Race Condition in java.lang.reflect.WeakCache
+Summary: Race can occur between Proxy.getProxyClass and Proxy.isProxyClass
+Reviewed-by: mchung
+
+diff --git a/src/share/classes/java/lang/reflect/WeakCache.java b/src/share/classes/java/lang/reflect/WeakCache.java
+--- openjdk/jdk/src/share/classes/java/lang/reflect/WeakCache.java
++++ openjdk/jdk/src/share/classes/java/lang/reflect/WeakCache.java
+@@ -239,11 +239,11 @@
+             // wrap value with CacheValue (WeakReference)
+             CacheValue<V> cacheValue = new CacheValue<>(value);
+ 
++            // put into reverseMap
++            reverseMap.put(cacheValue, Boolean.TRUE);
++
+             // try replacing us with CacheValue (this should always succeed)
+-            if (valuesMap.replace(subKey, this, cacheValue)) {
+-                // put also in reverseMap
+-                reverseMap.put(cacheValue, Boolean.TRUE);
+-            } else {
++            if (!valuesMap.replace(subKey, this, cacheValue)) {
+                 throw new AssertionError("Should not reach here");
+             }
+ 
+diff --git a/test/java/lang/reflect/Proxy/ProxyRace.java b/test/java/lang/reflect/Proxy/ProxyRace.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/test/java/lang/reflect/Proxy/ProxyRace.java
+@@ -0,0 +1,88 @@
++/*
++ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++import java.lang.reflect.Proxy;
++import java.util.concurrent.ExecutorService;
++import java.util.concurrent.Executors;
++import java.util.concurrent.Phaser;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.atomic.AtomicInteger;
++
++/**
++ * @test
++ * @bug 8174729
++ * @summary Proxy.getProxyClass() / Proxy.isProxyClass() race detector
++ * @run main ProxyRace
++ * @author plevart
++ */
++
++public class ProxyRace {
++
++    static final int threads = 8;
++
++    static volatile ClassLoader classLoader;
++    static volatile boolean terminate;
++    static final AtomicInteger racesDetected = new AtomicInteger();
++
++    public static void main(String[] args) throws Exception {
++
++        Phaser phaser = new Phaser(threads) {
++            @Override
++            protected boolean onAdvance(int phase, int registeredParties) {
++                // install new ClassLoader on each advance
++                classLoader = new CL();
++                return terminate;
++            }
++        };
++
++        ExecutorService exe = Executors.newFixedThreadPool(threads);
++
++        for (int i = 0; i < threads; i++) {
++            exe.execute(() -> {
++                while (phaser.arriveAndAwaitAdvance() >= 0) {
++                    Class<?> proxyClass = Proxy.getProxyClass(classLoader, Runnable.class);
++                    if (!Proxy.isProxyClass(proxyClass)) {
++                        racesDetected.incrementAndGet();
++                    }
++                }
++            });
++        }
++
++        Thread.sleep(5000L);
++
++        terminate = true;
++        exe.shutdown();
++        exe.awaitTermination(5L, TimeUnit.SECONDS);
++
++        System.out.println(racesDetected.get() + " races detected");
++        if (racesDetected.get() != 0) {
++            throw new RuntimeException(racesDetected.get() + " races detected");
++        }
++    }
++
++    static class CL extends ClassLoader {
++        public CL() {
++            super(ClassLoader.getSystemClassLoader());
++        }
++    }
++}

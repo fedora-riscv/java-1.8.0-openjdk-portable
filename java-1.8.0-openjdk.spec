@@ -34,7 +34,7 @@
 %global include_debug_build 0
 %endif
 
-# on intels, we build shenandoah htspot
+# On x86_64 and AArch64, we use the Shenandoah HotSpot
 %ifarch x86_64 %{aarch64}
 %global use_shenandoah_hotspot 1
 %else
@@ -108,49 +108,63 @@
 %global __provides_exclude ^(%{_privatelibs})$
 %global __requires_exclude ^(%{_privatelibs})$
 
+# In some cases, the arch used by the JDK does
+# not match _arch.
+# Also, in some cases, the machine name used by SystemTap
+# does not match that given by _build_cpu
 %ifarch x86_64
 %global archinstall amd64
+%global stapinstall x86_64
 %endif
 %ifarch ppc
 %global archinstall ppc
+%global stapinstall powerpc
 %endif
 %ifarch %{ppc64be}
 %global archinstall ppc64
+%global stapinstall powerpc
 %endif
 %ifarch %{ppc64le}
 %global archinstall ppc64le
+%global stapinstall powerpc
 %endif
 %ifarch %{ix86}
 %global archinstall i386
+%global stapinstall i386
 %endif
 %ifarch ia64
 %global archinstall ia64
+%global stapinstall ia64
 %endif
 %ifarch s390
 %global archinstall s390
+%global stapinstall s390
 %endif
 %ifarch s390x
 %global archinstall s390x
+%global stapinstall s390
 %endif
 %ifarch %{arm}
 %global archinstall arm
+%global stapinstall arm
 %endif
 %ifarch %{aarch64}
 %global archinstall aarch64
+%global stapinstall arm64
 %endif
 # 32 bit sparc, optimized for v9
 %ifarch sparcv9
 %global archinstall sparc
+%global stapinstall %{_build_cpu}
 %endif
 # 64 bit sparc
 %ifarch sparc64
 %global archinstall sparcv9
+%global stapinstall %{_build_cpu}
 %endif
 %ifnarch %{jit_arches}
 %global archinstall %{_arch}
 %endif
-
-
 
 %ifarch %{jit_arches}
 %global with_systemtap 1
@@ -214,7 +228,7 @@
 # for the primary arch for now). Systemtap uses the machine name
 # aka build_cpu as architecture specific directory name.
 %global tapsetroot /usr/share/systemtap
-%global tapsetdir %{tapsetroot}/tapset/%{_build_cpu}
+%global tapsetdir %{tapsetroot}/tapset/%{stapinstall}
 %endif
 
 # not-duplicated scriplets for normal/debug packages
@@ -799,7 +813,7 @@ URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
 # Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=aarch64-jdk8u121-b14 FILE_NAME_ROOT=aarch64-port-jdk8u-${VERSION}
+# VERSION=%%{revision} FILE_NAME_ROOT=%%{project}-%%{repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
@@ -811,14 +825,14 @@ Source2:  README.src
 # They are based on code contained in the IcedTea7 project.
 
 # Systemtap tapsets. Zipped up to keep it small.
-Source8: systemtap-tapset-3.1.0.tar.xz
+Source8: systemtap-tapset-3.4.0pre01.tar.xz
 
 # Desktop files. Adapated from IcedTea.
 Source9: jconsole.desktop.in
 Source10: policytool.desktop.in
 
 # nss configuration file
-Source11: nss.cfg
+Source11: nss.cfg.in
 
 # Removed libraries that we link instead
 Source12: %{name}-remove-intree-libraries.sh
@@ -910,20 +924,32 @@ Patch507: pr2842-02.patch
 Patch400: 8154313.patch
 # S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
 Patch526: 6260348-pr3066.patch
-# S8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
-Patch532: 8162384-pr3122-rh1358661.patch
-# 8174164, PR3334, RH1417266: SafePointNode::_replaced_nodes breaks with irreducible loops"
-Patch537: 8174164-pr3334-rh1417266.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
 
 # Patches upstream and appearing in 8u131
-# 8170888, PR3314, RH1390708: [linux] Experimental support for cgroup memory limits in container (ie Docker) environments
-Patch536: 8170888-pr3314-rh1390708.patch
+# 6515172, PR3346: Runtime.availableProcessors() ignores Linux taskset command
+Patch542: 6515172-pr3346.patch
 
 # Patches upstream and appearing in 8u152
 # 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
 Patch535: 8153711-pr3313-rh1284948.patch
+# 8144566, PR3352: Custom HostnameVerifier disables SNI extension
+Patch544: 8144566-pr3352.patch
+# 8155049, PR3352: New tests from 8144566 fail with "No expected Server Name Indication"
+Patch545: 8155049-pr3352.patch
+# 8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
+Patch532: 8162384-pr3122-rh1358661.patch
+# 8165231, RH1437545: java.nio.Bits.unaligned() doesn't return true on ppc
+Patch546: 8165231-rh1437545.patch
+# 8173941, PR3326: SA does not work if executable is DSO
+Patch547: 8173941-pr3326.patch
+# 8174164, PR3334, RH1417266: SafePointNode::_replaced_nodes breaks with irreducible loops"
+Patch537: 8174164-pr3334-rh1417266.patch
+# 8174729, PR3336, RH1420518: Race Condition in java.lang.reflect.WeakCache
+Patch548: 8174729-pr3336-rh1420518.patch
+# 8175097, PR3334, RH1417266: [TESTBUG] 8174164 fix missed the test
+Patch549: 8175097-pr3334-rh1417266.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1207,11 +1233,12 @@ fi
 # For old patches
 ln -s openjdk jdk8
 %if %{use_shenandoah_hotspot}
-#on intels, repalce hotpost by shenandoah-able hotspot
+# On Shenandoah-supported architectures, replace HotSpot with
+# the Shenandoah version
 pushd openjdk
 tar -xf %{SOURCE999}
 rm -rf hotspot
-cp -r openjdk/hotspot .
+mv openjdk/hotspot .
 rm -rf openjdk
 popd
 %endif
@@ -1230,9 +1257,12 @@ cp %{SOURCE101} openjdk/common/autoconf/build-aux/
 # Remove libraries that are linked
 sh %{SOURCE12}
 
+# System library fixes
 %patch201
 %patch202
 %patch203
+
+# Debugging fixes
 %patch204
 %patch205
 %patch206
@@ -1250,12 +1280,13 @@ sh %{SOURCE12}
 
 # ppc64le fixes
 
-# Zero fixes.
-
 %patch603
 %patch601
 %patch602
 
+# Zero fixes.
+
+# Upstreamable fixes
 %patch502
 %patch504
 %patch506
@@ -1272,15 +1303,23 @@ sh %{SOURCE12}
 %patch518
 %patch400
 %patch523
-%patch525
 %patch526
 %patch528
 %patch532
-%patch533
 %patch535
-%patch536
 %patch537
 %patch538
+%patch542
+%patch544
+%patch545
+%patch546
+%patch547
+%patch548
+%patch549
+
+# RPM-only fixes
+%patch525
+%patch533
 %patch539
 
 # RHEL-only patches
@@ -1326,6 +1365,9 @@ for file in %{SOURCE9} %{SOURCE10} ; do
     sed -i -e  s:#ARCH#:%{version}-%{release}.%{_arch}$suffix:g $OUTPUT_FILE
 done
 done
+
+# Setup nss.cfg
+sed -e s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g %{SOURCE11} > nss.cfg
 
 
 %build
@@ -1430,7 +1472,7 @@ popd >& /dev/null
 export JAVA_HOME=$(pwd)/%{buildoutputdir $suffix}/images/%{j2sdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
-install -m 644 %{SOURCE11} $JAVA_HOME/jre/lib/security/
+install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
 
 # Use system-wide tzdata
 rm $JAVA_HOME/jre/lib/tzdb.dat
