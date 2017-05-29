@@ -172,6 +172,26 @@
 %global with_systemtap 0
 %endif
 
+%ifarch %{ix86} x86_64
+%global with_openjfx_binding 1
+%global openjfx_path %{_jvmdir}/openjfx
+# links src directories
+%global jfx_jre_libs_dir %{openjfx_path}/rt/lib
+%global jfx_jre_native_dir %{jfx_jre_libs_dir}/%{archinstall}
+%global jfx_sdk_libs_dir %{openjfx_path}/lib
+%global jfx_sdk_bins_dir %{openjfx_path}/bin
+%global jfx_jre_exts_dir %{jfx_sdk_libs_dir}/ext
+# links src files
+# maybe depend on jfx and generate the lists in build time? Yes, bad idea to inlcude cyclic depndenci, but this list is aweful
+%global jfx_jre_libs jfxswt.jar javafx.properties
+%global jfx_jre_native libprism_es2.so libprism_common.so libjavafx_font.so libdecora_sse.so libjavafx_font_freetype.so libprism_sw.so libjavafx_font_pango.so ibglass.so libjavafx_iio.so
+%global jfx_sdk_libs javafx-mx.jar packager.jar ant-javafx.jar
+%global jfx_sdk_bins javafxpackager javapackager
+%global jfx_jre_exts jfxrt.jar
+%else
+%global with_openjfx_binding 0
+%endif
+
 # Convert an absolute path to a relative path.  Each symbolic link is
 # specified relative to the directory in which it is installed so that
 # it will resolve properly within chrooted installations.
@@ -793,7 +813,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1204,6 +1224,39 @@ Summary: OpenJDK accessibility connector %{for_debug}
 
 %description accessibility-debug
 See normal java-%{version}-openjdk-accessibility description.
+%endif
+
+
+%if %{with_openjfx_binding}
+%package openjfx
+Summary: OpenJDK x OpenJFX connector. This package adds symliks finishing Java FX integration to %{name}
+Requires: %{name}%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: openjfx%{?_isa}
+%description openjfx
+Set of links from OpenJDK (jre) to OpenJFX
+
+%package openjfx-devel
+Summary: OpenJDK x OpenJFX connector for FX developers. This package adds symliks finishing Java FX integration to %{name}-devel
+Requires: %{name}-devel%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: openjfx-devel
+%description openjfx-devel
+Set of links from OpenJDK (sdk) to OpenJFX
+
+%if %{include_debug_build}
+%package openjfx-debug
+Summary: OpenJDK x OpenJFX connector %{for_debug}. his package adds symliks finishing Java FX integration to %{name}-debug
+Requires: %{name}-debug%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: openjfx%{?_isa}
+%description openjfx-debug
+Set of links from OpenJDK-debug (jre) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
+
+%package openjfx-devel-debug
+Summary: OpenJDK x OpenJFX connector for FX developers %{for_debug}. This package adds symliks finishing Java FX integration to %{name}-devel-debug
+Requires: %{name}-devel-debug%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: openjfx-devel
+%description openjfx-devel-debug
+Set of links from OpenJDK-debug (sdk) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
+%endif
 %endif
 
 %prep
@@ -1771,6 +1824,44 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir $suffix}/demo \
     echo "" >> accessibility.properties
   popd
 
+# intentionally after all else, fx links  with redirections on its own
+%if %{with_openjfx_binding}
+  FXSDK_FILES=%{name}-openjfx-devel.files"$suffix"
+  FXJRE_FILES=%{name}-openjfx.files"$suffix"
+  echo -n "" > $FXJRE_FILES
+  echo -n "" > $FXSDK_FILES
+  for file in  %{jfx_jre_libs} ; do
+    srcfile=%{jfx_jre_libs_dir}/$file
+    targetfile=%{_jvmdir}/%{jredir $suffix}/lib/$file
+    ln -s $srcfile $RPM_BUILD_ROOT/$targetfile
+    echo $targetfile >> $FXJRE_FILES
+  done
+  for file in  %{jfx_jre_native} ; do
+    srcfile=%{jfx_jre_native_dir}/$file
+    targetfile=%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/$file
+    ln -s $srcfile $RPM_BUILD_ROOT/$targetfile
+    echo $targetfile >> $FXJRE_FILES
+  done
+  for file in  %{jfx_jre_exts} ; do
+    srcfile=%{jfx_jre_exts_dir}/$file
+    targetfile=%{_jvmdir}/%{jredir $suffix}/lib/ext/$file
+    ln -s $srcfile $RPM_BUILD_ROOT/$targetfile
+    echo $targetfile >> $FXJRE_FILES
+  done
+  for file in  %{jfx_sdk_libs} ; do
+    srcfile=%{jfx_sdk_libs_dir}/$file
+    targetfile=%{_jvmdir}/%{sdkdir $suffix}/lib/$file
+    ln -s $srcfile $RPM_BUILD_ROOT/$targetfile
+    echo $targetfile >> $FXSDK_FILES
+  done
+  for file in  %{jfx_sdk_bins} ; do
+    srcfile=%{jfx_sdk_bins_dir}/$file
+    targetfile=%{_jvmdir}/%{sdkdir $suffix}/bin/$file
+    ln -s $srcfile $RPM_BUILD_ROOT/$targetfile
+    echo $targetfile >> $FXSDK_FILES
+  done
+%endif
+
 bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix} %{javaver}
 # https://bugzilla.redhat.com/show_bug.cgi?id=1183793
 touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir $suffix}/lib/security/java.security
@@ -1929,6 +2020,12 @@ require "copy_jdk_configs.lua"
 
 %files accessibility
 %{files_accessibility %{nil}}
+
+%if %{with_openjfx_binding}
+%files openjfx -f %{name}-openjfx.files
+
+%files openjfx-devel -f %{name}-openjfx-devel.files
+%endif
 %endif
 
 %if %{include_debug_build} 
@@ -1955,9 +2052,18 @@ require "copy_jdk_configs.lua"
 
 %files accessibility-debug
 %{files_accessibility %{debug_suffix_unquoted}}
+
+%if %{with_openjfx_binding}
+%files openjfx-debug -f %{name}-openjfx.files-debug
+
+%files openjfx-devel-debug -f %{name}-openjfx-devel.files-debug
+%endif
 %endif
 
 %changelog
+* Tue May 09 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-1.b12
+- added javafx binding subpackages
+
 * Thu Apr 20 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-1.b12
 - updated to aarch64-jdk8u131-b12 (from aarch64-port/jdk8u)
 - updated to aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20 (from aarch64-port/jdk8u-shenandoah) of hotspot
