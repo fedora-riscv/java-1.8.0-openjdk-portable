@@ -125,7 +125,7 @@ else
 echo "${FILENAME_SH} already exists, using"
 fi
 
-sed -i "s/^Source999:.*/Source999: ${FILENAME_SH}/" $SPEC
+sed -i "s/^Source1:.*/Source1: ${FILENAME_SH}/" $SPEC
 git --no-pager diff $SPEC
 
 # find the most similar sources name and replace it by newly generated one.

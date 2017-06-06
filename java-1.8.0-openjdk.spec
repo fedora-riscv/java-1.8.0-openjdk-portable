@@ -548,6 +548,7 @@ exit 0
 %{_jvmprivdir}/*
 %{jvmjardir %%1}
 %dir %{_jvmdir}/%{jredir %%1}/lib/security
+%{_jvmdir}/%{jredir %%1}/lib/security/cacerts
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/US_export_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/local_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/java.policy
@@ -813,7 +814,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -837,6 +838,9 @@ URL:      http://openjdk.java.net/
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
 Source0: %{project}-%{repo}-%{revision}.tar.xz
+
+# Shenandoah HotSpot
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -868,9 +872,6 @@ Source20: repackReproduciblePolycies.sh
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
-
-# Shenandoah HotSpot
-Source999: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20.tar.xz
 
 # RPM/distribution specific patches
 
@@ -946,6 +947,10 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
+# 8175813, PR3394, RH1448880: PPC64: "mbind: Invalid argument" when -XX:+UseNUMA is used
+Patch550: 8175813-pr3394-rh1448880.patch
+# 8181055, PR3394, RH1448880: PPC64: "mbind: Invalid argument" still seen after 8175813
+Patch551: 8181055-pr3394-rh1448880.patch
 
 # Patches upstream and appearing in 8u131
 # 6515172, PR3346: Runtime.availableProcessors() ignores Linux taskset command
@@ -988,6 +993,7 @@ Patch534: always_assumemp.patch
 Patch539: pr2888.patch
 
 # Non-OpenJDK fixes
+Patch1000: enableCommentedOutSystemNss.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1289,7 +1295,7 @@ ln -s openjdk jdk8
 # On Shenandoah-supported architectures, replace HotSpot with
 # the Shenandoah version
 pushd openjdk
-tar -xf %{SOURCE999}
+tar -xf %{SOURCE1}
 rm -rf hotspot
 mv openjdk/hotspot .
 rm -rf openjdk
@@ -1369,6 +1375,8 @@ sh %{SOURCE12}
 %patch547
 %patch548
 %patch549
+%patch550
+%patch551
 
 # RPM-only fixes
 %patch525
@@ -1379,6 +1387,8 @@ sh %{SOURCE12}
 %if 0%{?rhel}
 %patch534
 %endif
+
+%patch1000
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -1660,6 +1670,12 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/client/
 
   # Remove empty cacerts database.
   rm -f $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security/cacerts
+  # Install cacerts symlink needed by some apps which hardcode the path.
+  pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/security
+    RELATIVE=$(%{abs2rel} %{_sysconfdir}/pki/java \
+      %{_jvmdir}/%{jredir $suffix}/lib/security)
+    ln -sf $RELATIVE/cacerts .
+  popd
 
   # Install extension symlinks.
   install -d -m 755 $RPM_BUILD_ROOT%{jvmjardir $suffix}
@@ -2061,6 +2077,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Jun 06 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-3.b12
+- source999 moved to source1
+- added two pathces 8181055-pr3394-rh1448880.patch and 8175813/PR3394/RH1448880
+- enabled (commented out) system NSS via patch1000, enableCommentedOutSystemNss.patch
+
 * Tue May 09 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-1.b12
 - added javafx binding subpackages
 
