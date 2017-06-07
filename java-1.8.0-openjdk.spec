@@ -180,7 +180,7 @@
 %global jfx_jre_native_dir %{jfx_jre_libs_dir}/%{archinstall}
 %global jfx_sdk_libs_dir %{openjfx_path}/lib
 %global jfx_sdk_bins_dir %{openjfx_path}/bin
-%global jfx_jre_exts_dir %{jfx_sdk_libs_dir}/ext
+%global jfx_jre_exts_dir %{jfx_jre_libs_dir}/ext
 # links src files
 # maybe depend on jfx and generate the lists in build time? Yes, bad idea to inlcude cyclic depndenci, but this list is aweful
 %global jfx_jre_libs jfxswt.jar javafx.properties
@@ -814,7 +814,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2077,6 +2077,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jun 07 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-4.b12
+- fixed target of to fxrt.jar link
+
 * Tue Jun 06 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-3.b12
 - source999 moved to source1
 - added two pathces 8181055-pr3394-rh1448880.patch and 8175813/PR3394/RH1448880
