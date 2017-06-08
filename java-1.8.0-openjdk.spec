@@ -184,7 +184,7 @@
 # links src files
 # maybe depend on jfx and generate the lists in build time? Yes, bad idea to inlcude cyclic depndenci, but this list is aweful
 %global jfx_jre_libs jfxswt.jar javafx.properties
-%global jfx_jre_native libprism_es2.so libprism_common.so libjavafx_font.so libdecora_sse.so libjavafx_font_freetype.so libprism_sw.so libjavafx_font_pango.so ibglass.so libjavafx_iio.so
+%global jfx_jre_native libprism_es2.so libprism_common.so libjavafx_font.so libdecora_sse.so libjavafx_font_freetype.so libprism_sw.so libjavafx_font_pango.so libglass.so libjavafx_iio.so
 %global jfx_sdk_libs javafx-mx.jar packager.jar ant-javafx.jar
 %global jfx_sdk_bins javafxpackager javapackager
 %global jfx_jre_exts jfxrt.jar
@@ -814,7 +814,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2077,8 +2077,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Wed Jun 07 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-4.b12
+* Wed Jun 07 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-5.b12
 - fixed target of to fxrt.jar link
+- fixedname of libglass
 
 * Tue Jun 06 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-3.b12
 - source999 moved to source1
