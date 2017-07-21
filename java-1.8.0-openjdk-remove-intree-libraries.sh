@@ -1,10 +1,10 @@
 #!/bin/sh
 
-ZIP_SRC=jdk8/jdk/src/share/native/java/util/zip/zlib-*
-JPEG_SRC=jdk8/jdk/src/share/native/sun/awt/image/jpeg
-GIF_SRC=jdk8/jdk/src/share/native/sun/awt/giflib
-PNG_SRC=jdk8/jdk/src/share/native/sun/awt/libpng
-LCMS_SRC=jdk8/jdk/src/share/native/sun/java2d/cmm/lcms
+ZIP_SRC=openjdk/jdk/src/share/native/java/util/zip/zlib-*
+JPEG_SRC=openjdk/jdk/src/share/native/sun/awt/image/jpeg
+GIF_SRC=openjdk/jdk/src/share/native/sun/awt/giflib
+PNG_SRC=openjdk/jdk/src/share/native/sun/awt/libpng
+LCMS_SRC=openjdk/jdk/src/share/native/sun/java2d/cmm/lcms
 
 echo "Removing built-in libs (they will be linked)"
 

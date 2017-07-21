@@ -204,7 +204,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u131-b12
+%global revision        aarch64-jdk8u141-b16
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -814,7 +814,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -840,7 +840,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u131-b12-shenandoah-merge-2017-04-20.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u141-b16.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -947,34 +947,24 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
-# 8175813, PR3394, RH1448880: PPC64: "mbind: Invalid argument" when -XX:+UseNUMA is used
-Patch550: 8175813-pr3394-rh1448880.patch
 # 8181055, PR3394, RH1448880: PPC64: "mbind: Invalid argument" still seen after 8175813
 Patch551: 8181055-pr3394-rh1448880.patch
-
-# Patches upstream and appearing in 8u131
-# 6515172, PR3346: Runtime.availableProcessors() ignores Linux taskset command
-Patch542: 6515172-pr3346.patch
+# 8181419, PR3413, RH1463144: Race in jdwp invoker handling may lead to crashes or invalid results
+Patch553: 8181419-pr3413-rh1463144.patch
 
 # Patches upstream and appearing in 8u152
 # 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
 Patch535: 8153711-pr3313-rh1284948.patch
-# 8144566, PR3352: Custom HostnameVerifier disables SNI extension
-Patch544: 8144566-pr3352.patch
-# 8155049, PR3352: New tests from 8144566 fail with "No expected Server Name Indication"
-Patch545: 8155049-pr3352.patch
 # 8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
 Patch532: 8162384-pr3122-rh1358661.patch
-# 8165231, RH1437545: java.nio.Bits.unaligned() doesn't return true on ppc
-Patch546: 8165231-rh1437545.patch
 # 8173941, PR3326: SA does not work if executable is DSO
 Patch547: 8173941-pr3326.patch
-# 8174164, PR3334, RH1417266: SafePointNode::_replaced_nodes breaks with irreducible loops"
-Patch537: 8174164-pr3334-rh1417266.patch
-# 8174729, PR3336, RH1420518: Race Condition in java.lang.reflect.WeakCache
-Patch548: 8174729-pr3336-rh1420518.patch
-# 8175097, PR3334, RH1417266: [TESTBUG] 8174164 fix missed the test
-Patch549: 8175097-pr3334-rh1417266.patch
+# 8175813, PR3394, RH1448880: PPC64: "mbind: Invalid argument" when -XX:+UseNUMA is used
+Patch550: 8175813-pr3394-rh1448880.patch
+# 8179084, PR3409, RH1455694: HotSpot VM fails to start when AggressiveHeap is set
+Patch552: 8179084-pr3409-rh1455694.patch
+# 8175887, PR3415: C1 value numbering handling of Unsafe.get*Volatile is incorrect
+Patch554: 8175887-pr3415.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1370,17 +1360,13 @@ sh %{SOURCE12}
 %patch528
 %patch532
 %patch535
-%patch537
 %patch538
-%patch542
-%patch544
-%patch545
-%patch546
 %patch547
-%patch548
-%patch549
 %patch550
 %patch551
+%patch552
+%patch553
+%patch554
 
 # RPM-only fixes
 %patch525
@@ -2081,6 +2067,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jul 21 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.141-1.b16
+- updated to security u141.b16
+- sync patches with rhel7
+
 * Sat Jun 17 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-7.b12
 - adapted to no longer noarch openjfx-devel
 

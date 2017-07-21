@@ -6,10 +6,11 @@
 # Parent  afd392dfaed501ac674a7cc3e37353ce300969c7
 PR1983: Support using the system installation of NSS with the SunEC provider
 Summary: Apply code changes from PR1699 & PR1742 & forward-port Makefile changes to the new build.
+Updated 2017/07/04 to accomodate 8175110
 
-diff -r afd392dfaed5 -r 48c15869ecd5 make/lib/SecurityLibraries.gmk
---- openjdk/jdk/make/lib/SecurityLibraries.gmk	Tue Jan 26 22:26:26 2016 +0000
-+++ openjdk/jdk/make/lib/SecurityLibraries.gmk	Wed Jan 27 02:54:06 2016 +0000
+diff -r 984a4af2ed4e make/lib/SecurityLibraries.gmk
+--- openjdk/jdk/make/lib/SecurityLibraries.gmk
++++ openjdk/jdk/make/lib/SecurityLibraries.gmk
 @@ -218,8 +218,17 @@
  
  ifeq ($(ENABLE_INTREE_EC), yes)
@@ -51,9 +52,9 @@ diff -r afd392dfaed5 -r 48c15869ecd5 make/lib/SecurityLibraries.gmk
        VERSIONINFO_RESOURCE := $(JDK_TOPDIR)/src/windows/resource/version.rc, \
        RC_FLAGS := $(RC_FLAGS) \
            -D "JDK_FNAME=sunec.dll" \
-diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ECC_JNI.cpp
---- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Tue Jan 26 22:26:26 2016 +0000
-+++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Jan 27 02:54:06 2016 +0000
+diff -r 984a4af2ed4e src/share/native/sun/security/ec/ECC_JNI.cpp
+--- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp
++++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp
 @@ -24,7 +24,7 @@
   */
  
@@ -76,8 +77,8 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ECC_JNI.cp
   */
  JNIEXPORT jbyteArray
  JNICALL Java_sun_security_ec_ECDSASignature_signDigest
--  (JNIEnv *env, jclass clazz, jbyteArray digest, jbyteArray privateKey, jbyteArray encodedParams, jbyteArray seed)
-+  (JNIEnv *env, jclass UNUSED(clazz), jbyteArray digest, jbyteArray privateKey, jbyteArray encodedParams, jbyteArray seed)
+-  (JNIEnv *env, jclass clazz, jbyteArray digest, jbyteArray privateKey, jbyteArray encodedParams, jbyteArray seed, jint timing)
++  (JNIEnv *env, jclass UNUSED(clazz), jbyteArray digest, jbyteArray privateKey, jbyteArray encodedParams, jbyteArray seed, jint timing)
  {
      jbyte* pDigestBuffer = NULL;
      jint jDigestLength = env->GetArrayLength(digest);
@@ -99,12 +100,12 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ECC_JNI.cp
  {
      jbyteArray jSecret = NULL;
      ECParams *ecparams = NULL;
-diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ecc_impl.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Wed Jan 27 02:54:06 2016 +0000
+diff -r 984a4af2ed4e src/share/native/sun/security/ec/ecc_impl.h
+--- /dev/null
++++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h
 @@ -0,0 +1,298 @@
 +/*
-+ * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 + * Use is subject to license terms.
 + *
 + * This library is free software; you can redistribute it and/or
@@ -139,7 +140,7 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ecc_impl.h
 + *   Dr Vipul Gupta <vipul.gupta@sun.com> and
 + *   Douglas Stebila <douglas@stebila.ca>, Sun Microsystems Laboratories
 + *
-+ * Last Modified Date from the Original Code: November 2013
++ * Last Modified Date from the Original Code: May 2017
 + *********************************************************************** */
 +
 +#ifndef _ECC_IMPL_H
@@ -373,7 +374,7 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ecc_impl.h
 +#ifdef SYSTEM_NSS
 +#define EC_DecodeParams(a,b,c) EC_DecodeParams(a,b)
 +#define EC_NewKey(a,b,c,d,e) EC_NewKeyFromSeed(a,b,c,d)
-+#define ECDSA_SignDigest(a,b,c,d,e,f) ECDSA_SignDigestWithSeed(a,b,c,d,e)
++#define ECDSA_SignDigest(a,b,c,d,e,f,g) ECDSA_SignDigestWithSeed(a,b,c,d,e)
 +#define ECDSA_VerifyDigest(a,b,c,d) ECDSA_VerifyDigest(a,b,c)
 +#define ECDH_Derive(a,b,c,d,e,f) ECDH_Derive(a,b,c,d,e)
 +#else
@@ -389,7 +390,7 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ecc_impl.h
 +    const unsigned char* random, int randomlen, int);
 +/* This function has been modified to accept an array of random bytes */
 +extern SECStatus ECDSA_SignDigest(ECPrivateKey *, SECItem *, const SECItem *,
-+    const unsigned char* random, int randomlen, int);
++    const unsigned char* random, int randomlen, int, int timing);
 +extern SECStatus ECDSA_VerifyDigest(ECPublicKey *, const SECItem *,
 +    const SECItem *, int);
 +extern SECStatus ECDH_Derive(SECItem *, ECParams *, SECItem *, boolean_t,
@@ -401,12 +402,12 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/ecc_impl.h
 +#endif
 +
 +#endif /* _ECC_IMPL_H */
-diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/impl/ecc_impl.h
---- openjdk/jdk/src/share/native/sun/security/ec/impl/ecc_impl.h	Tue Jan 26 22:26:26 2016 +0000
-+++ /dev/null	Thu Jan 01 00:00:00 1970 +0000
+diff -r 984a4af2ed4e src/share/native/sun/security/ec/impl/ecc_impl.h
+--- openjdk/jdk/src/share/native/sun/security/ec/impl/ecc_impl.h
++++ /dev/null
 @@ -1,271 +0,0 @@
 -/*
-- * Copyright (c) 2007, 2013, Oracle and/or its affiliates. All rights reserved.
+- * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
 - * Use is subject to license terms.
 - *
 - * This library is free software; you can redistribute it and/or
@@ -441,7 +442,7 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/impl/ecc_i
 - *   Dr Vipul Gupta <vipul.gupta@sun.com> and
 - *   Douglas Stebila <douglas@stebila.ca>, Sun Microsystems Laboratories
 - *
-- * Last Modified Date from the Original Code: November 2013
+- * Last Modified Date from the Original Code: May 2017
 - *********************************************************************** */
 -
 -#ifndef _ECC_IMPL_H
@@ -665,7 +666,7 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/impl/ecc_i
 -    const unsigned char* random, int randomlen, int);
 -/* This function has been modified to accept an array of random bytes */
 -extern SECStatus ECDSA_SignDigest(ECPrivateKey *, SECItem *, const SECItem *,
--    const unsigned char* random, int randomlen, int);
+-    const unsigned char* random, int randomlen, int, int timing);
 -extern SECStatus ECDSA_VerifyDigest(ECPublicKey *, const SECItem *,
 -    const SECItem *, int);
 -extern SECStatus ECDH_Derive(SECItem *, ECParams *, SECItem *, boolean_t,
@@ -676,9 +677,9 @@ diff -r afd392dfaed5 -r 48c15869ecd5 src/share/native/sun/security/ec/impl/ecc_i
 -#endif
 -
 -#endif /* _ECC_IMPL_H */
-diff -r afd392dfaed5 -r 48c15869ecd5 src/solaris/javavm/export/jni_md.h
---- openjdk/jdk/src/solaris/javavm/export/jni_md.h	Tue Jan 26 22:26:26 2016 +0000
-+++ openjdk/jdk/src/solaris/javavm/export/jni_md.h	Wed Jan 27 02:54:06 2016 +0000
+diff -r 984a4af2ed4e src/solaris/javavm/export/jni_md.h
+--- openjdk/jdk/src/solaris/javavm/export/jni_md.h
++++ openjdk/jdk/src/solaris/javavm/export/jni_md.h
 @@ -36,6 +36,11 @@
    #define JNIEXPORT
    #define JNIIMPORT

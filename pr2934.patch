@@ -6,10 +6,11 @@
 # Parent  3fa42705acab6d69b6141f47ebba4f85739a338c
 PR2934: SunEC provider throwing KeyException with current NSS
 Summary: Initialise the random number generator and feed the seed to it.
+Updated 2017/07/04 to accomodate 8175110
 
-diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ECC_JNI.cpp
---- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Wed Apr 20 03:39:11 2016 +0100
-+++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp	Fri Apr 22 19:17:13 2016 +0100
+diff -r 8aed1e903a4c src/share/native/sun/security/ec/ECC_JNI.cpp
+--- openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp
++++ openjdk/jdk/src/share/native/sun/security/ec/ECC_JNI.cpp
 @@ -134,8 +134,17 @@
      env->GetByteArrayRegion(seed, 0, jSeedLength, pSeedBuffer);
  
@@ -42,7 +43,7 @@ diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ECC_JNI.cp
 +	!= SECSuccess) {
 +#else
      if (ECDSA_SignDigest(&privKey, &signature_item, &digest_item,
-         (unsigned char *) pSeedBuffer, jSeedLength, 0) != SECSuccess) {
+         (unsigned char *) pSeedBuffer, jSeedLength, 0, timing) != SECSuccess) {
 +#endif
          ThrowException(env, KEY_EXCEPTION);
          goto cleanup;
@@ -65,9 +66,9 @@ diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ECC_JNI.cp
      if (SECOID_Shutdown() != SECSuccess) {
  	ThrowException(env, INTERNAL_ERROR);
      }
-diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ecc_impl.h
---- openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Wed Apr 20 03:39:11 2016 +0100
-+++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h	Fri Apr 22 19:17:13 2016 +0100
+diff -r 8aed1e903a4c src/share/native/sun/security/ec/ecc_impl.h
+--- openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h
++++ openjdk/jdk/src/share/native/sun/security/ec/ecc_impl.h
 @@ -254,8 +254,10 @@
   This function is no longer required because the random bytes are now
   supplied by the caller. Force a failure.
@@ -84,7 +85,7 @@ diff -r 3fa42705acab -r dab76de2f91c src/share/native/sun/security/ec/ecc_impl.h
  #ifdef SYSTEM_NSS
  #define EC_DecodeParams(a,b,c) EC_DecodeParams(a,b)
 -#define EC_NewKey(a,b,c,d,e) EC_NewKey(a,b)
--#define ECDSA_SignDigest(a,b,c,d,e,f) ECDSA_SignDigest(a,b,c)
+-#define ECDSA_SignDigest(a,b,c,d,e,f,g) ECDSA_SignDigest(a,b,c)
  #define ECDSA_VerifyDigest(a,b,c,d) ECDSA_VerifyDigest(a,b,c)
  #define ECDH_Derive(a,b,c,d,e,f) ECDH_Derive(a,b,c,d,e)
  #else
