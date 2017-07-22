@@ -234,7 +234,6 @@
 %global jredir()        %{expand:%{sdkdir %%1}/jre}
 %global sdkbindir()     %{expand:%{_jvmdir}/%{sdkdir %%1}/bin}
 %global jrebindir()     %{expand:%{_jvmdir}/%{jredir %%1}/bin}
-%global jvmjardir()     %{expand:%{_jvmjardir}/%{uniquesuffix %%1}}
 
 %global rpm_state_dir %{_localstatedir}/lib/rpm-state/
 
@@ -280,7 +279,6 @@ ext=.gz
 alternatives \\
   --install %{_bindir}/java java %{jrebindir %%1}/java $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir %%1} \\
-  --slave %{_jvmjardir}/jre jre_exports %{_jvmjardir}/%{jrelnk %%1} \\
   --slave %{_bindir}/jjs jjs %{jrebindir %%1}/jjs \\
   --slave %{_bindir}/keytool keytool %{jrebindir %%1}/keytool \\
   --slave %{_bindir}/orbd orbd %{jrebindir %%1}/orbd \\
@@ -315,15 +313,11 @@ alternatives \\
   %{_mandir}/man1/unpack200-%{uniquesuffix %%1}.1$ext
 
 for X in %{origin} %{javaver} ; do
-  alternatives \\
-    --install %{_jvmdir}/jre-"$X" \\
-    jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY  --family %{name}.%{_arch} \\
-    --slave %{_jvmjardir}/jre-"$X" \\
-    jre_"$X"_exports %{_jvmdir}/%{jredir %%1}
+  alternatives --install %{_jvmdir}/jre-"$X" jre_"$X" %{_jvmdir}/%{jredir %%1} $PRIORITY --family %{name}.%{_arch}
 done
 
-update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name}.%{_arch} \\
---slave %{_jvmjardir}/jre-%{javaver}       jre_%{javaver}_%{origin}_exports      %{jvmjardir %%1}
+update-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk %%1} $PRIORITY  --family %{name}.%{_arch}
+
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
@@ -371,7 +365,6 @@ ext=.gz
 alternatives \\
   --install %{_bindir}/javac javac %{sdkbindir %%1}/javac $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir %%1} \\
-  --slave %{_jvmjardir}/java java_sdk_exports %{_jvmjardir}/%{sdkdir %%1} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir %%1}/appletviewer \\
   --slave %{_bindir}/extcheck extcheck %{sdkbindir %%1}/extcheck \\
   --slave %{_bindir}/idlj idlj %{sdkbindir %%1}/idlj \\
@@ -461,14 +454,10 @@ alternatives \\
 
 for X in %{origin} %{javaver} ; do
   alternatives \\
-    --install %{_jvmdir}/java-"$X" \\
-    java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name}.%{_arch} \\
-    --slave %{_jvmjardir}/java-"$X" \\
-    java_sdk_"$X"_exports %{_jvmjardir}/%{sdkdir %%1}
+    --install %{_jvmdir}/java-"$X" java_sdk_"$X" %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name}.%{_arch}
 done
 
 update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir %%1} $PRIORITY  --family %{name}.%{_arch} \\
---slave %{_jvmjardir}/java-%{javaver}-%{origin}       java_sdk_%{javaver}_%{origin}_exports      %{_jvmjardir}/%{sdkdir %%1}
 
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
@@ -544,9 +533,7 @@ exit 0
 %license %{buildoutputdir %%1}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir %%1}
 %{_jvmdir}/%{jrelnk %%1}
-%{_jvmjardir}/%{jrelnk %%1}
 %{_jvmprivdir}/*
-%{jvmjardir %%1}
 %dir %{_jvmdir}/%{jredir %%1}/lib/security
 %{_jvmdir}/%{jredir %%1}/lib/security/cacerts
 %config(noreplace) %{_jvmdir}/%{jredir %%1}/lib/security/US_export_policy.jar
@@ -588,7 +575,6 @@ exit 0
 %{_jvmdir}/%{sdkdir %%1}/bin/*
 %{_jvmdir}/%{sdkdir %%1}/include/*
 %{_jvmdir}/%{sdkdir %%1}/lib/*
-%{_jvmjardir}/%{sdkdir %%1}
 %{_datadir}/applications/*jconsole%1.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/extcheck-%{uniquesuffix %%1}.1*
@@ -1667,40 +1653,12 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir $suffix}/lib/%{archinstall}/client/
     ln -sf $RELATIVE/cacerts .
   popd
 
-  # Install extension symlinks.
-  install -d -m 755 $RPM_BUILD_ROOT%{jvmjardir $suffix}
-  pushd $RPM_BUILD_ROOT%{jvmjardir $suffix}
-    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{jredir $suffix}/lib %{jvmjardir $suffix})
-    ln -sf $RELATIVE/jsse.jar jsse-%{version}.jar
-    ln -sf $RELATIVE/jce.jar jce-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jndi-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jndi-ldap-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jndi-cos-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jndi-rmi-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jaas-%{version}.jar
-    ln -sf $RELATIVE/rt.jar jdbc-stdext-%{version}.jar
-    ln -sf jdbc-stdext-%{version}.jar jdbc-stdext-3.0.jar
-    ln -sf $RELATIVE/rt.jar sasl-%{version}.jar
-    for jar in *-%{version}.jar
-    do
-      if [ x%{version} != x%{javaver} ]
-      then
-        ln -sf $jar $(echo $jar | sed "s|-%{version}.jar|-%{javaver}.jar|g")
-      fi
-      ln -sf $jar $(echo $jar | sed "s|-%{version}.jar|.jar|g")
-    done
-  popd
-
   # Install JCE policy symlinks.
   install -d -m 755 $RPM_BUILD_ROOT%{_jvmprivdir}/%{uniquesuffix $suffix}/jce/vanilla
 
   # Install versioned symlinks.
   pushd $RPM_BUILD_ROOT%{_jvmdir}
     ln -sf %{jredir $suffix} %{jrelnk $suffix}
-  popd
-
-  pushd $RPM_BUILD_ROOT%{_jvmjardir}
-    ln -sf %{sdkdir $suffix} %{jrelnk $suffix}
   popd
 
   # Remove javaws man page
@@ -2070,6 +2028,7 @@ require "copy_jdk_configs.lua"
 * Fri Jul 21 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.141-1.b16
 - updated to security u141.b16
 - sync patches with rhel7
+- removed no longer defined jvmjardir
 
 * Sat Jun 17 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-7.b12
 - adapted to no longer noarch openjfx-devel
