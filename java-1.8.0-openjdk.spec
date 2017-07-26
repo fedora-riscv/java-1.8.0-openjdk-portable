@@ -800,7 +800,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -957,6 +957,7 @@ Patch554: 8175887-pr3415.patch
 Patch201: system-libjpeg.patch
 # custom securities
 Patch207: PR3183.patch
+Patch208: aarch64BuildFailure.patch
 
 # Local fixes
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
@@ -1306,6 +1307,7 @@ sh %{SOURCE12}
 %patch205
 %patch206
 %patch207
+%patch208
 
 %patch1
 %patch3
@@ -2025,6 +2027,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jul 21 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.141-3.b16
+- added patch208, aarch64BuildFailure.patch to fix condition found during jdk9 build
+
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.141-2.b16
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
 
