@@ -2027,7 +2027,7 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Fri Jul 21 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.141-3.b16
+* Wed Jul 26 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.141-3.b16
 - added patch208, aarch64BuildFailure.patch to fix condition found during jdk9 build
 
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.141-2.b16
