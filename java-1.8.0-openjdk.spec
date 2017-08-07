@@ -572,8 +572,10 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir %%1}/bin
 %dir %{_jvmdir}/%{sdkdir %%1}/include
 %dir %{_jvmdir}/%{sdkdir %%1}/lib
+#fixme!!! contaisn fx files
 %{_jvmdir}/%{sdkdir %%1}/bin/*
 %{_jvmdir}/%{sdkdir %%1}/include/*
+#fixme!!! contaisn fx files
 %{_jvmdir}/%{sdkdir %%1}/lib/*
 %{_datadir}/applications/*jconsole%1.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
