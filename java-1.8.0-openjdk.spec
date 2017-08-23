@@ -204,7 +204,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u141-b16
+%global revision        aarch64-jdk8u144-b01
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -572,9 +572,58 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir %%1}/bin
 %dir %{_jvmdir}/%{sdkdir %%1}/include
 %dir %{_jvmdir}/%{sdkdir %%1}/lib
-%{_jvmdir}/%{sdkdir %%1}/bin/*
+%{_jvmdir}/%{sdkdir %%1}/bin/appletviewer
+%{_jvmdir}/%{sdkdir %%1}/bin/extcheck
+%{_jvmdir}/%{sdkdir %%1}/bin/idlj
+%{_jvmdir}/%{sdkdir %%1}/bin/jar
+%{_jvmdir}/%{sdkdir %%1}/bin/jarsigner
+%{_jvmdir}/%{sdkdir %%1}/bin/java
+%{_jvmdir}/%{sdkdir %%1}/bin/javac
+%{_jvmdir}/%{sdkdir %%1}/bin/javadoc
+%{_jvmdir}/%{sdkdir %%1}/bin/javah
+%{_jvmdir}/%{sdkdir %%1}/bin/javap
+%{_jvmdir}/%{sdkdir %%1}/bin/java-rmi.cgi
+%{_jvmdir}/%{sdkdir %%1}/bin/jcmd
+%{_jvmdir}/%{sdkdir %%1}/bin/jconsole
+%{_jvmdir}/%{sdkdir %%1}/bin/jdb
+%{_jvmdir}/%{sdkdir %%1}/bin/jdeps
+%{_jvmdir}/%{sdkdir %%1}/bin/jhat
+%{_jvmdir}/%{sdkdir %%1}/bin/jinfo
+%{_jvmdir}/%{sdkdir %%1}/bin/jjs
+%{_jvmdir}/%{sdkdir %%1}/bin/jmap
+%{_jvmdir}/%{sdkdir %%1}/bin/jps
+%{_jvmdir}/%{sdkdir %%1}/bin/jrunscript
+%{_jvmdir}/%{sdkdir %%1}/bin/jsadebugd
+%{_jvmdir}/%{sdkdir %%1}/bin/jstack
+%{_jvmdir}/%{sdkdir %%1}/bin/jstat
+%{_jvmdir}/%{sdkdir %%1}/bin/jstatd
+%{_jvmdir}/%{sdkdir %%1}/bin/keytool
+%{_jvmdir}/%{sdkdir %%1}/bin/native2ascii
+%{_jvmdir}/%{sdkdir %%1}/bin/orbd
+%{_jvmdir}/%{sdkdir %%1}/bin/pack200
+%{_jvmdir}/%{sdkdir %%1}/bin/policytool
+%{_jvmdir}/%{sdkdir %%1}/bin/rmic
+%{_jvmdir}/%{sdkdir %%1}/bin/rmid
+%{_jvmdir}/%{sdkdir %%1}/bin/rmiregistry
+%{_jvmdir}/%{sdkdir %%1}/bin/schemagen
+%{_jvmdir}/%{sdkdir %%1}/bin/serialver
+%{_jvmdir}/%{sdkdir %%1}/bin/servertool
+%{_jvmdir}/%{sdkdir %%1}/bin/tnameserv
+%{_jvmdir}/%{sdkdir %%1}/bin/unpack200
+%{_jvmdir}/%{sdkdir %%1}/bin/wsgen
+%{_jvmdir}/%{sdkdir %%1}/bin/wsimport
+%{_jvmdir}/%{sdkdir %%1}/bin/xjc
 %{_jvmdir}/%{sdkdir %%1}/include/*
-%{_jvmdir}/%{sdkdir %%1}/lib/*
+%{_jvmdir}/%{sdkdir %%1}/lib/amd64
+%{_jvmdir}/%{sdkdir %%1}/lib/ct.sym
+%{_jvmdir}/%{sdkdir %%1}/lib/ir.idl
+%{_jvmdir}/%{sdkdir %%1}/lib/jconsole.jar
+%{_jvmdir}/%{sdkdir %%1}/lib/orb.idl
+%{_jvmdir}/%{sdkdir %%1}/lib/sa-jdi.jar
+%{_jvmdir}/%{sdkdir %%1}/lib/dt.jar
+%{_jvmdir}/%{sdkdir %%1}/lib/jexec
+%{_jvmdir}/%{sdkdir %%1}/lib/tools.jar
+%{_jvmjardir}/%{sdkdir %%1}
 %{_datadir}/applications/*jconsole%1.desktop
 %{_mandir}/man1/appletviewer-%{uniquesuffix %%1}.1*
 %{_mandir}/man1/extcheck-%{uniquesuffix %%1}.1*
@@ -790,7 +839,7 @@ Requires: java-atk-wrapper%{?_isa}
 Requires: %{name}%1%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%1%{?_isa} = %{epoch}:%{version}-%{release}
 
-Provides: java-%{javaver}-%{origin}-accessiblity = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{release}
 
 Obsoletes: java-1.7.0-openjdk-accessibility%1
 }
@@ -800,7 +849,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%1
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -826,7 +875,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u141-b16.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u144-b01.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -951,6 +1000,10 @@ Patch550: 8175813-pr3394-rh1448880.patch
 Patch552: 8179084-pr3409-rh1455694.patch
 # 8175887, PR3415: C1 value numbering handling of Unsafe.get*Volatile is incorrect
 Patch554: 8175887-pr3415.patch
+
+# Patches upstream and appearing in 8u161
+# 8164293, PR3412, RH1459641: HotSpot leaking memory in long-running requests
+Patch555: 8164293-pr3412-rh1459641.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1354,7 +1407,7 @@ sh %{SOURCE12}
 %patch551
 %patch552
 %patch553
-%patch554
+%patch555
 
 # RPM-only fixes
 %patch525
@@ -1364,6 +1417,12 @@ sh %{SOURCE12}
 # RHEL-only patches
 %if 0%{?rhel}
 %patch534
+%endif
+
+# 8175887 was added to the Shenandoah HotSpot ahead of time
+%if %{use_shenandoah_hotspot}
+%else
+%patch554
 %endif
 
 %patch1000
@@ -2027,6 +2086,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Aug 23 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.144-1.b01
+- Update to aarch64-jdk8u144-b01 and aarch64-shenandoah-jdk8u144-b01.
+- Exclude 8175887 from Shenandoah builds as it has been included in that repo.
+- Added 8164293-pr3412-rh1459641.patch backport from 8u development tree
+- get rid of bin/* and lib/*, fixed rhbz1480777
+
 * Wed Aug 02 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.141-5.b16
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
 
