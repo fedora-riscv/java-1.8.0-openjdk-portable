@@ -604,7 +604,9 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnet.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnio.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnpt.so
+%ifarch x86_64  %{ix86} 
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsaproc.so
+%endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsctp.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsunec.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libunpack.so
@@ -685,12 +687,14 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/wsimport
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/xjc
 %{_jvmdir}/%{sdkdir -- %{?1}}/include/*
-%{_jvmdir}/%{sdkdir -- %{?1}}/lib/amd64
+%{_jvmdir}/%{sdkdir -- %{?1}}/lib/%{archinstall}
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ct.sym
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ir.idl
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/jconsole.jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/orb.idl
+%ifnarch  %{aarch64}
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/sa-jdi.jar
+%endif
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/dt.jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/jexec
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/tools.jar
