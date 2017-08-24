@@ -692,7 +692,7 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ir.idl
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/jconsole.jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/orb.idl
-%ifnarch  %{aarch64}
+%ifarch x86_64  %{ix86}
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/sa-jdi.jar
 %endif
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/dt.jar
