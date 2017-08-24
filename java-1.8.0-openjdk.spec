@@ -919,7 +919,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 }
 
 # Prevent brp-java-repack-jars from being run.
-%define __jar_repack 0
+%global __jar_repack 0
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
