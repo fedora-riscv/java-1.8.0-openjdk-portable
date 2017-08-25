@@ -580,6 +580,7 @@ exit 0
 %endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/jli
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/jli/libjli.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/jvm.cfg
@@ -639,6 +640,7 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/cmm/*
 %{_jvmdir}/%{jredir -- %{?1}}/lib/ext/*
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images/cursors
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/management
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/cmm
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/ext
