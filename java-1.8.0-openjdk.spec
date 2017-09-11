@@ -933,7 +933,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1138,7 +1138,7 @@ BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
 # Use OpenJDK 7 where available (on RHEL) to avoid
 # having to use the rhel-7.x-java-unsafe-candidate hack
-%if 0%{?rhel}
+%if 0%{?rhel} <= 7
 BuildRequires: java-1.7.0-openjdk-devel
 %else
 BuildRequires: java-1.8.0-openjdk-devel
@@ -1499,7 +1499,7 @@ sh %{SOURCE12}
 %patch539
 
 # RHEL-only patches
-%if 0%{?rhel}
+%if 0%{?rhel} <= 7
 %patch534
 %endif
 
@@ -2126,6 +2126,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Sep 08 2017 Troy Dawson <tdawson@redhat.com> - 1:1.8.0.144-6.b01
+- Cleanup spec file conditionals
+
 * Fri Aug 25 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.144-4.b01
 - added ownership of diretories which were oonly listing files
 
