@@ -1138,7 +1138,7 @@ BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
 # Use OpenJDK 7 where available (on RHEL) to avoid
 # having to use the rhel-7.x-java-unsafe-candidate hack
-%if 0%{?rhel} <= 7
+%if ! 0%{?fedora} && 0%{?rhel} <= 7
 BuildRequires: java-1.7.0-openjdk-devel
 %else
 BuildRequires: java-1.8.0-openjdk-devel
@@ -1499,7 +1499,7 @@ sh %{SOURCE12}
 %patch539
 
 # RHEL-only patches
-%if 0%{?rhel} <= 7
+%if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch534
 %endif
 
