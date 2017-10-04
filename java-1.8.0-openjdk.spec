@@ -933,7 +933,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -959,7 +959,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u144-b01.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u144-b02-shenandoah-merge-2017-10-02.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1105,6 +1105,8 @@ Patch533: rh1367357.patch
 Patch534: always_assumemp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 Patch539: pr2888.patch
+# test patch for rhbz#1484079
+Patch540: bug1484079.patch
 
 # Non-OpenJDK fixes
 Patch1000: enableCommentedOutSystemNss.patch
@@ -1497,6 +1499,7 @@ sh %{SOURCE12}
 %patch525
 %patch533
 %patch539
+%patch540
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -2126,6 +2129,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Oct 04 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.144-7.b01
+- updated to aarch64-shenandoah-jdk8u144-b02-shenandoah-merge-2017-10-02 (from aarch64-port/jdk8u-shenandoah) of hotspot
+- used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u144-b02-shenandoah-merge-2017-10-02.tar.xz as new sources for hotspot
+
+* Fri Sep 15 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.144-6.b01
+- added patch540, bug1484079.patch
+
 * Fri Sep 08 2017 Troy Dawson <tdawson@redhat.com> - 1:1.8.0.144-6.b01
 - Cleanup spec file conditionals
 
