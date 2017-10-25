@@ -7,10 +7,10 @@
 8148351, PR2842: Only display resolved symlink for compiler, do not change path
 Reviewed-by: erikj
 
-diff -r 5096b6468914 common/autoconf/toolchain.m4
---- openjdk/./common/autoconf/toolchain.m4	Tue Jan 14 10:25:22 2014 -0800
-+++ openjdk/./common/autoconf/toolchain.m4	Fri Feb 05 20:02:15 2016 +0000
-@@ -147,38 +147,22 @@
+diff --git a/common/autoconf/toolchain.m4 b/common/autoconf/toolchain.m4
+--- openjdk///common/autoconf/toolchain.m4
++++ openjdk///common/autoconf/toolchain.m4
+@@ -198,38 +198,22 @@
    fi
    BASIC_FIXUP_EXECUTABLE($1)
    TEST_COMPILER="[$]$1"
@@ -62,4 +62,4 @@ diff -r 5096b6468914 common/autoconf/toolchain.m4
 +    fi
    fi
  
-   TOOLCHAIN_CHECK_COMPILER_VERSION([$1], [$COMPILER_NAME])
+   TOOLCHAIN_EXTRACT_COMPILER_VERSION([$1], [$COMPILER_NAME])

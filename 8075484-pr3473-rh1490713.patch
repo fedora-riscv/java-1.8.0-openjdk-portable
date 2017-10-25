@@ -1,0 +1,278 @@
+# HG changeset patch
+# User vtewari
+# Date 1508189111 -3600
+#      Mon Oct 16 22:25:11 2017 +0100
+# Node ID bcaa659478ccac2b2ad1a817e03cab777949775a
+# Parent  161fbe4c53ff12328565487e69a608e15f39bd49
+8075484, PR3473, RH1490713: SocketInputStream.socketRead0 can hang even with soTimeout set
+Reviewed-by: chegar, dsamersoff, msheppar, clanger
+
+diff --git a/src/aix/native/java/net/aix_close.c b/src/aix/native/java/net/aix_close.c
+--- openjdk/jdk/src/aix/native/java/net/aix_close.c
++++ openjdk/jdk/src/aix/native/java/net/aix_close.c
+@@ -1,5 +1,6 @@
+ /*
+- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2016, SAP SE and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -328,6 +329,10 @@
+     BLOCKING_IO_RETURN_INT( s, recv(s, buf, len, 0) );
+ }
+ 
++int NET_NonBlockingRead(int s, void* buf, size_t len) {
++    BLOCKING_IO_RETURN_INT(s, recv(s, buf, len, MSG_NONBLOCK));
++}
++
+ int NET_ReadV(int s, const struct iovec * vector, int count) {
+     BLOCKING_IO_RETURN_INT( s, readv(s, vector, count) );
+ }
+@@ -429,8 +434,8 @@
+  * Auto restarts with adjusted timeout if interrupted by
+  * signal other than our wakeup signal.
+  */
+-int NET_Timeout(int s, long timeout) {
+-    long prevtime = 0, newtime;
++int NET_Timeout0(int s, long timeout, long currentTime) {
++    long prevtime = currentTime, newtime;
+     struct timeval t;
+     fdEntry_t *fdEntry = getFdEntry(s);
+ 
+@@ -442,14 +447,6 @@
+         return -1;
+     }
+ 
+-    /*
+-     * Pick up current time as may need to adjust timeout
+-     */
+-    if (timeout > 0) {
+-        gettimeofday(&t, NULL);
+-        prevtime = t.tv_sec * 1000  +  t.tv_usec / 1000;
+-    }
+-
+     for(;;) {
+         struct pollfd pfd;
+         int rv;
+diff --git a/src/solaris/native/java/net/SocketInputStream.c b/src/solaris/native/java/net/SocketInputStream.c
+--- openjdk/jdk/src/solaris/native/java/net/SocketInputStream.c
++++ openjdk/jdk/src/solaris/native/java/net/SocketInputStream.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -52,6 +52,42 @@
+     IO_fd_fdID = NET_GetFileDescriptorID(env);
+ }
+ 
++#if !defined(__solaris__)
++static int NET_ReadWithTimeout(JNIEnv *env, int fd, char *bufP, int len, long timeout) {
++    int result = 0;
++    long prevtime = NET_GetCurrentTime(), newtime;
++    while (timeout > 0) {
++        result = NET_TimeoutWithCurrentTime(fd, timeout, prevtime);
++        if (result <= 0) {
++            if (result == 0) {
++                JNU_ThrowByName(env, "java/net/SocketTimeoutException", "Read timed out");
++            } else if (result == -1) {
++                if (errno == EBADF) {
++                    JNU_ThrowByName(env, "java/net/SocketException", "Socket closed");
++                } else if (errno == ENOMEM) {
++                    JNU_ThrowOutOfMemoryError(env, "NET_Timeout native heap allocation failed");
++                } else {
++                    JNU_ThrowByNameWithMessageAndLastError
++                            (env, "java/net/SocketException", "select/poll failed");
++                }
++            }
++            return -1;
++        }
++        result = NET_NonBlockingRead(fd, bufP, len);
++        if (result == -1 && ((errno == EAGAIN) || (errno == EWOULDBLOCK))) {
++            newtime = NET_GetCurrentTime();
++            timeout -= newtime - prevtime;
++            if (timeout > 0) {
++                prevtime = newtime;
++            }
++        } else {
++            break;
++        }
++    }
++    return result;
++}
++#endif
++
+ /*
+  * Class:     java_net_SocketInputStream
+  * Method:    socketRead0
+@@ -99,6 +135,7 @@
+         bufP = BUF;
+     }
+ 
++#if defined(__solaris__)
+     if (timeout) {
+         nread = NET_Timeout(fd, timeout);
+         if (nread <= 0) {
+@@ -126,7 +163,19 @@
+     }
+ 
+     nread = NET_Read(fd, bufP, len);
+-
++#else
++    if (timeout) {
++        nread = NET_ReadWithTimeout(env, fd, bufP, len, timeout);
++        if ((*env)->ExceptionCheck(env)) {
++            if (bufP != BUF) {
++                free(bufP);
++            }
++            return nread;
++        }
++    } else {
++        nread = NET_Read(fd, bufP, len);
++    }
++#endif
+     if (nread <= 0) {
+         if (nread < 0) {
+ 
+diff --git a/src/solaris/native/java/net/bsd_close.c b/src/solaris/native/java/net/bsd_close.c
+--- openjdk/jdk/src/solaris/native/java/net/bsd_close.c
++++ openjdk/jdk/src/solaris/native/java/net/bsd_close.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -292,6 +292,10 @@
+     BLOCKING_IO_RETURN_INT( s, recv(s, buf, len, 0) );
+ }
+ 
++int NET_NonBlockingRead(int s, void* buf, size_t len) {
++    BLOCKING_IO_RETURN_INT( s, recv(s, buf, len, MSG_DONTWAIT));
++}
++
+ int NET_ReadV(int s, const struct iovec * vector, int count) {
+     BLOCKING_IO_RETURN_INT( s, readv(s, vector, count) );
+ }
+@@ -344,8 +348,8 @@
+  * Auto restarts with adjusted timeout if interrupted by
+  * signal other than our wakeup signal.
+  */
+-int NET_Timeout(int s, long timeout) {
+-    long prevtime = 0, newtime;
++int NET_Timeout0(int s, long timeout, long currentTime) {
++    long prevtime = currentTime, newtime;
+     struct timeval t, *tp = &t;
+     fd_set fds;
+     fd_set* fdsp = NULL;
+@@ -366,9 +370,6 @@
+      */
+     if (timeout > 0) {
+         /* Timed */
+-        struct timeval now;
+-        gettimeofday(&now, NULL);
+-        prevtime = now.tv_sec * 1000  +  now.tv_usec / 1000;
+         t.tv_sec = timeout / 1000;
+         t.tv_usec = (timeout % 1000) * 1000;
+     } else if (timeout < 0) {
+diff --git a/src/solaris/native/java/net/linux_close.c b/src/solaris/native/java/net/linux_close.c
+--- openjdk/jdk/src/solaris/native/java/net/linux_close.c
++++ openjdk/jdk/src/solaris/native/java/net/linux_close.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -273,6 +273,10 @@
+     BLOCKING_IO_RETURN_INT( s, recv(s, buf, len, 0) );
+ }
+ 
++int NET_NonBlockingRead(int s, void* buf, size_t len) {
++    BLOCKING_IO_RETURN_INT( s, recv(s, buf, len, MSG_DONTWAIT) );
++}
++
+ int NET_ReadV(int s, const struct iovec * vector, int count) {
+     BLOCKING_IO_RETURN_INT( s, readv(s, vector, count) );
+ }
+@@ -324,8 +328,8 @@
+  * Auto restarts with adjusted timeout if interrupted by
+  * signal other than our wakeup signal.
+  */
+-int NET_Timeout(int s, long timeout) {
+-    long prevtime = 0, newtime;
++int NET_Timeout0(int s, long timeout, long currentTime) {
++    long prevtime = currentTime, newtime;
+     struct timeval t;
+     fdEntry_t *fdEntry = getFdEntry(s);
+ 
+@@ -337,14 +341,6 @@
+         return -1;
+     }
+ 
+-    /*
+-     * Pick up current time as may need to adjust timeout
+-     */
+-    if (timeout > 0) {
+-        gettimeofday(&t, NULL);
+-        prevtime = t.tv_sec * 1000  +  t.tv_usec / 1000;
+-    }
+-
+     for(;;) {
+         struct pollfd pfd;
+         int rv;
+diff --git a/src/solaris/native/java/net/net_util_md.c b/src/solaris/native/java/net/net_util_md.c
+--- openjdk/jdk/src/solaris/native/java/net/net_util_md.c
++++ openjdk/jdk/src/solaris/native/java/net/net_util_md.c
+@@ -33,6 +33,7 @@
+ #include <netdb.h>
+ #include <stdlib.h>
+ #include <dlfcn.h>
++#include <sys/time.h>
+ 
+ #ifndef _ALLBSD_SOURCE
+ #include <values.h>
+@@ -1661,3 +1662,20 @@
+ 
+     return timeout;
+ }
++
++#if !defined(__solaris__)
++long NET_GetCurrentTime() {
++    struct timeval time;
++    gettimeofday(&time, NULL);
++    return (time.tv_sec * 1000 + time.tv_usec / 1000);
++}
++
++int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime) {
++    return NET_Timeout0(s, timeout, currentTime);
++}
++
++int NET_Timeout(int s, long timeout) {
++    long currentTime = (timeout > 0) ? NET_GetCurrentTime() : 0;
++    return NET_Timeout0(s, timeout, currentTime);
++}
++#endif
+diff --git a/src/solaris/native/java/net/net_util_md.h b/src/solaris/native/java/net/net_util_md.h
+--- openjdk/jdk/src/solaris/native/java/net/net_util_md.h
++++ openjdk/jdk/src/solaris/native/java/net/net_util_md.h
+@@ -47,9 +47,13 @@
+    close subroutine does not return until the select call returns.
+    ...
+ */
+-#if defined(__linux__) || defined(MACOSX) || defined (_AIX)
++#if !defined(__solaris__)
+ extern int NET_Timeout(int s, long timeout);
++extern int NET_Timeout0(int s, long timeout, long currentTime);
+ extern int NET_Read(int s, void* buf, size_t len);
++extern int NET_NonBlockingRead(int s, void* buf, size_t len);
++extern int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime);
++extern long NET_GetCurrentTime();
+ extern int NET_RecvFrom(int s, void *buf, int len, unsigned int flags,
+        struct sockaddr *from, int *fromlen);
+ extern int NET_ReadV(int s, const struct iovec * vector, int count);

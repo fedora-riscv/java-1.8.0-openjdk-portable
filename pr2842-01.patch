@@ -7,16 +7,16 @@
 8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
 Reviewed-by: erikj, ihse
 
-diff -r f0635543beb3 -r 842cc183c9f6 common/autoconf/toolchain.m4
---- openjdk/./common/autoconf/toolchain.m4	Wed Jan 27 02:50:07 2016 +0000
-+++ openjdk/./common/autoconf/toolchain.m4	Tue Jan 14 10:25:22 2014 -0800
-@@ -188,8 +188,8 @@
+diff --git a/common/autoconf/toolchain.m4 b/common/autoconf/toolchain.m4
+--- openjdk///common/autoconf/toolchain.m4
++++ openjdk///common/autoconf/toolchain.m4
+@@ -230,8 +230,8 @@
      $1="$PROPER_COMPILER_$1"
    else
      AC_MSG_RESULT([no, keeping $1])
 -    $1="$TEST_COMPILER"
    fi
 +
-   TOOLCHAIN_CHECK_COMPILER_VERSION([$1], [$COMPILER_NAME])
+   TOOLCHAIN_EXTRACT_COMPILER_VERSION([$1], [$COMPILER_NAME])
  ])
  

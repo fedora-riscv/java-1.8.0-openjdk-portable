@@ -3,7 +3,7 @@ diff --git a/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java b
 +++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHKeyPairGenerator.java
 @@ -1,5 +1,6 @@
  /*
-  * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+  * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2014 Red Hat Inc.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
@@ -26,12 +26,12 @@ diff --git a/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java
 +++ openjdk/jdk/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java
 @@ -1,5 +1,6 @@
  /*
-  * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+  * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
 + * Copyright (c) 2014 Red Hat Inc.
   * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
   *
   * This code is free software; you can redistribute it and/or modify it
-@@ -60,11 +61,11 @@
+@@ -61,11 +62,11 @@
  
      private static void checkKeySize(int keysize)
              throws InvalidParameterException {
@@ -48,7 +48,7 @@ diff --git a/src/share/classes/com/sun/crypto/provider/DHParameterGenerator.java
 diff --git a/src/share/classes/sun/security/pkcs11/P11KeyPairGenerator.java b/src/share/classes/sun/security/pkcs11/P11KeyPairGenerator.java
 --- openjdk/jdk/src/share/classes/sun/security/pkcs11/P11KeyPairGenerator.java
 +++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11KeyPairGenerator.java
-@@ -285,11 +285,11 @@
+@@ -292,11 +292,11 @@
                      // this restriction is in the spec for DSA
                      // since we currently use DSA parameters for DH as well,
                      // it also applies to DH if no parameters are specified
