@@ -533,6 +533,8 @@ exit 0
 
 %define files_jre_headless() %{expand:
 %defattr(-,root,root,-)
+%dir %{_sysconfdir}/.java/.systemPrefs
+%dir %{_sysconfdir}/.java
 %license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/ASSEMBLY_EXCEPTION
 %license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/LICENSE
 %license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
@@ -2154,6 +2156,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mond Nov 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
+- added ownership of etc dirs
+- sysconfdir/.java/.systemPrefs
+- sysconfdir/.java
+
 * Wed Oct 25 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
 - updated to aarch64-jdk8u151-b12 (from aarch64-port/jdk8u)
 - updated to aarch64-shenandoah-jdk8u151-b12 (from aarch64-port/jdk8u-shenandoah) of hotspot
