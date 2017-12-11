@@ -2156,7 +2156,7 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mond Nov 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
+* Mon Nov 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
 - added ownership of etc dirs
 - sysconfdir/.java/.systemPrefs
 - sysconfdir/.java
