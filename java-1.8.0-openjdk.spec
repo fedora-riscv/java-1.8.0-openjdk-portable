@@ -1075,10 +1075,6 @@ Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
 
-# Patches upstream and appearing in 8u152
-# 8175887, PR3415: C1 value numbering handling of Unsafe.get*Volatile is incorrect
-Patch554: 8175887-pr3415.patch
- 
 # Patches upstream and appearing in 8u162
 # 8181055, PR3394, RH1448880: PPC64: "mbind: Invalid argument" still seen after 8175813
 Patch551: 8181055-pr3394-rh1448880.patch
@@ -1509,12 +1505,6 @@ sh %{SOURCE12}
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch534
-%endif
-
-# 8175887 was added to the Shenandoah HotSpot ahead of time
-%if %{use_shenandoah_hotspot}
-%else
-%patch554
 %endif
 
 %patch1000
@@ -2142,6 +2132,7 @@ require "copy_jdk_configs.lua"
 - removed patch532 8162384-pr3122-rh1358661.patch
 - removed patch535 8153711-pr3313-rh1284948.patch
 - removed patch561 8075484-pr3473-rh1490713.patch
+- removed patch554 8175887-pr3415.patch
 
 * Mon Nov 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
 - added ownership of etc dirs
