@@ -963,7 +963,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u151-b12.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u161-b14.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1075,25 +1075,9 @@ Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
 
-# Patches upstream and appearing in 8u151
-# 8075484, PR3473, RH1490713: SocketInputStream.socketRead0 can hang even with soTimeout set
-Patch561: 8075484-pr3473-rh1490713.patch
-
 # Patches upstream and appearing in 8u152
-# 8153711, PR3313, RH1284948: [REDO] JDWP: Memory Leak: GlobalRefs never deleted when processing invokeMethod command
-Patch535: 8153711-pr3313-rh1284948.patch
-# 8162384, PR3122, RH1358661: Performance regression: bimorphic inlining may be bypassed by type speculation
-Patch532: 8162384-pr3122-rh1358661.patch
-# 8173941, PR3326: SA does not work if executable is DSO
-Patch547: 8173941-pr3326.patch
-# 8175813, PR3394, RH1448880: PPC64: "mbind: Invalid argument" when -XX:+UseNUMA is used
-Patch550: 8175813-pr3394-rh1448880.patch
 # 8175887, PR3415: C1 value numbering handling of Unsafe.get*Volatile is incorrect
 Patch554: 8175887-pr3415.patch
-
-# Patches upstream and appearing in 8u161
-# 8164293, PR3412, RH1459641: HotSpot leaking memory in long-running requests
-Patch555: 8164293-pr3412-rh1459641.patch
  
 # Patches upstream and appearing in 8u162
 # 8181055, PR3394, RH1448880: PPC64: "mbind: Invalid argument" still seen after 8175813
@@ -1507,16 +1491,10 @@ sh %{SOURCE12}
 %patch523
 %patch526
 %patch528
-%patch532
-%patch535
 %patch538
-%patch547
-%patch550
 %patch551
 %patch553
-%patch555
 %patch560
-%patch561
 
 # PPC64 updates
 %patch556
@@ -2156,7 +2134,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Wed Jan 24 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.161-0.b14
+* Wed Jan 24 2018 jvanek <jvanek@redhat.com> - 1:1.8.0.161-0.b14
+- updated to u161, rmeoved upstreamed patches
+- removed patch555 8164293-pr3412-rh1459641.patch
+- removed patch550 8175813-pr3394-rh1448880.patch
+- removed patch547 8173941-pr3326.patch
+- removed patch532 8162384-pr3122-rh1358661.patch
+- removed patch535 8153711-pr3313-rh1284948.patch
+- removed patch561 8075484-pr3473-rh1490713.patch
 
 * Mon Nov 13 2017 jvanek <jvanek@redhat.com> - 1:1.8.0.151-1.b12
 - added ownership of etc dirs
