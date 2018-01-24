@@ -99,6 +99,7 @@ if [ ! -d ${LCMS_SRC} ]; then
 fi
 # temporary change to move bundled LCMS
 if [ ! true ]; then
+rm -vf ${LCMS_SRC}/cmsalpha.c
 rm -vf ${LCMS_SRC}/cmscam02.c
 rm -vf ${LCMS_SRC}/cmscgats.c
 rm -vf ${LCMS_SRC}/cmscnvrt.c

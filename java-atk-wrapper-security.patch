@@ -1,9 +1,9 @@
 --- jdk8/jdk/src/share/lib/security/java.security-linux.orig
 +++ jdk8/jdk/src/share/lib/security/java.security-linux
-@@ -211,7 +211,9 @@
-                jdk.internal.,\
+@@ -223,7 +223,9 @@
                 jdk.nashorn.internal.,\
                 jdk.nashorn.tools.,\
+                jdk.xml.internal.,\
 -               com.sun.activation.registries.
 +               com.sun.activation.registries.,\
 +               org.GNOME.Accessibility.,\
@@ -11,10 +11,10 @@
  
  #
  # List of comma-separated packages that start with or equal this string
-@@ -258,7 +260,9 @@
-                    jdk.internal.,\
+@@ -273,7 +275,9 @@
                     jdk.nashorn.internal.,\
                     jdk.nashorn.tools.,\
+                    jdk.xml.internal.,\
 -                   com.sun.activation.registries.
 +                   com.sun.activation.registries.,\
 +                   org.GNOME.Accessibility.,\
@@ -22,4 +22,3 @@
  
  #
  # Determines whether this properties file can be appended to
-
