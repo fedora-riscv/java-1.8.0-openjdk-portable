@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 0.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1042,6 +1042,8 @@ Patch205: dont-add-unnecessary-debug-links.patch
 Patch206: hotspot-assembler-debuginfo.patch
 # 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
 Patch560: 8188030-pr3459-rh1484079.patch
+# 8196218, RH1538767: libfontmanager.so needs to link against headless awt library
+Patch561: rhbz_1538767_fix_linking.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -1491,6 +1493,9 @@ sh %{SOURCE12}
 %patch551
 %patch553
 %patch560
+pushd openjdk/jdk
+%patch561 -p1
+popd
 
 # PPC64 updates
 %patch556
@@ -2124,6 +2129,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 24 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-1.b14
+- Fix FTBFS due to link failure in libfontmanager.so
+- See RHBZ#1538767
+
 * Wed Jan 24 2018 jvanek <jvanek@redhat.com> - 1:1.8.0.161-0.b14
 - updated to u161, rmeoved upstreamed patches
 - removed patch555 8164293-pr3412-rh1459641.patch

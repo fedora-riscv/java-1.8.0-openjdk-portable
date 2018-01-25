@@ -1,0 +1,21 @@
+diff --git a/make/lib/Awt2dLibraries.gmk b/make/lib/Awt2dLibraries.gmk
+--- a/make/lib/Awt2dLibraries.gmk
++++ b/make/lib/Awt2dLibraries.gmk
+@@ -921,7 +921,7 @@
+     LDFLAGS := $(subst -Xlinker -z -Xlinker defs,,$(LDFLAGS_JDKLIB)) $(LDFLAGS_CXX_JDK) \
+         $(call SET_SHARED_LIBRARY_ORIGIN), \
+     LDFLAGS_SUFFIX := $(BUILD_LIBFONTMANAGER_FONTLIB), \
+-    LDFLAGS_SUFFIX_linux := -lawt $(LIBM) $(LIBCXX) -ljava -ljvm -lc, \
++    LDFLAGS_SUFFIX_linux := -lawt_headless -lawt $(LIBM) $(LIBCXX) -ljava -ljvm -lc, \
+     LDFLAGS_SUFFIX_solaris := -lawt -lawt_headless -lc $(LIBM) $(LIBCXX) -ljava -ljvm, \
+     LDFLAGS_SUFFIX_aix := -lawt -lawt_headless $(LIBM) $(LIBCXX) -ljava -ljvm,\
+     LDFLAGS_SUFFIX_macosx := -lawt $(LIBM) $(LIBCXX) -undefined dynamic_lookup \
+@@ -938,7 +938,7 @@
+ 
+ $(BUILD_LIBFONTMANAGER): $(BUILD_LIBAWT)
+ 
+-ifneq (, $(findstring $(OPENJDK_TARGET_OS), solaris aix))
++ifneq (, $(findstring $(OPENJDK_TARGET_OS), solaris aix linux))
+   $(BUILD_LIBFONTMANAGER): $(BUILD_LIBAWT_HEADLESS)
+ endif
+ 
