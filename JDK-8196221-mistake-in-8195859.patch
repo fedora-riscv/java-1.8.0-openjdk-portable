@@ -1,0 +1,22 @@
+# HG changeset patch
+# User adinn
+# Date 1516984701 0
+#      Fri Jan 26 16:38:21 2018 +0000
+# Node ID 2c35f60ad26425a6d1dd1071e8a5adde79154fe3
+# Parent  e2a7856edfbaccebd36bf02674e39b1a53867241
+8196221: AArch64: Mistake in committed patch for JDK-8195859
+Summary:  The wrong patch was committed for JDK-8195859
+Reviewed-by: duke
+
+diff --git a/src/cpu/aarch64/vm/macroAssembler_aarch64.cpp b/src/cpu/aarch64/vm/macroAssembler_aarch64.cpp
+--- a/src/cpu/aarch64/vm/macroAssembler_aarch64.cpp
++++ b/src/cpu/aarch64/vm/macroAssembler_aarch64.cpp
+@@ -1050,7 +1050,7 @@
+   } else {
+     vtable_offset_in_bytes += vtable_index.as_constant() * wordSize;
+     ldr(method_result,
+-        form_address(rscratch1, recv_klass, vtable_offset_in_bytes));
++        form_address(rscratch1, recv_klass, vtable_offset_in_bytes, 0));
+   }
+ }
+ 

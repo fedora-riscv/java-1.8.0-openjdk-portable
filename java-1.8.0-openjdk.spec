@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1090,6 +1090,19 @@ Patch557: 8168318-pr3466-rh1498320.patch
 Patch558: 8170328-pr3466-rh1498321.patch
 # 8181810, PR3466, RH1498319: PPC64: Leverage extrdi for bitfield extract
 Patch559: 8181810-pr3466-rh1498319.patch
+
+# Aarch64 build fixes after January 2018 CPU
+#
+# JDK-8195685 AArch64 cannot build with JDK-8174962 (already included in source tarball)
+# JDK-8196136 AArch64: Correct register use in patch for JDK-8195685
+# JDK-8195859 AArch64: vtableStubs gtest fails after 8174962
+# JDK-8196221 AArch64: Mistake in committed patch for JDK-8195859
+Patch570: JDK-8196136-correct-register-use-8195685.patch
+Patch571: JDK-8195859-vtableStubs-gtest-fails-after-8174962.patch
+Patch572: JDK-8196221-mistake-in-8195859.patch
+
+Patch573: rhbz_1540242.patch
+Patch574: rhbz_1540242_2.patch
 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1503,6 +1516,17 @@ popd
 %patch558
 %patch559
 
+pushd openjdk/hotspot
+# Aarch64 build fixes after January 2018 CPU
+%patch570 -p1
+%patch571 -p1
+%patch572 -p1
+
+# Zero/AArch64 fix for RHBZ#1540242
+%patch573 -p1
+%patch574 -p1
+popd
+
 # RPM-only fixes
 %patch525
 %patch539
@@ -1728,11 +1752,16 @@ do
 done
 
 # Make sure gdb can do a backtrace based on line numbers on libjvm.so
+# javaCalls.cpp:58 should map to:
+# http://hg.openjdk.java.net/jdk8u/jdk8u/hotspot/file/ff3b27e6bcc2/src/share/vm/runtime/javaCalls.cpp#l58 
+# Using line number 1 might cause build problems. See:
+# https://bugzilla.redhat.com/show_bug.cgi?id=1539664
+# https://bugzilla.redhat.com/show_bug.cgi?id=1538767
 gdb -q "$JAVA_HOME/bin/java" <<EOF | tee gdb.out
 handle SIGSEGV pass nostop noprint
 handle SIGILL pass nostop noprint
 set breakpoint pending on
-break javaCalls.cpp:1
+break javaCalls.cpp:58
 commands 1
 backtrace
 quit
@@ -2129,6 +2158,21 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 31 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-5.b14
+- Additional fix needed for FTBFS bug on aarch64.
+  Resolves RHBZ#1540242.
+
+* Wed Jan 31 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-4.b14
+- Add fix for FTBFS on aarch64 and armv7hl.
+  Resolves RHBZ#1540242.
+
+* Tue Jan 30 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-3.b14
+- Include Aarch64 build fixes post January 2018 CPU.
+
+* Mon Jan 29 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-2.b14
+- Work around ppc64le gdb backtrace problem in %check.
+  See RHBZ#1539664
+
 * Wed Jan 24 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-1.b14
 - Fix FTBFS due to link failure in libfontmanager.so
 - See RHBZ#1538767
