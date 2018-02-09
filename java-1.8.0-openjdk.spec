@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2158,6 +2158,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1:1.8.0.161-7.b14
+- Escape macros in %%changelog
+
 * Wed Feb 07 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.161-6.b14
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
@@ -2173,7 +2176,7 @@ require "copy_jdk_configs.lua"
 - Include Aarch64 build fixes post January 2018 CPU.
 
 * Mon Jan 29 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-2.b14
-- Work around ppc64le gdb backtrace problem in %check.
+- Work around ppc64le gdb backtrace problem in %%check.
   See RHBZ#1539664
 
 * Wed Jan 24 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.161-1.b14
@@ -2228,7 +2231,7 @@ require "copy_jdk_configs.lua"
 - Exclude 8175887 from Shenandoah builds as it has been included in that repo.
 - Added 8164293-pr3412-rh1459641.patch backport from 8u development tree
 - get rid of bin/* and lib/*, fixed rhbz1480777
-- adapted to rpm 4.14: all expanding macros changed to define, all %1 and %%1 replaced by %{?1}, all expandable macros parameter preffixed by --
+- adapted to rpm 4.14: all expanding macros changed to define, all %1 and %%1 replaced by %%{?1}, all expandable macros parameter preffixed by --
 - get rid of generated filelists all except javafx and demos
 
 * Wed Aug 02 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.141-5.b16
@@ -2599,7 +2602,7 @@ renamed: jdk8-archivedJavadoc.patch -> 8154313.patch, pr2991-rh1341258.patch -> 
 * Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-8.b17
 - used extracted lua scripts.
 - now depnding on copy-jdk-configs
-- config files persisting in pre instead of %pretrans
+- config files persisting in pre instead of %%pretrans
 
 * Tue Dec 08 2015 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.65-7.b17
 - changed way of generating the sources. As result:
