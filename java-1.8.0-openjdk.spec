@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1076,6 +1076,7 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
+Patch540: rhbz1548475-LDFLAGSusage.patch
  
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
@@ -1476,6 +1477,7 @@ sh %{SOURCE12}
 %patch526
 %patch528
 %patch538
+%patch540
 %patch560
 pushd openjdk/jdk
 %patch561 -p1
@@ -2113,6 +2115,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Mar 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-1.b12
+- Added  patch 540 rhbz1548475-LDFLAGSusage.patch to honor build flags fully
+
 * Wed Mar 21 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.162-1.b12
 - Update to aarch64-jdk8u162-b12 and aarch64-shenandoah-jdk8u162-b12.
 - Remove upstreamed patches for 8181055/PR3394/RH1448880,
