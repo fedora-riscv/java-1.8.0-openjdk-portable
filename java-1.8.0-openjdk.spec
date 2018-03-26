@@ -204,7 +204,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u161-b14
+%global revision        aarch64-jdk8u162-b12
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 9.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -963,7 +963,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u161-b14.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u162-b12.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1076,34 +1076,7 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
-
-# Patches upstream and appearing in 8u162
-# 8181055, PR3394, RH1448880: PPC64: "mbind: Invalid argument" still seen after 8175813
-Patch551: 8181055-pr3394-rh1448880.patch
-# 8181419, PR3413, RH1463144: Race in jdwp invoker handling may lead to crashes or invalid results
-Patch553: 8181419-pr3413-rh1463144.patch
-# 8145913, PR3466, RH1498309: PPC64: add Montgomery multiply intrinsic
-Patch556: 8145913-pr3466-rh1498309.patch
-# 8168318, PR3466, RH1498320: PPC64: Use cmpldi instead of li/cmpld
-Patch557: 8168318-pr3466-rh1498320.patch
-# 8170328, PR3466, RH1498321: PPC64: Use andis instead of lis/and
-Patch558: 8170328-pr3466-rh1498321.patch
-# 8181810, PR3466, RH1498319: PPC64: Leverage extrdi for bitfield extract
-Patch559: 8181810-pr3466-rh1498319.patch
-
-# Aarch64 build fixes after January 2018 CPU
-#
-# JDK-8195685 AArch64 cannot build with JDK-8174962 (already included in source tarball)
-# JDK-8196136 AArch64: Correct register use in patch for JDK-8195685
-# JDK-8195859 AArch64: vtableStubs gtest fails after 8174962
-# JDK-8196221 AArch64: Mistake in committed patch for JDK-8195859
-Patch570: JDK-8196136-correct-register-use-8195685.patch
-Patch571: JDK-8195859-vtableStubs-gtest-fails-after-8174962.patch
-Patch572: JDK-8196221-mistake-in-8195859.patch
-
-Patch573: rhbz_1540242.patch
-Patch574: rhbz_1540242_2.patch
-
+ 
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
@@ -1503,29 +1476,11 @@ sh %{SOURCE12}
 %patch526
 %patch528
 %patch538
-%patch551
-%patch553
 %patch560
 pushd openjdk/jdk
 %patch561 -p1
 popd
 
-# PPC64 updates
-%patch556
-%patch557
-%patch558
-%patch559
-
-pushd openjdk/hotspot
-# Aarch64 build fixes after January 2018 CPU
-%patch570 -p1
-%patch571 -p1
-%patch572 -p1
-
-# Zero/AArch64 fix for RHBZ#1540242
-%patch573 -p1
-%patch574 -p1
-popd
 
 # RPM-only fixes
 %patch525
@@ -2158,6 +2113,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Mar 21 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.162-1.b12
+- Update to aarch64-jdk8u162-b12 and aarch64-shenandoah-jdk8u162-b12.
+- Remove upstreamed patches for 8181055/PR3394/RH1448880,
+-  8181419/PR3413/RH1463144, 8145913/PR3466/RH1498309,
+-  8168318/PR3466/RH1498320, 8170328/PR3466/RR1498321 and
+-  8181810/PR3466/RH1498319.
+
 * Wed Mar 07 2018 Adam Williamson <awilliam@redhat.com> - 1:1.8.0.161-9.b14
 - Rebuild to fix GCC 8 mis-compilation
   See https://da.gd/YJVwk ("GCC 8 ABI change on x86_64")
