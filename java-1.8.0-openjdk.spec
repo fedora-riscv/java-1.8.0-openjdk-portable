@@ -1084,6 +1084,8 @@ Patch201: system-libjpeg.patch
 # custom securities
 Patch207: PR3183.patch
 # ustreamed aarch64 fixes
+Patch208: aarch64BuildFailure.patch
+Patch209: 8035496-hotspot.patch
 Patch210: suse_linuxfilestore.patch
 
 # Local fixes
@@ -1432,6 +1434,8 @@ sh %{SOURCE12}
 %patch205
 %patch206
 %patch207
+%patch208
+%patch209
 %patch210
 
 %patch1
@@ -2120,7 +2124,6 @@ require "copy_jdk_configs.lua"
 -  8181419/PR3413/RH1463144, 8145913/PR3466/RH1498309,
 -  8168318/PR3466/RH1498320, 8170328/PR3466/RR1498321 and
 -  8181810/PR3466/RH1498319.
-- removed also 208 and 209 (aarch64BuildFailure.patch, 8035496-hotspot.patch) to preven aarch64 failure
 
 * Wed Mar 07 2018 Adam Williamson <awilliam@redhat.com> - 1:1.8.0.161-9.b14
 - Rebuild to fix GCC 8 mis-compilation
