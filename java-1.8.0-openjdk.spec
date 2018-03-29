@@ -1,3 +1,4 @@
+%define _find_debuginfo_opts -g
 # note, parametrised macros are order-senisitve (unlike not-parametrized) even with normal macros
 # also necessary when passing it as parameter other macros. If not macro, then it is considered as switch
 %global debug_suffix_unquoted -debug
@@ -937,7 +938,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2120,6 +2121,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Mar 29 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-4.b12
+- added experimental %%define _find_debuginfo_opts -g
+- in attempt to fix https://bugzilla.redhat.com/show_bug.cgi?id=1520879
+- no idea what will come out
+
 * Thu Mar 29 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-3.b12
 - returned patch562 rhbz_1540242.patch
 - added Patch563 rhbz_1536622-JDK8197429-jdk8.patch
