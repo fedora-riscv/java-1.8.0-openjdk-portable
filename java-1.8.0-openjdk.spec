@@ -937,7 +937,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1044,6 +1044,10 @@ Patch206: hotspot-assembler-debuginfo.patch
 Patch560: 8188030-pr3459-rh1484079.patch
 # 8196218, RH1538767: libfontmanager.so needs to link against headless awt library
 Patch561: rhbz_1538767_fix_linking.patch
+# fixing aarch64 segfault when boostraping after compiled by gcc8
+Patch562: rhbz_1540242.patch
+# rhbz1536622 - 32 bit java app started via JNI crashes with larger stack sizes
+Patch563: rhbz_1536622-JDK8197429-jdk8.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -1482,7 +1486,8 @@ sh %{SOURCE12}
 pushd openjdk/jdk
 %patch561 -p1
 popd
-
+%patch562
+%patch563
 
 # RPM-only fixes
 %patch525
@@ -2115,7 +2120,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mon Mar 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-1.b12
+* Thu Mar 29 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-3.b12
+- returned patch562 rhbz_1540242.patch
+- added Patch563 rhbz_1536622-JDK8197429-jdk8.patch
+
+* Mon Mar 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-2.b12
 - Added  patch 540 rhbz1548475-LDFLAGSusage.patch to honor build flags fully
 
 * Wed Mar 21 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.162-1.b12
