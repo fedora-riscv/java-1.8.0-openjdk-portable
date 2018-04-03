@@ -938,7 +938,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1036,19 +1036,17 @@ Patch509: rh1176206-root.patch
 Patch523: pr2974-rh1337583.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460.patch
+# 8196218, RH1538767: libfontmanager.so needs to link against headless awt library
+Patch529: rhbz_1538767_fix_linking.patch
+
+# Upstreamable debugging patches
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
 Patch204: hotspot-remove-debuglink.patch
 Patch205: dont-add-unnecessary-debug-links.patch
 # Enable debug information for assembly code files
 Patch206: hotspot-assembler-debuginfo.patch
-# 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
-Patch560: 8188030-pr3459-rh1484079.patch
-# 8196218, RH1538767: libfontmanager.so needs to link against headless awt library
-Patch561: rhbz_1538767_fix_linking.patch
-# fixing aarch64 segfault when boostraping after compiled by gcc8
-Patch562: rhbz_1540242.patch
-# rhbz1536622 - 32 bit java app started via JNI crashes with larger stack sizes
-Patch563: rhbz_1536622-JDK8197429-jdk8.patch
+# 8200556, PR3566: AArch64 port crashes on slowdebug builds
+Patch207: 8200556-pr3566.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -1057,6 +1055,8 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
+# Fix more cases of missing return statements on AArch64
+Patch104: pr3458-rh1540242.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -1082,16 +1082,18 @@ Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
 Patch540: rhbz1548475-LDFLAGSusage.patch
+# 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
+Patch560: 8188030-pr3459-rh1484079.patch
+# 8197429, PR3456, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
+Patch561: 8197429-pr3456-rh1536622.patch
  
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
-# custom securities
-Patch207: PR3183.patch
-# ustreamed aarch64 fixes
-Patch208: aarch64BuildFailure.patch
 Patch209: 8035496-hotspot.patch
 Patch210: suse_linuxfilestore.patch
+# custom securities
+Patch300: PR3183.patch
 
 # Local fixes
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
@@ -1439,9 +1441,10 @@ sh %{SOURCE12}
 %patch205
 %patch206
 %patch207
-%patch208
 %patch209
 %patch210
+
+%patch300
 
 %patch1
 %patch3
@@ -1453,8 +1456,10 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
-# ppc64le fixes
+# AArch64 fixes
+%patch104
 
+# ppc64le fixes
 %patch603
 %patch601
 %patch602
@@ -1485,10 +1490,9 @@ sh %{SOURCE12}
 %patch540
 %patch560
 pushd openjdk/jdk
-%patch561 -p1
+%patch529 -p1
 popd
-%patch562
-%patch563
+%patch561
 
 # RPM-only fixes
 %patch525
@@ -2121,6 +2125,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Apr 02 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.162-5.b12
+- Cleanup from previous commit.
+- Remove unused upstream patch 8167200.hotspotAarch64.patch.
+
 * Thu Mar 29 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-4.b12
 - added experimental %%define _find_debuginfo_opts -g
 - in attempt to fix https://bugzilla.redhat.com/show_bug.cgi?id=1520879
