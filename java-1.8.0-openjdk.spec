@@ -938,7 +938,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1036,8 +1036,9 @@ Patch509: rh1176206-root.patch
 Patch523: pr2974-rh1337583.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460.patch
-# 8196218, RH1538767: libfontmanager.so needs to link against headless awt library
-Patch529: rhbz_1538767_fix_linking.patch
+# 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
+#                     linking with unresolved symbols.
+Patch529: rhbz_1538767_fix_linking2.patch
 
 # Upstreamable debugging patches
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
@@ -2125,6 +2126,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Apr 10 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.162-6.b12
+- Use correct patch for RHBZ#1538767 (JDK-8196516)
+
 * Mon Apr 02 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.162-5.b12
 - Cleanup from previous commit.
 - Remove unused upstream patch 8167200.hotspotAarch64.patch.
