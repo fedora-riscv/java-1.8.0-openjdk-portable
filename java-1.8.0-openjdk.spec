@@ -557,6 +557,9 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/bin/servertool
 %{_jvmdir}/%{jredir -- %{?1}}/bin/tnameserv
 %{_jvmdir}/%{jredir -- %{?1}}/bin/unpack200
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/
 %config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/US_export_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/local_policy.jar
 %config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/US_export_policy.jar
@@ -580,8 +583,8 @@ exit 0
 %config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.cfg
 %ifarch %{jit_arches}
 %ifnarch %{power64}
-%attr(664, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
-%attr(664, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
+%ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
+%ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
 %endif
 %endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/
@@ -938,7 +941,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2126,6 +2129,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Apr 18 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-7.b12
+- added ownership of policy dir and subdirs
+- removed ignored attributes for classes.jsa
+
 * Tue Apr 10 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.162-6.b12
 - Use correct patch for RHBZ#1538767 (JDK-8196516)
 
