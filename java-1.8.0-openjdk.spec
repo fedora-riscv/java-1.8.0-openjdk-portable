@@ -205,7 +205,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u162-b12
+%global revision        aarch64-jdk8u171-b10
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -941,7 +941,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -956,7 +956,17 @@ Epoch:   1
 Summary: OpenJDK Runtime Environment
 Group:   Development/Languages
 
-License:  ASL 1.1 and ASL 2.0 and GPL+ and GPLv2 and GPLv2 with exceptions and LGPL+ and LGPLv2 and MPLv1.0 and MPLv1.1 and Public Domain and W3C
+# HotSpot code is licensed under GPLv2
+# JDK library code is licensed under GPLv2 with the Classpath exception
+# The Apache license is used in code taken from Apache projects (primarily JAXP & JAXWS)
+# DOM levels 2 & 3 and the XML digital signature schemas are licensed under the W3C Software License
+# The JSR166 concurrency code is in the public domain
+# The BSD and MIT licenses are used for a number of third-party libraries (see THIRD_PARTY_README)
+# The OpenJDK source tree includes the JPEG library (IJG), zlib & libpng (zlib), giflib and LCMS (MIT)
+# The test code includes copies of NSS under the Mozilla Public License v2.0
+# The PCSClite headers are under a BSD with advertising license
+# The elliptic curve cryptography (ECC) source code is licensed under the LGPLv2.1 or any later version
+License:  ASL 1.1 and ASL 2.0 and BSD and BSD with advertising and GPL+ and GPLv2 and GPLv2 with exceptions and IJG and LGPLv2+ and MIT and MPLv2.0 and Public Domain and W3C and zlib
 URL:      http://openjdk.java.net/
 
 # aarch64-port now contains integration forest of both aarch64 and normal jdk
@@ -967,7 +977,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u162-b12.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u171-b10.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1107,6 +1117,10 @@ Patch534: always_assumemp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 Patch539: pr2888.patch
 
+# Shenandoah fixes
+# PR3573: Fix TCK crash with Shenandoah
+Patch700: pr3573.patch
+
 # Non-OpenJDK fixes
 Patch1000: enableCommentedOutSystemNss.patch
 
@@ -1140,7 +1154,7 @@ BuildRequires: zip
 # Use OpenJDK 7 where available (on RHEL) to avoid
 # having to use the rhel-7.x-java-unsafe-candidate hack
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
-BuildRequires: java-1.7.0-openjdk-devel
+BuildRequires: java-1.7.0-openjdk-devel >= 1.7.0.151-2.6.11.3
 %else
 BuildRequires: java-1.8.0-openjdk-devel
 %endif
@@ -1505,6 +1519,11 @@ popd
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch534
+%endif
+
+# Shenandoah-only patches
+%if %{use_shenandoah_hotspot}
+%patch700
 %endif
 
 %patch1000
@@ -2129,6 +2148,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Apr 18 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.171-1.b10
+- Update to aarch64-jdk8u171-b10 and aarch64-shenandoah-jdk8u171-b10.
+- Fix jconsole.desktop.in subcategory, replacing "Monitor" with "Profiling" (PR3550) (gnu_andrew)
+- Fix invalid license 'LGPL+' (should be LGPLv2+ for ECC code) and add misisng ones (gnu_andrew)
+
 * Wed Apr 18 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.162-7.b12
 - added ownership of policy dir and subdirs
 - removed ignored attributes for classes.jsa
