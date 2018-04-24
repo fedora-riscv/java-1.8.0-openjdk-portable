@@ -941,7 +941,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
+Release: 2.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2148,6 +2148,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Apr 24 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-2.b10
+- Update rhbz1548475-LDFLAGSusage.patch to also set linker
+  flags for libsaproc.so and libjsig.so.
+
 * Wed Apr 18 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.171-1.b10
 - Update to aarch64-jdk8u171-b10 and aarch64-shenandoah-jdk8u171-b10.
 - Fix jconsole.desktop.in subcategory, replacing "Monitor" with "Profiling" (PR3550) (gnu_andrew)
