@@ -66,12 +66,6 @@
 %global targets all
 %endif
 
-%ifnarch %{jit_arches}
-# Disable hardened build on non-jit arches. Work-around for RHBZ#1290936.
-%undefine _hardened_build
-%global ourcppflags %{nil}
-%global ourldflags %{nil}
-%else
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
@@ -80,7 +74,6 @@
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
-%endif
 
 # With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
 # the initialisation must be here. LAter the pkg-connfig have bugy behaviour
@@ -934,7 +927,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 4.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -2141,6 +2134,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Apr 25 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-4.b10
+- Enable hardened build unconditionally (also for Zero).
+  Resolves RHBZ#1290936.
+
 * Tue Apr 24 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-3.b10
 - Enable hardened build for Aarch64.
 
