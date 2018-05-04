@@ -927,7 +927,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 4.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1037,7 +1037,7 @@ Patch523: pr2974-rh1337583.patch
 Patch528: pr3083-rh1346460.patch
 # 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
 #                     linking with unresolved symbols.
-Patch529: rhbz_1538767_fix_linking2.patch
+Patch529: rhbz_1538767_fix_linking.patch
 
 # Upstreamable debugging patches
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
@@ -2134,6 +2134,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri May 04 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-5.b10
+- Remove duplicate patch rhbz_1538767_fix_linking2.patch. Just use
+  rhbz_1538767_fix_linking.patch.
+
 * Wed Apr 25 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-4.b10
 - Enable hardened build unconditionally (also for Zero).
   Resolves RHBZ#1290936.
