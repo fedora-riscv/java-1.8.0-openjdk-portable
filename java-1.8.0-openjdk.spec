@@ -799,8 +799,8 @@ Obsoletes: sinjdoc
 %define java_headless_rpo() %{expand:
 # Require /etc/pki/java/cacerts.
 Requires: ca-certificates
-# Require javapackages-tools for ownership of /usr/lib/jvm/
-Requires: javapackages-tools
+# Require javapackages-filesystem for ownership of /usr/lib/jvm/
+Requires: javapackages-filesystem
 # Require zoneinfo data provided by tzdata-java subpackage.
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
@@ -927,7 +927,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 5.%{buildver}%{?dist}
+Release: 6.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -1271,7 +1271,7 @@ The OpenJDK source bundle %{for_debug}.
 %package javadoc
 Summary: OpenJDK API Documentation
 Group:   Documentation
-Requires: javapackages-tools
+Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo %{nil}}
@@ -1284,7 +1284,7 @@ The OpenJDK API documentation.
 %package javadoc-zip
 Summary: OpenJDK API Documentation compressed in single archive
 Group:   Documentation
-Requires: javapackages-tools
+Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo %{nil}}
@@ -1297,7 +1297,7 @@ The OpenJDK API documentation compressed in single archive.
 %package javadoc-debug
 Summary: OpenJDK API Documentation %{for_debug}
 Group:   Documentation
-Requires: javapackages-tools
+Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo -- %{debug_suffix_unquoted}}
@@ -1310,7 +1310,7 @@ The OpenJDK API documentation %{for_debug}.
 %package javadoc-zip-debug
 Summary: OpenJDK API Documentation compressed in single archive %{for_debug}
 Group:   Documentation
-Requires: javapackages-tools
+Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo -- %{debug_suffix_unquoted}}
@@ -2134,6 +2134,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu May 17 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-6.b10
+- Move to javapackages-filesystem over javapackages-tools
+  for directory ownership. Resolves RHBZ#1500288.
+
 * Fri May 04 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-5.b10
 - Remove duplicate patch rhbz_1538767_fix_linking2.patch. Just use
   rhbz_1538767_fix_linking.patch.
