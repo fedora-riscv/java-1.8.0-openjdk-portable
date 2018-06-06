@@ -191,7 +191,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u171-b10
+%global revision        aarch64-jdk8u172-b11
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -927,7 +927,7 @@ Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 6.%{buildver}%{?dist}
+Release: 1.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
 # and this change was brought into RHEL-4.  java-1.5.0-ibm packages
 # also included the epoch in their virtual provides.  This created a
@@ -963,7 +963,7 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u171-b10.tar.xz
+Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u172-b11--shenandoah-merge-2018-05-15.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.src
@@ -1045,8 +1045,6 @@ Patch204: hotspot-remove-debuglink.patch
 Patch205: dont-add-unnecessary-debug-links.patch
 # Enable debug information for assembly code files
 Patch206: hotspot-assembler-debuginfo.patch
-# 8200556, PR3566: AArch64 port crashes on slowdebug builds
-Patch207: 8200556-pr3566.patch
 
 # Arch-specific upstreamable patches
 # PR2415: JVM -Xmx requirement is too high on s390
@@ -1055,8 +1053,6 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
-# Fix more cases of missing return statements on AArch64
-Patch104: pr3458-rh1540242.patch
 
 # Patches which need backporting to 8u
 # S8073139, RH1191652; fix name of ppc64le architecture
@@ -1090,7 +1086,6 @@ Patch561: 8197429-pr3456-rh1536622.patch
 # Patches ineligible for 8u
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
-Patch209: 8035496-hotspot.patch
 Patch210: suse_linuxfilestore.patch
 # custom securities
 Patch300: PR3183.patch
@@ -1102,10 +1097,6 @@ Patch525: pr1834-rh1022017.patch
 Patch534: always_assumemp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 Patch539: pr2888.patch
-
-# Shenandoah fixes
-# PR3573: Fix TCK crash with Shenandoah
-Patch700: pr3573.patch
 
 # Non-OpenJDK fixes
 Patch1000: enableCommentedOutSystemNss.patch
@@ -1444,8 +1435,6 @@ sh %{SOURCE12}
 %patch204
 %patch205
 %patch206
-%patch207
-%patch209
 %patch210
 
 %patch300
@@ -1459,9 +1448,6 @@ sh %{SOURCE12}
 %patch100
 %patch102
 %patch103
-
-# AArch64 fixes
-%patch104
 
 # ppc64le fixes
 %patch603
@@ -1505,11 +1491,6 @@ popd
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch534
-%endif
-
-# Shenandoah-only patches
-%if %{use_shenandoah_hotspot}
-%patch700
 %endif
 
 %patch1000
@@ -2134,6 +2115,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-1.b11
+- updated to u172-b11
+- removed patches:
+- patch207 8200556-pr3566.patch
+- patch104 pr3458-rh1540242.patch
+- patch209 8035496-hotspot.patch
+- patch700 pr3573.patch
+
 * Thu May 17 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-6.b10
 - Move to javapackages-filesystem over javapackages-tools
   for directory ownership. Resolves RHBZ#1500288.
