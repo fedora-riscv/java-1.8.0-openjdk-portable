@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=OpenJDK 8 Policy Tool #ARCH#
-Comment=Manage OpenJDK policy files #ARCH#
-Exec=#JRE_HOME#/policytool
-Icon=java-1.8.0
+Name=OpenJDK @JAVA_MAJOR_VERSION@ Policy Tool #ARCH#
+Comment=Manage OpenJDK @JAVA_MAJOR_VERSION@ policy files #ARCH#
+Exec=@JRE_HOME@/policytool
+Icon=java-@JAVA_MAJOR_VERSION@-@JAVA_VENDOR@
 Terminal=false
 Type=Application
 StartupWMClass=sun-security-tools-PolicyTool

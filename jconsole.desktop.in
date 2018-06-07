@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=OpenJDK 8 Monitoring & Management Console #ARCH#
-Comment=Monitor and manage OpenJDK applications for #ARCH#
-Exec=#JAVA_HOME#/jconsole
-Icon=java-1.8.0
+Name=OpenJDK @JAVA_MAJOR_VERSION@ Monitoring & Management Console @ARCH@
+Comment=Monitor and manage OpenJDK @JAVA_MAJOR_VERSION@ applications for @ARCH@
+Exec=@JAVA_HOME@/jconsole
+Icon=java-@JAVA_MAJOR_VERSION@-@JAVA_VENDOR@
 Terminal=false
 Type=Application
 StartupWMClass=sun-tools-jconsole-JConsole

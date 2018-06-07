@@ -1,19 +1,20 @@
 %define _find_debuginfo_opts -g
-# note, parametrised macros are order-senisitve (unlike not-parametrized) even with normal macros
-# also necessary when passing it as parameter other macros. If not macro, then it is considered as switch
-%global debug_suffix_unquoted -debug
+# note: parametrized macros are order-sensitive (unlike not-parametrized) even with normal macros
+# also necessary when passing it as parameter to other macros. If not macro, then it is considered a switch
+# see the difference between global and deffine:
+# See https://github.com/rpm-software-management/rpm/issues/127 to comments at  "pmatilai commented on Aug 18, 2017"
+# (initiated in https://bugzilla.redhat.com/show_bug.cgi?id=1482192)
+%global debug_suffix_unquoted -slowdebug
 # quoted one for shell operations
 %global debug_suffix "%{debug_suffix_unquoted}"
 %global normal_suffix ""
 
-#if you wont only debug build, but providing java, build only normal build, but  set normalbuild_parameter
-%global debugbuild_parameter  slowdebug
-%global normalbuild_parameter release
-%global debug_warning This package have full debug on. Install only in need, and remove asap.
+# if you want only debug build but providing java build only normal build but set normalbuild_parameter
+%global debug_warning This package has full debug on. Install only in need and remove asap.
 %global debug_on with full debug on
 %global for_debug for packages with debug on
 
-# by default we build normal build always.
+# by default we build normal build
 %global include_normal_build 1
 %if %{include_normal_build}
 %global build_loop1 %{normal_suffix}
@@ -22,7 +23,7 @@
 %endif
 
 %global aarch64         aarch64 arm64 armv8
-# sometimes we need to distinguish big and little endian PPC64
+# we need to distinguish between big and little endian PPC64
 %global ppc64le         ppc64le
 %global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
@@ -30,7 +31,11 @@
 
 # By default, we build a debug build during main build on JIT architectures
 %ifarch %{jit_arches}
+%ifnarch %{arm}
 %global include_debug_build 1
+%else
+%global include_debug_build 0
+%endif
 %else
 %global include_debug_build 0
 %endif
@@ -42,16 +47,17 @@
 %global use_shenandoah_hotspot 0
 %endif
 
+
 %if %{include_debug_build}
 %global build_loop2 %{debug_suffix}
 %else
 %global build_loop2 %{nil}
 %endif
 
-# if you disable both builds, then build fails
+# if you disable both builds, then the build fails
 %global build_loop  %{build_loop1} %{build_loop2}
-# note, that order  normal_suffix debug_suffix, in case of both enabled,
-# is expected in one single case at the end of build
+# note: that order: normal_suffix debug_suffix, in case of both enabled
+# is expected in one single case at the end of the build
 %global rev_build_loop  %{build_loop2} %{build_loop1}
 
 %ifarch %{jit_arches}
@@ -75,9 +81,9 @@
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
 
-# With diabled nss is NSS deactivated, so in NSS_LIBDIR can be wrong path
-# the initialisation must be here. LAter the pkg-connfig have bugy behaviour
-#looks liekopenjdk RPM specific bug
+# With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
+# the initialisation must be here. Later the pkg-config have buggy behaviour
+# looks like openjdk RPM specific bug
 # Always set this so the nss.cfg file is not broken
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
 %global NSS_LIBS %(pkg-config --libs nss)
@@ -85,13 +91,14 @@
 # see https://bugzilla.redhat.com/show_bug.cgi?id=1332456
 %global NSSSOFTOKN_BUILDTIME_NUMBER %(pkg-config --modversion nss-softokn || : )
 %global NSS_BUILDTIME_NUMBER %(pkg-config --modversion nss || : )
-#this is worakround for processing of requires during srpm creation
+# this is workaround for processing of requires during srpm creation
 %global NSSSOFTOKN_BUILDTIME_VERSION %(if [ "x%{NSSSOFTOKN_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSSSOFTOKN_BUILDTIME_NUMBER}" ;fi)
 %global NSS_BUILDTIME_VERSION %(if [ "x%{NSS_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSS_BUILDTIME_NUMBER}" ;fi)
 
 
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
-%global _privatelibs libmawt[.]so.*
+%global _privatelibs libmawt[.]so.* libattach[.]so.* libawt[.]so.* libextnet[.]so.* libjsig[.]so.* libawt_headless[.]so.* libdt_socket[.]so.* libfontmanager[.]so.* libinstrument[.]so.* libj2gss[.]so.* libj2pcsc[.]so.* libj2pkcs11[.]so.* libjaas_unix[.]so.* libjavajpeg[.]so.* libjdwp[.]so.* libjimage[.]so.* libjsound[.]so.* liblcms[.]so.* libmanagement[.]so.* libmanagement_agent[.]so.* libmanagement_ext[.]so.* libmlib_image[.]so.* libnet[.]so.* libnio[.]so.* libprefs[.]so.* librmi[.]so.* libsaproc[.]so.* libsctp[.]so.* libunpack[.]so.* libverify[.]so.* libzip[.]so.* libjsoundalsa[.]so.* libsplashscreen[.]so.* libawt_xawt[.]so.*
+
 %global __provides_exclude ^(%{_privatelibs})$
 %global __requires_exclude ^(%{_privatelibs})$
 
@@ -101,63 +108,56 @@
 # does not match that given by _build_cpu
 %ifarch x86_64
 %global archinstall amd64
-%global stapinstall x86_64
 %endif
 %ifarch ppc
 %global archinstall ppc
-%global stapinstall powerpc
 %endif
 %ifarch %{ppc64be}
 %global archinstall ppc64
-%global stapinstall powerpc
 %endif
 %ifarch %{ppc64le}
 %global archinstall ppc64le
-%global stapinstall powerpc
 %endif
 %ifarch %{ix86}
 %global archinstall i386
-%global stapinstall i386
 %endif
 %ifarch ia64
 %global archinstall ia64
-%global stapinstall ia64
 %endif
 %ifarch s390
 %global archinstall s390
-%global stapinstall s390
 %endif
 %ifarch s390x
 %global archinstall s390x
-%global stapinstall s390
 %endif
 %ifarch %{arm}
 %global archinstall arm
-%global stapinstall arm
 %endif
 %ifarch %{aarch64}
 %global archinstall aarch64
-%global stapinstall arm64
 %endif
 # 32 bit sparc, optimized for v9
 %ifarch sparcv9
 %global archinstall sparc
-%global stapinstall %{_build_cpu}
 %endif
 # 64 bit sparc
 %ifarch sparc64
 %global archinstall sparcv9
-%global stapinstall %{_build_cpu}
 %endif
 %ifnarch %{jit_arches}
 %global archinstall %{_arch}
 %endif
+
+
 
 %ifarch %{jit_arches}
 %global with_systemtap 1
 %else
 %global with_systemtap 0
 %endif
+
+# New Version-String scheme-style defines
+%global majorver 8
 
 %ifarch %{ix86} x86_64
 %global with_openjfx_binding 1
@@ -179,15 +179,10 @@
 %global with_openjfx_binding 0
 %endif
 
-# Convert an absolute path to a relative path.  Each symbolic link is
-# specified relative to the directory in which it is installed so that
-# it will resolve properly within chrooted installations.
-%global script 'use File::Spec; print File::Spec->abs2rel($ARGV[0], $ARGV[1])'
-%global abs2rel %{__perl} -e %{script}
-
-
 # Standard JPackage naming and versioning defines.
 %global origin          openjdk
+%global origin_nice     OpenJDK
+%global top_level_dir_name   %{origin}
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
@@ -201,17 +196,19 @@
 # priority must be 7 digits in total. The expression is workarounding tip
 %global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
 
-%global javaver         1.8.0
+%global javaver         1.%{majorver}.0
+%global systemtap_javaver 9
 
 # parametrized macros are order-sensitive
-%global fullversion     %{name}-%{version}-%{release}
-#images stub
-%global j2sdkimage       j2sdk-image
+%global compatiblename  %{name}
+%global fullversion     %{compatiblename}-%{version}-%{release}
+# images stub
+%global jdkimage       j2sdk-image
 # output dir stub
 %define buildoutputdir() %{expand:openjdk/build/jdk8.build%{?1}}
-#we can copy the javadoc to not arched dir, or made it not noarch
+# we can copy the javadoc to not arched dir, or make it not noarch
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
-#main id and dir of this jdk
+# main id and dir of this jdk
 %define uniquesuffix()        %{expand:%{fullversion}.%{_arch}%{?1}}
 
 # Standard JPackage directories and symbolic links.
@@ -234,10 +231,11 @@
 # for the primary arch for now). Systemtap uses the machine name
 # aka build_cpu as architecture specific directory name.
 %global tapsetroot /usr/share/systemtap
-%global tapsetdir %{tapsetroot}/tapset/%{stapinstall}
+%global tapsetdirttapset %{tapsetroot}/tapset/
+%global tapsetdir %{tapsetdirttapset}/%{_build_cpu}
 %endif
 
-# not-duplicated scriplets for normal/debug packages
+# not-duplicated scriptlets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
 
 
@@ -252,7 +250,7 @@ exit 0
 %ifarch %{jit_arches}
 # MetaspaceShared::generate_vtable_methods not implemented for PPC JIT
 %ifnarch %{power64}
-#see https://bugzilla.redhat.com/show_bug.cgi?id=513605
+# see https://bugzilla.redhat.com/show_bug.cgi?id=513605
 %{jrebindir -- %{?1}}/java -Xshare:dump >/dev/null 2>/dev/null
 %endif
 %endif
@@ -508,7 +506,7 @@ exit 0
 }
 
 %define files_jre() %{expand:
-%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}.png
+%{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}-%{origin}.png
 %{_datadir}/applications/*policytool%{?1}.desktop
 %{_jvmdir}/%{sdkdir -- %{?1}}/jre/lib/%{archinstall}/libjsoundalsa.so
 %{_jvmdir}/%{sdkdir -- %{?1}}/jre/lib/%{archinstall}/libsplashscreen.so
@@ -522,12 +520,11 @@ exit 0
 %defattr(-,root,root,-)
 %dir %{_sysconfdir}/.java/.systemPrefs
 %dir %{_sysconfdir}/.java
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/ASSEMBLY_EXCEPTION
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/LICENSE
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/THIRD_PARTY_README
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/ASSEMBLY_EXCEPTION
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}
 %{_jvmdir}/%{jrelnk -- %{?1}}
-%{_jvmprivdir}/*
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security
 %{_jvmdir}/%{jredir -- %{?1}}/lib/security/cacerts
 %dir %{_jvmdir}/%{jredir -- %{?1}}
@@ -633,7 +630,17 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/management-agent.jar
 %{_jvmdir}/%{jredir -- %{?1}}/lib/management/*
 %{_jvmdir}/%{jredir -- %{?1}}/lib/cmm/*
-%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/*
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/cldrdata.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/dnsns.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/jaccess.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/localedata.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/meta-index
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/nashorn.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/sunec.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/sunjce_provider.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/sunpkcs11.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/zipfs.jar
+
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images/cursors
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/management
@@ -643,9 +650,9 @@ exit 0
 
 %define files_devel() %{expand:
 %defattr(-,root,root,-)
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/ASSEMBLY_EXCEPTION
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/LICENSE
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/THIRD_PARTY_README
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/ASSEMBLY_EXCEPTION
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/LICENSE
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/bin
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/include
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/lib
@@ -693,6 +700,9 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/include/*
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/%{archinstall}
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ct.sym
+%if %{with_systemtap}
+%{_jvmdir}/%{sdkdir -- %{?1}}/tapset
+%endif
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ir.idl
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/jconsole.jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/orb.idl
@@ -734,34 +744,33 @@ exit 0
 %{_mandir}/man1/xjc-%{uniquesuffix -- %{?1}}.1*
 %if %{with_systemtap}
 %dir %{tapsetroot}
+%dir %{tapsetdirttapset}
 %dir %{tapsetdir}
-%{tapsetdir}/*%{version}-%{release}.%{_arch}%{?1}.stp
-%dir %{_jvmdir}/%{sdkdir -- %{?1}}/tapset
-%{_jvmdir}/%{sdkdir -- %{?1}}/tapset/*.stp
+%{tapsetdir}/*%{_arch}%{?1}.stp
 %endif
 }
 
 %define files_demo() %{expand:
 %defattr(-,root,root,-)
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 }
 
 %define files_src() %{expand:
 %defattr(-,root,root,-)
-%doc README.src
+%doc README.md
 %{_jvmdir}/%{sdkdir -- %{?1}}/src.zip
 }
 
 %define files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 }
 
 %define files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip
-%license %{buildoutputdir -- %{?1}}/images/%{j2sdkimage}/jre/LICENSE
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 }
 
 %define files_accessibility() %{expand:
@@ -770,7 +779,7 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/accessibility.properties
 }
 
-# not-duplicated requires/provides/obsolate for normal/debug packages
+# not-duplicated requires/provides/obsoletes for normal/debug packages
 %define java_rpo() %{expand:
 Requires: fontconfig%{?_isa}
 Requires: xorg-x11-fonts-Type1
@@ -779,97 +788,82 @@ Requires: xorg-x11-fonts-Type1
 Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
+Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
-# Standard JPackage base provides.
-Provides: jre-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
+# Standard JPackage base provides
+Provides: jre = %{javaver}%{?1}
 Provides: jre-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
+Provides: jre-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
-Provides: jre = %{javaver}%{?1}
 Provides: java-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java%{?1} = %{epoch}:%{javaver}
-# Standard JPackage extensions provides.
-Provides: java-fonts%{?1} = %{epoch}:%{version}
-
-Obsoletes: java-1.7.0-openjdk%{?1}
-Obsoletes: java-1.5.0-gcj%{?1}
-Obsoletes: sinjdoc
 }
 
 %define java_headless_rpo() %{expand:
-# Require /etc/pki/java/cacerts.
+# Require /etc/pki/java/cacerts
 Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/
 Requires: javapackages-filesystem
-# Require zoneinfo data provided by tzdata-java subpackage.
+# Require zoneinfo data provided by tzdata-java sub-package
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
 # there is a need to depend on the exact version of NSS
 Requires: nss%{?_isa} %{NSS_BUILDTIME_VERSION}
 Requires: nss-softokn%{?_isa} %{NSSSOFTOKN_BUILDTIME_VERSION}
-# tool to copy jdk's configs - should be Recommends only, but then only dnf/yum eforce it, not rpm transaction and so no configs are persisted when pure rpm -u is run. I t may be consiedered as regression
-Requires:	copy-jdk-configs >= 3.3
+# tool to copy jdk's configs - should be Recommends only, but then only dnf/yum enforce it,
+# not rpm transaction and so no configs are persisted when pure rpm -u is run. It may be
+# considered as regression
+Requires: copy-jdk-configs >= 3.3
 OrderWithRequires: copy-jdk-configs
-# Post requires alternatives to install tool alternatives.
+# Post requires alternatives to install tool alternatives
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(post):   chkconfig >= 1.7
-# Postun requires alternatives to uninstall tool alternatives.
+# Postun requires alternatives to uninstall tool alternatives
 Requires(postun): %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(postun):   chkconfig >= 1.7
 
-# Standard JPackage base provides.
+# Standard JPackage base provides
+Provides: jre-headless%{?1} = %{epoch}:%{javaver}
 Provides: jre-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
-Provides: jre-headless%{?1} = %{epoch}:%{javaver}
 Provides: java-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-headless%{?1} = %{epoch}:%{javaver}
-# Standard JPackage extensions provides.
-Provides: jndi%{?1} = %{epoch}:%{version}
-Provides: jndi-ldap%{?1} = %{epoch}:%{version}
-Provides: jndi-cos%{?1} = %{epoch}:%{version}
-Provides: jndi-rmi%{?1} = %{epoch}:%{version}
-Provides: jndi-dns%{?1} = %{epoch}:%{version}
-Provides: jaas%{?1} = %{epoch}:%{version}
-Provides: jsse%{?1} = %{epoch}:%{version}
-Provides: jce%{?1} = %{epoch}:%{version}
-Provides: jdbc-stdext%{?1} = 4.1
-Provides: java-sasl%{?1} = %{epoch}:%{version}
 
-#https://bugzilla.redhat.com/show_bug.cgi?id=1312019
+# https://bugzilla.redhat.com/show_bug.cgi?id=1312019
 Provides: /usr/bin/jjs
 
-Obsoletes: java-1.7.0-openjdk-headless%{?1}
 }
 
 %define java_devel_rpo() %{expand:
-# Require base package.
+# Requires base package
 Requires:         %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
-# Post requires alternatives to install tool alternatives.
+# Post requires alternatives to install tool alternatives
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(post):   chkconfig >= 1.7
-# Postun requires alternatives to uninstall tool alternatives.
+# Postun requires alternatives to uninstall tool alternatives
 Requires(postun): %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(postun):   chkconfig >= 1.7
 
-# Standard JPackage devel provides.
+# Standard JPackage devel provides
 Provides: java-sdk-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}
 Provides: java-sdk-%{javaver}%{?1} = %{epoch}:%{version}
 Provides: java-sdk-%{origin}%{?1} = %{epoch}:%{version}
 Provides: java-sdk%{?1} = %{epoch}:%{javaver}
 Provides: java-%{javaver}-devel%{?1} = %{epoch}:%{version}
+Provides: java-%{javaver}-%{origin}-devel%{?1} = %{epoch}:%{version}
 Provides: java-devel-%{origin}%{?1} = %{epoch}:%{version}
 Provides: java-devel%{?1} = %{epoch}:%{javaver}
 
-Obsoletes: java-1.7.0-openjdk-devel%{?1}
-Obsoletes: java-1.5.0-gcj-devel%{?1}
 }
 
 
@@ -877,39 +871,36 @@ Obsoletes: java-1.5.0-gcj-devel%{?1}
 Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
-Provides: java-%{javaver}-%{origin}-demo = %{epoch}:%{version}-%{release}
+Provides: java-demo%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-demo%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
 
-Obsoletes: java-1.7.0-openjdk-demo%{?1}
 }
 
 %define java_javadoc_rpo() %{expand:
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
-# Post requires alternatives to install javadoc alternative.
+# Post requires alternatives to install javadoc alternative
 Requires(post):   %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(post):   chkconfig >= 1.7
-# Postun requires alternatives to uninstall javadoc alternative.
+# Postun requires alternatives to uninstall javadoc alternative
 Requires(postun): %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(postun):   chkconfig >= 1.7
 
-# Standard JPackage javadoc provides.
+# Standard JPackage javadoc provides
 Provides: java-javadoc%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-javadoc%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-%{origin}-javadoc = %{epoch}:%{version}-%{release}
-
-Obsoletes: java-1.7.0-openjdk-javadoc%{?1}
-
+Provides: java-%{javaver}-%{origin}-javadoc%{?1} = %{epoch}:%{version}-%{release}
 }
 
 %define java_src_rpo() %{expand:
 Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
-# Standard JPackage javadoc provides.
+# Standard JPackage sources provides
 Provides: java-src%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-src%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-%{origin}-src = %{epoch}:%{version}-%{release}
-Obsoletes: java-1.7.0-openjdk-src%{?1}
+Provides: java-%{javaver}-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 }
 
 %define java_accessibility_rpo() %{expand:
@@ -917,29 +908,30 @@ Requires: java-atk-wrapper%{?_isa}
 Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
+Provides: java-accessibility = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-accessibility = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{release}
 
-Obsoletes: java-1.7.0-openjdk-accessibility%{?1}
 }
 
-# Prevent brp-java-repack-jars from being run.
+# Prevent brp-java-repack-jars from being run
 %global __jar_repack 0
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 1.%{buildver}%{?dist}
-# java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons,
-# and this change was brought into RHEL-4.  java-1.5.0-ibm packages
-# also included the epoch in their virtual provides.  This created a
+Release: 2.%{buildver}%{?dist}
+# java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
+# and this change was brought into RHEL-4. java-1.5.0-ibm packages
+# also included the epoch in their virtual provides. This created a
 # situation where in-the-wild java-1.5.0-ibm packages provided "java =
-# 1:1.5.0".  In RPM terms, "1.6.0 < 1:1.5.0" since 1.6.0 is
-# interpreted as 0:1.6.0.  So the "java >= 1.6.0" requirement would be
-# satisfied by the 1:1.5.0 packages.  Thus we need to set the epoch in
+# 1:1.5.0". In RPM terms, "1.6.0 < 1:1.5.0" since 1.6.0 is
+# interpreted as 0:1.6.0. So the "java >= 1.6.0" requirement would be
+# satisfied by the 1:1.5.0 packages. Thus we need to set the epoch in
 # JDK package >= 1.6.0 to 1, and packages referring to JDK virtual
 # provides >= 1.6.0 must specify the epoch, "java >= 1:1.6.0".
 
 Epoch:   1
-Summary: OpenJDK Runtime Environment
+Summary: %{origin_nice} Runtime Environment %{majorver}
 Group:   Development/Languages
 
 # HotSpot code is licensed under GPLv2
@@ -966,15 +958,15 @@ Source0: %{project}-%{repo}-%{revision}.tar.xz
 Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u172-b11--shenandoah-merge-2018-05-15.tar.xz
 
 # Custom README for -src subpackage
-Source2:  README.src
+Source2:  README.md
 
 # Use 'generate_tarballs.sh' to generate the following tarballs
-# They are based on code contained in the IcedTea7 project.
+# They are based on code contained in the IcedTea7 project
 
-# Systemtap tapsets. Zipped up to keep it small.
+# Systemtap tapsets. Zipped up to keep it small
 Source8: systemtap-tapset-3.6.0pre02.tar.xz
 
-# Desktop files. Adapated from IcedTea.
+# Desktop files. Adapted from IcedTea
 Source9: jconsole.desktop.in
 Source10: policytool.desktop.in
 
@@ -996,7 +988,11 @@ Source20: repackReproduciblePolycies.sh
 Source100: config.guess
 Source101: config.sub
 
+############################################
+#
 # RPM/distribution specific patches
+#
+############################################
 
 # Accessibility patches
 # Ignore AWTError when assistive technologies are loaded 
@@ -1004,7 +1000,11 @@ Patch1:   %{name}-accessible-toolkit.patch
 # Restrict access to java-atk-wrapper classes
 Patch3: java-atk-wrapper-security.patch
 
+#############################################
+#
 # Upstreamable patches
+#
+#############################################
 # PR2737: Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
 # PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
@@ -1039,7 +1039,11 @@ Patch528: pr3083-rh1346460.patch
 #                     linking with unresolved symbols.
 Patch529: rhbz_1538767_fix_linking.patch
 
+#############################################
+#
 # Upstreamable debugging patches
+#
+#############################################
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
 Patch204: hotspot-remove-debuglink.patch
 Patch205: dont-add-unnecessary-debug-links.patch
@@ -1053,8 +1057,14 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: s390-size_t_format_flags.patch
+# Fix more cases of missing return statements on AArch64
+Patch104: pr3458-rh1540242.patch
 
+#############################################
+#
 # Patches which need backporting to 8u
+#
+#############################################
 # S8073139, RH1191652; fix name of ppc64le architecture
 Patch601: %{name}-rh1191652-root.patch
 Patch602: %{name}-rh1191652-jdk.patch
@@ -1083,14 +1093,23 @@ Patch560: 8188030-pr3459-rh1484079.patch
 # 8197429, PR3456, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
 Patch561: 8197429-pr3456-rh1536622.patch
  
+#############################################
+#
 # Patches ineligible for 8u
+#
+#############################################
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
 Patch210: suse_linuxfilestore.patch
 # custom securities
 Patch300: PR3183.patch
 
+#############################################
+#
 # Local fixes
+#
+#############################################
+
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 Patch525: pr1834-rh1022017.patch
 # Turn on AssumeMP by default on RHEL systems
@@ -1098,8 +1117,20 @@ Patch534: always_assumemp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 Patch539: pr2888.patch
 
+#############################################
+#
+# Shenandoah fixes
+#
+#############################################
+# PR3573: Fix TCK crash with Shenandoah
+Patch700: pr3573.patch
+
+#############################################
+#
 # Non-OpenJDK fixes
 Patch1000: enableCommentedOutSystemNss.patch
+#
+#############################################
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1107,7 +1138,8 @@ BuildRequires: alsa-lib-devel
 BuildRequires: binutils
 BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
-BuildRequires: elfutils
+# elfutils only are ok for build without AOT
+BuildRequires: elfutils-devel
 BuildRequires: fontconfig
 BuildRequires: freetype-devel
 BuildRequires: giflib-devel
@@ -1135,7 +1167,7 @@ BuildRequires: java-1.7.0-openjdk-devel >= 1.7.0.151-2.6.11.3
 %else
 BuildRequires: java-1.8.0-openjdk-devel
 %endif
-# Zero-assembler build requirement.
+# Zero-assembler build requirement
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
@@ -1149,118 +1181,118 @@ BuildRequires: nss-softokn-freebl-devel >= 3.16.1
 BuildRequires: systemtap-sdt-devel
 %endif
 
-# this is built always, also during debug-only build
-# when it is built in debug-only, then this package is just placeholder
+# this is always built, also during debug-only build
+# when it is built in debug-only this package is just placeholder
 %{java_rpo %{nil}}
 
 %description
-The OpenJDK runtime environment.
+The %{origin_nice} runtime environment.
 
 %if %{include_debug_build}
-%package debug
-Summary: OpenJDK Runtime Environment %{debug_on}
+%package slowdebug
+Summary: %{origin_nice} Runtime Environment %{majorver} %{debug_on}
 Group:   Development/Languages
 
 %{java_rpo -- %{debug_suffix_unquoted}}
-%description debug
-The OpenJDK runtime environment.
+%description slowdebug
+The %{origin_nice} runtime environment.
 %{debug_warning}
 %endif
 
 %if %{include_normal_build}
 %package headless
-Summary: OpenJDK Runtime Environment
+Summary: %{origin_nice} Headless Runtime Environment %{majorver}
 Group:   Development/Languages
 
 %{java_headless_rpo %{nil}}
 
 %description headless
-The OpenJDK runtime environment without audio and video support.
+The %{origin_nice} runtime environment %{majorver} without audio and video support.
 %endif
 
 %if %{include_debug_build}
-%package headless-debug
-Summary: OpenJDK Runtime Environment %{debug_on}
+%package headless-slowdebug
+Summary: %{origin_nice} Runtime Environment %{debug_on}
 Group:   Development/Languages
 
 %{java_headless_rpo -- %{debug_suffix_unquoted}}
 
-%description headless-debug
-The OpenJDK runtime environment without audio and video support.
+%description headless-slowdebug
+The %{origin_nice} runtime environment %{majorver} without audio and video support.
 %{debug_warning}
 %endif
 
 %if %{include_normal_build}
 %package devel
-Summary: OpenJDK Development Environment
+Summary: %{origin_nice} Development Environment %{majorver}
 Group:   Development/Tools
 
 %{java_devel_rpo %{nil}}
 
 %description devel
-The OpenJDK development tools.
+The %{origin_nice} development tools %{majorver}.
 %endif
 
 %if %{include_debug_build}
-%package devel-debug
-Summary: OpenJDK Development Environment %{debug_on}
+%package devel-slowdebug
+Summary: %{origin_nice} Development Environment %{majorver} %{debug_on}
 Group:   Development/Tools
 
 %{java_devel_rpo -- %{debug_suffix_unquoted}}
 
-%description devel-debug
-The OpenJDK development tools.
+%description devel-slowdebug
+The %{origin_nice} development tools %{majorver}.
 %{debug_warning}
 %endif
 
 %if %{include_normal_build}
 %package demo
-Summary: OpenJDK Demos
+Summary: %{origin_nice} Demos %{majorver}
 Group:   Development/Languages
 
 %{java_demo_rpo %{nil}}
 
 %description demo
-The OpenJDK demos.
+The %{origin_nice} demos %{majorver}.
 %endif
 
 %if %{include_debug_build}
-%package demo-debug
-Summary: OpenJDK Demos %{debug_on}
+%package demo-slowdebug
+Summary: %{origin_nice} Demos %{majorver} %{debug_on}
 Group:   Development/Languages
 
 %{java_demo_rpo -- %{debug_suffix_unquoted}}
 
-%description demo-debug
-The OpenJDK demos.
+%description demo-slowdebug
+The %{origin_nice} demos %{majorver}.
 %{debug_warning}
 %endif
 
 %if %{include_normal_build}
 %package src
-Summary: OpenJDK Source Bundle
+Summary: %{origin_nice} Source Bundle %{majorver}
 Group:   Development/Languages
 
 %{java_src_rpo %{nil}}
 
 %description src
-The OpenJDK source bundle.
+The java-%{origin}-src sub-package contains the complete %{origin_nice} %{majorver} class library source code for use by IDE indexers and debuggers.
 %endif
 
 %if %{include_debug_build}
-%package src-debug
-Summary: OpenJDK Source Bundle %{for_debug}
+%package src-slowdebug
+Summary: %{origin_nice} Source Bundle %{majorver} %{for_debug}
 Group:   Development/Languages
 
 %{java_src_rpo -- %{debug_suffix_unquoted}}
 
-%description src-debug
-The OpenJDK source bundle %{for_debug}.
+%description src-slowdebug
+The java-%{origin}-src-slowdebug sub-package contains the complete %{origin_nice} %{majorver} class library source code for use by IDE indexers and debuggers. Debugging %{for_debug}.
 %endif
 
 %if %{include_normal_build}
 %package javadoc
-Summary: OpenJDK API Documentation
+Summary: %{origin_nice} %{majorver} API documentation
 Group:   Documentation
 Requires: javapackages-filesystem
 BuildArch: noarch
@@ -1268,12 +1300,12 @@ BuildArch: noarch
 %{java_javadoc_rpo %{nil}}
 
 %description javadoc
-The OpenJDK API documentation.
+The %{origin_nice} %{majorver} API documentation.
 %endif
 
 %if %{include_normal_build}
 %package javadoc-zip
-Summary: OpenJDK API Documentation compressed in single archive
+Summary: %{origin_nice} %{majorver} API documentation compressed in single archive
 Group:   Documentation
 Requires: javapackages-filesystem
 BuildArch: noarch
@@ -1281,60 +1313,60 @@ BuildArch: noarch
 %{java_javadoc_rpo %{nil}}
 
 %description javadoc-zip
-The OpenJDK API documentation compressed in single archive.
+The %{origin_nice} %{majorver} API documentation compressed in single archive.
 %endif
 
 %if %{include_debug_build}
-%package javadoc-debug
-Summary: OpenJDK API Documentation %{for_debug}
+%package javadoc-slowdebug
+Summary: %{origin_nice} %{majorver} API documentation %{for_debug}
 Group:   Documentation
 Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo -- %{debug_suffix_unquoted}}
 
-%description javadoc-debug
-The OpenJDK API documentation %{for_debug}.
+%description javadoc-slowdebug
+The %{origin_nice} %{majorver} API documentation %{for_debug}.
 %endif
 
 %if %{include_debug_build}
-%package javadoc-zip-debug
-Summary: OpenJDK API Documentation compressed in single archive %{for_debug}
+%package javadoc-zip-slowdebug
+Summary: %{origin_nice} %{majorver} API documentation compressed in single archive %{for_debug}
 Group:   Documentation
 Requires: javapackages-filesystem
 BuildArch: noarch
 
 %{java_javadoc_rpo -- %{debug_suffix_unquoted}}
 
-%description javadoc-zip-debug
-The OpenJDK API documentation compressed in single archive %{for_debug}.
+%description javadoc-zip-slowdebug
+The %{origin_nice} %{majorver} API documentation compressed in single archive %{for_debug}.
 %endif
 
 
 %if %{include_normal_build}
 %package accessibility
-Summary: OpenJDK accessibility connector
+Summary: %{origin_nice} %{majorver} accessibility connector
 
 %{java_accessibility_rpo %{nil}}
 
 %description accessibility
-Enables accessibility support in OpenJDK by using java-atk-wrapper. This allows
+Enables accessibility support in %{origin_nice} %{majorver} by using java-atk-wrapper. This allows
 compatible at-spi2 based accessibility programs to work for AWT and Swing-based
 programs.
 
-Please note, the java-atk-wrapper is still in beta, and OpenJDK itself is still
+Please note, the java-atk-wrapper is still in beta, and %{origin_nice} %{majorver} itself is still
 being tuned to be working with accessibility features. There are known issues
 with accessibility on, so please do not install this package unless you really
 need to.
 %endif
 
 %if %{include_debug_build}
-%package accessibility-debug
-Summary: OpenJDK accessibility connector %{for_debug}
+%package accessibility-slowdebug
+Summary: %{origin_nice} %{majorver} accessibility connector %{for_debug}
 
 %{java_accessibility_rpo -- %{debug_suffix_unquoted}}
 
-%description accessibility-debug
+%description accessibility-slowdebug
 See normal java-%{version}-openjdk-accessibility description.
 %endif
 
@@ -1389,7 +1421,7 @@ else
   exit 12
 fi
 if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
-  echo "you have disabled both include_debug_build and include_debug_build. no go."
+  echo "You have disabled both include_debug_build and include_debug_build. That is a no go."
   exit 13
 fi
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
@@ -1449,6 +1481,12 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
+# AArch64 fixes
+%if %{use_shenandoah_hotspot}
+%else
+%patch104
+%endif
+
 # ppc64le fixes
 %patch603
 %patch601
@@ -1479,9 +1517,9 @@ sh %{SOURCE12}
 %patch538
 %patch540
 %patch560
-pushd openjdk/jdk
+pushd %{top_level_dir_name}/jdk
 %patch529 -p1
-popd
+popd # openjdk
 %patch561
 
 # RPM-only fixes
@@ -1505,17 +1543,17 @@ cp -r tapset tapset%{debug_suffix}
 
 for suffix in %{build_loop} ; do
   for file in "tapset"$suffix/*.in; do
-    OUTPUT_FILE=`echo $file | sed -e s:%{javaver}\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g`
-    sed -e s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir -- $suffix}/jre/lib/%{archinstall}/server/libjvm.so:g $file > $file.1
+    OUTPUT_FILE=`echo $file | sed -e "s:%{systemtap_javaver}\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g"`
+    sed -e "s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir -- $suffix}/jre/lib/%{archinstall}/server/libjvm.so:g" $file > $file.1
 # TODO find out which architectures other than i686 have a client vm
 %ifarch %{ix86}
-    sed -e s:@ABS_CLIENT_LIBJVM_SO@:%{_jvmdir}/%{sdkdir -- $suffix}/jre/lib/%{archinstall}/client/libjvm.so:g $file.1 > $OUTPUT_FILE
+    sed -e "s:@ABS_CLIENT_LIBJVM_SO@:%{_jvmdir}/%{sdkdir -- $suffix}/jre/lib/%{archinstall}/client/libjvm.so:g" $file.1 > $OUTPUT_FILE
 %else
-    sed -e '/@ABS_CLIENT_LIBJVM_SO@/d' $file.1 > $OUTPUT_FILE
+    sed -e "/@ABS_CLIENT_LIBJVM_SO@/d" $file.1 > $OUTPUT_FILE
 %endif
-    sed -i -e s:@ABS_JAVA_HOME_DIR@:%{_jvmdir}/%{sdkdir -- $suffix}:g $OUTPUT_FILE
-    sed -i -e s:@INSTALL_ARCH_DIR@:%{archinstall}:g $OUTPUT_FILE
-    sed -i -e s:@prefix@:%{_jvmdir}/%{sdkdir -- $suffix}/:g $OUTPUT_FILE
+    sed -i -e "s:@ABS_JAVA_HOME_DIR@:%{_jvmdir}/%{sdkdir -- $suffix}:g" $OUTPUT_FILE
+    sed -i -e "s:@INSTALL_ARCH_DIR@:%{archinstall}:g" $OUTPUT_FILE
+    sed -i -e "s:@prefix@:%{_jvmdir}/%{sdkdir -- $suffix}/:g" $OUTPUT_FILE
   done
 done
 # systemtap tapsets ends
@@ -1528,14 +1566,16 @@ for file in %{SOURCE9} %{SOURCE10} ; do
     EXT="${FILE##*.}"
     NAME="${FILE%.*}"
     OUTPUT_FILE=$NAME$suffix.$EXT
-    sed -e s:#JAVA_HOME#:%{sdkbindir -- $suffix}:g $file > $OUTPUT_FILE
-    sed -i -e  s:#JRE_HOME#:%{jrebindir -- $suffix}:g $OUTPUT_FILE
-    sed -i -e  s:#ARCH#:%{version}-%{release}.%{_arch}$suffix:g $OUTPUT_FILE
+    sed    -e  "s:@JAVA_HOME@:%{sdkbindir -- $suffix}:g" $file > $OUTPUT_FILE
+    sed -i -e  "s:@JRE_HOME@:%{jrebindir -- $suffix}:g" $OUTPUT_FILE
+    sed -i -e  "s:@ARCH@:%{version}-%{release}.%{_arch}$suffix:g" $OUTPUT_FILE
+    sed -i -e  "s:@JAVA_MAJOR_VERSION@:%{majorver}:g" $OUTPUT_FILE
+    sed -i -e  "s:@JAVA_VENDOR@:%{origin}:g" $OUTPUT_FILE
 done
 done
 
 # Setup nss.cfg
-sed -e s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g %{SOURCE11} > nss.cfg
+sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
 
 %build
@@ -1547,7 +1587,6 @@ export NUM_PROC=${NUM_PROC:-1}
 [ ${NUM_PROC} -gt %{?_smp_ncpus_max} ] && export NUM_PROC=%{?_smp_ncpus_max}
 %endif
 
-# Build IcedTea and OpenJDK.
 %ifarch s390x sparc64 alpha %{power64} %{aarch64}
 export ARCH_DATA_MODEL=64
 %endif
@@ -1560,21 +1599,23 @@ export CFLAGS="$CFLAGS -mieee"
 # Explicitly set the C++ standard as the default has changed on GCC >= 6
 EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error -fno-delete-null-pointer-checks -fno-lifetime-dse"
 EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse"
+
 %ifarch %{power64} ppc
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
 %endif
 export EXTRA_CFLAGS
 
-(cd openjdk/common/autoconf
+(cd %{top_level_dir_name}/common/autoconf
  bash ./autogen.sh
 )
 
 for suffix in %{build_loop} ; do
-if [ "$suffix" = "%{debug_suffix}" ] ; then
-debugbuild=%{debugbuild_parameter}
+if [ "x$suffix" = "x" ] ; then
+  debugbuild=release
 else
-debugbuild=%{normalbuild_parameter}
+  # change --something to something
+  debugbuild=`echo $suffix  | sed "s/-//g"`
 fi
 
 mkdir -p %{buildoutputdir -- $suffix}
@@ -1598,10 +1639,15 @@ bash ../../configure \
     --with-libjpeg=system \
     --with-giflib=system \
     --with-libpng=system \
-    --with-lcms=bundled \
+    --with-lcms=system \
     --with-stdc++lib=dynamic \
+%ifarch %{ix86}
+    --with-extra-cxxflags="-mstackrealign $EXTRA_CPP_FLAGS" \
+    --with-extra-cflags="-mstackrealign $EXTRA_CFLAGS" \
+%else
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
+%endif
     --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
@@ -1627,17 +1673,22 @@ make zip-docs
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
 # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
-find images/%{j2sdkimage} -iname '*.jar' -exec chmod ugo+r {} \;
-chmod ugo+r images/%{j2sdkimage}/lib/ct.sym
+find images/%{jdkimage} -iname '*.jar' -exec chmod ugo+r {} \;
+chmod ugo+r images/%{jdkimage}/lib/ct.sym
 
 # remove redundant *diz and *debuginfo files
-find images/%{j2sdkimage} -iname '*.diz' -exec rm {} \;
-find images/%{j2sdkimage} -iname '*.debuginfo' -exec rm {} \;
+find images/%{jdkimage} -iname '*.diz' -exec rm {} \;
+find images/%{jdkimage} -iname '*.debuginfo' -exec rm {} \;
+
+# Build screws up permissions on binaries
+# https://bugs.openjdk.java.net/browse/JDK-8173610
+find images/%{jdkimage} -iname '*.so' -exec chmod +x {} \;
+find images/%{jdkimage}/bin/ -exec chmod +x {} \;
 
 popd >& /dev/null
 
 # Install nss.cfg right away as we will be using the JRE above
-export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{j2sdkimage}
+export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
@@ -1646,7 +1697,7 @@ install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
 rm $JAVA_HOME/jre/lib/tzdb.dat
 ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
 
-#build cycles
+# build cycles
 done
 
 %check
@@ -1654,7 +1705,7 @@ done
 # We test debug first as it will give better diagnostics on a crash
 for suffix in %{rev_build_loop} ; do
 
-export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{j2sdkimage}
+export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1672,14 +1723,14 @@ do
     # All these tests rely on RPM failing the build if the exit code of any set
     # of piped commands is non-zero.
 
-    # Test for .debug_* sections in the shared object. This is the  main test.
-    # Stripped objects will not contain these.
+    # Test for .debug_* sections in the shared object. This is the main test
+    # Stripped objects will not contain these
     eu-readelf -S "$lib" | grep "] .debug_"
     test $(eu-readelf -S "$lib" | grep -E "\]\ .debug_(info|abbrev)" | wc --lines) == 2
 
-    # Test FILE symbols. These will most likely be removed by anyting that
+    # Test FILE symbols. These will most likely be removed by anything that
     # manipulates symbol tables because it's generally useless. So a nice test
-    # that nothing has messed with symbols.
+    # that nothing has messed with symbols
     old_IFS="$IFS"
     IFS=$'\n'
     for line in $(eu-readelf -s "$lib" | grep "00000000      0 FILE    LOCAL  DEFAULT")
@@ -1690,7 +1741,7 @@ do
     done
     IFS="$old_IFS"
 
-    # If this is the JVM, look for javaCalls.(cpp|o) in FILEs, for extra sanity checking.
+    # If this is the JVM, look for javaCalls.(cpp|o) in FILEs, for extra sanity checking
     if [ "`basename $lib`" = "libjvm.so" ]; then
       eu-readelf -s "$lib" | \
         grep -E "00000000      0 FILE    LOCAL  DEFAULT      ABS javaCalls.(cpp|o)$"
@@ -1698,7 +1749,7 @@ do
 
     # Test that there are no .gnu_debuglink sections pointing to another
     # debuginfo file. There shouldn't be any debuginfo files, so the link makes
-    # no sense either.
+    # no sense either
     eu-readelf -S "$lib" | grep 'gnu'
     if eu-readelf -S "$lib" | grep '] .gnu_debuglink' | grep PROGBITS; then
       echo "bad .gnu_debuglink section."
@@ -1740,7 +1791,7 @@ $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
 
-#build cycles check
+# build cycles check
 done
 
 %install
@@ -1748,9 +1799,10 @@ STRIP_KEEP_SYMTAB=libjvm*
 
 for suffix in %{build_loop} ; do
 
-pushd %{buildoutputdir -- $suffix}/images/%{j2sdkimage}
+# Install the jdk
+pushd %{buildoutputdir -- $suffix}/images/%{jdkimage}
 
-#install jsa directories so we can owe them
+# Install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/server/
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/client/
 
@@ -1761,7 +1813,7 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
   cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}
 
 %if %{with_systemtap}
-  # Install systemtap support files.
+  # Install systemtap support files
   install -dm 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/tapset
   # note, that uniquesuffix  is in BUILD dir in this case
   cp -a $RPM_BUILD_DIR/%{uniquesuffix ""}/tapset$suffix/*.stp $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/tapset/
@@ -1769,28 +1821,20 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
    tapsetFiles=`ls *.stp`
   popd
   install -d -m 755 $RPM_BUILD_ROOT%{tapsetdir}
-  pushd $RPM_BUILD_ROOT%{tapsetdir}
-    RELATIVE=$(%{abs2rel} %{_jvmdir}/%{sdkdir -- $suffix}/tapset %{tapsetdir})
-    for name in $tapsetFiles ; do
-      targetName=`echo $name | sed "s/.stp/$suffix.stp/"`
-      ln -sf $RELATIVE/$name $targetName
-    done
-  popd
+  for name in $tapsetFiles ; do
+    targetName=`echo $name | sed "s/.stp/$suffix.stp/"`
+    ln -sf %{_jvmdir}/%{sdkdir -- $suffix}/tapset/$name $RPM_BUILD_ROOT%{tapsetdir}/$targetName
+  done
 %endif
 
-  # Remove empty cacerts database.
+  # Remove empty cacerts database
   rm -f $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/security/cacerts
-  # Install cacerts symlink needed by some apps which hardcode the path.
+  # Install cacerts symlink needed by some apps which hardcode the path
   pushd $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/security
-    RELATIVE=$(%{abs2rel} %{_sysconfdir}/pki/java \
-      %{_jvmdir}/%{jredir -- $suffix}/lib/security)
-    ln -sf $RELATIVE/cacerts .
+      ln -sf /etc/pki/java/cacerts .
   popd
 
-  # Install JCE policy symlinks.
-  install -d -m 755 $RPM_BUILD_ROOT%{_jvmprivdir}/%{uniquesuffix -- $suffix}/jce/vanilla
-
-  # Install versioned symlinks.
+  # Install versioned symlinks
   pushd $RPM_BUILD_ROOT%{_jvmdir}
     ln -sf %{jredir -- $suffix} %{jrelnk -- $suffix}
   popd
@@ -1798,11 +1842,11 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
   # Remove javaws man page
   rm -f man/man1/javaws*
 
-  # Install man pages.
+  # Install man pages
   install -d -m 755 $RPM_BUILD_ROOT%{_mandir}/man1
   for manpage in man/man1/*
   do
-    # Convert man pages to UTF8 encoding.
+    # Convert man pages to UTF8 encoding
     iconv -f ISO_8859-1 -t UTF8 $manpage -o $manpage.tmp
     mv -f $manpage.tmp $manpage
     install -m 644 -p $manpage $RPM_BUILD_ROOT%{_mandir}/man1/$(basename \
@@ -1821,19 +1865,20 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
 popd
 
 
-# Install Javadoc documentation.
+# Install Javadoc documentation
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
 cp -a %{buildoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
-cp -a %{buildoutputdir -- $suffix}/bundles/jdk-%{javaver}_%{updatever}$suffix-%{buildver}-docs.zip  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
+built_doc_archive=`echo "jdk-%{javaver}_%{updatever}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
+cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
 
-# Install icons and menu entries.
+# Install icons and menu entries
 for s in 16 24 32 48 ; do
   install -D -p -m 644 \
     openjdk/jdk/src/solaris/classes/sun/awt/X11/java-icon${s}.png \
-    $RPM_BUILD_ROOT%{_datadir}/icons/hicolor/${s}x${s}/apps/java-%{javaver}.png
+    $RPM_BUILD_ROOT%{_datadir}/icons/hicolor/${s}x${s}/apps/java-%{javaver}-%{origin}.png
 done
 
-# Install desktop files.
+# Install desktop files
 install -d -m 755 $RPM_BUILD_ROOT%{_datadir}/{applications,pixmaps}
 for e in jconsole$suffix policytool$suffix ; do
     desktop-file-install --vendor=%{uniquesuffix -- $suffix} --mode=644 \
@@ -1844,7 +1889,7 @@ done
 # See https://bugzilla.redhat.com/show_bug.cgi?id=741821
 mkdir -p $RPM_BUILD_ROOT%{_sysconfdir}/.java/.systemPrefs
 
-# FIXME: remove SONAME entries from demo DSOs.  See
+# FIXME: remove SONAME entries from demo DSOs. See
 # https://bugzilla.redhat.com/show_bug.cgi?id=436497
 
 # Find non-documentation demo files.
@@ -1920,17 +1965,24 @@ bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix} %{javaver}
 # https://bugzilla.redhat.com/show_bug.cgi?id=1183793
 touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/security/java.security
 
+# stabilize permissions
+find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "*.so" -exec chmod 755 {} \; ; 
+find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -type d -exec chmod 755 {} \; ; 
+find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "ASSEMBLY_EXCEPTION" -exec chmod 644 {} \; ; 
+find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "LICENSE" -exec chmod 644 {} \; ; 
+find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "THIRD_PARTY_README" -exec chmod 644 {} \; ; 
+
 # end, dual install
 done
 
-%if %{include_normal_build} 
-# intentioanlly only for non-debug
+%if %{include_normal_build}
+# intentionally only for non-debug
 %pretrans headless -p <lua>
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1290388 for pretrans over pre
 -- if copy-jdk-configs is in transaction, it installs in pretrans to temp
 -- if copy_jdk_configs is in temp, then it means that copy-jdk-configs is in tranasction  and so is
--- preferred over one in %%{_libexecdir}. If it is not in transaction, then depends 
+-- preferred over one in %%{_libexecdir}. If it is not in transaction, then depends
 -- whether copy-jdk-configs is installed or not. If so, then configs are copied
 -- (copy_jdk_configs from %%{_libexecdir} used) or not copied at all
 local posix = require "posix"
@@ -1947,7 +1999,7 @@ local stat2 = posix.stat(SOURCE2, "type");
     print(SOURCE1 .." exists - copy-jdk-configs in transaction, using this one.")
   end;
   package.path = package.path .. ";" .. SOURCE1
-else 
+else
   if (stat2 ~= nil) then
   if (debug) then
     print(SOURCE2 .." exists - copy-jdk-configs alrady installed and NOT in transation. Using.")
@@ -1962,11 +2014,11 @@ else
   return
   end
 end
--- run contetn of included file with fake args
+-- run content of included file with fake args
 arg = {"--currentjvm", "%{uniquesuffix %{nil}}", "--jvmdir", "%{_jvmdir %{nil}}", "--origname", "%{name}", "--origjavaver", "%{javaver}", "--arch", "%{_arch}", "--temp", "%{rpm_state_dir}/%{name}.%{_arch}"}
 require "copy_jdk_configs.lua"
 
-%post 
+%post
 %{post_script %{nil}}
 
 %post headless
@@ -2003,45 +2055,45 @@ require "copy_jdk_configs.lua"
 %{postun_javadoc_zip %{nil}}
 %endif
 
-%if %{include_debug_build} 
-%post debug
+%if %{include_debug_build}
+%post slowdebug
 %{post_script -- %{debug_suffix_unquoted}}
 
-%post headless-debug
+%post headless-slowdebug
 %{post_headless -- %{debug_suffix_unquoted}}
 
-%postun debug
+%postun slowdebug
 %{postun_script -- %{debug_suffix_unquoted}}
 
-%postun headless-debug
+%postun headless-slowdebug
 %{postun_headless -- %{debug_suffix_unquoted}}
 
-%posttrans debug
+%posttrans slowdebug
 %{posttrans_script -- %{debug_suffix_unquoted}}
 
-%post devel-debug
+%post devel-slowdebug
 %{post_devel -- %{debug_suffix_unquoted}}
 
-%postun devel-debug
+%postun devel-slowdebug
 %{postun_devel -- %{debug_suffix_unquoted}}
 
-%posttrans  devel-debug
+%posttrans  devel-slowdebug
 %{posttrans_devel -- %{debug_suffix_unquoted}}
 
-%post javadoc-debug
+%post javadoc-slowdebug
 %{post_javadoc -- %{debug_suffix_unquoted}}
 
-%postun javadoc-debug
+%postun javadoc-slowdebug
 %{postun_javadoc -- %{debug_suffix_unquoted}}
 
-%post javadoc-zip-debug
+%post javadoc-zip-slowdebug
 %{post_javadoc_zip -- %{debug_suffix_unquoted}}
 
-%postun javadoc-zip-debug
+%postun javadoc-zip-slowdebug
 %{postun_javadoc_zip -- %{debug_suffix_unquoted}}
 %endif
 
-%if %{include_normal_build} 
+%if %{include_normal_build}
 %files
 # main package builds always
 %{files_jre %{nil}}
@@ -2051,10 +2103,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 
-%if %{include_normal_build} 
+%if %{include_normal_build}
 %files headless
-# important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue 
-# all config/norepalce files (and more) have to be declared in pretrans. See pretrans
+# important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
+# all config/noreplace files (and more) have to be declared in pretrans. See pretrans
 %{files_jre_headless %{nil}}
 
 %files devel
@@ -2069,6 +2121,10 @@ require "copy_jdk_configs.lua"
 %files javadoc
 %{files_javadoc %{nil}}
 
+# this puts huge file to /usr/share
+# unluckily ti is really a documentation file
+# and unluckily it really is archtecture-depndent, as ag aot and grail are now x86_64 only
+# same for debug variant
 %files javadoc-zip
 %{files_javadoc_zip %{nil}}
 
@@ -2082,39 +2138,52 @@ require "copy_jdk_configs.lua"
 %endif
 %endif
 
-%if %{include_debug_build} 
-%files debug
+%if %{include_debug_build}
+%files slowdebug
 %{files_jre -- %{debug_suffix_unquoted}}
 
-%files headless-debug
+%files headless-slowdebug
 %{files_jre_headless -- %{debug_suffix_unquoted}}
 
-%files devel-debug
+%files devel-slowdebug
 %{files_devel -- %{debug_suffix_unquoted}}
 
-%files demo-debug -f %{name}-demo.files-debug
+%files demo-slowdebug -f %{name}-demo.files-slowdebug
 %{files_demo -- %{debug_suffix_unquoted}}
 
-%files src-debug
+%files src-slowdebug
 %{files_src -- %{debug_suffix_unquoted}}
 
-%files javadoc-debug
+%files javadoc-slowdebug
 %{files_javadoc -- %{debug_suffix_unquoted}}
 
-%files javadoc-zip-debug
+%files javadoc-zip-slowdebug
 %{files_javadoc_zip -- %{debug_suffix_unquoted}}
 
-%files accessibility-debug
+%files accessibility-slowdebug
 %{files_accessibility -- %{debug_suffix_unquoted}}
 
 %if %{with_openjfx_binding}
-%files openjfx-debug -f %{name}-openjfx.files-debug
+%files openjfx-slowdebug -f %{name}-openjfx.files-slowdebug
 
-%files openjfx-devel-debug -f %{name}-openjfx-devel.files-debug
+%files openjfx-devel-slowdebug -f %{name}-openjfx-devel.files-slowdebug
 %endif
 %endif
 
 %changelog
+* Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-2.b11
+- quoted sed expressions, changed possibly confussing # by @
+- added vendor(origin) into icons
+- removed last trace of relative symlinks
+- added BuildRequires of javapackages-tools to fix build failure after Requires change to javapackages-filesystem
+- aligning with java-openjdk in fedora:
+- slowdebug instead simply debug subpackage
+- purged provides
+- many macros renamed
+- typos correction
+- bumped jstack (may be wrong)
+- fixed issue with atkwrapper wrongly palced broken symlink
+
 * Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-1.b11
 - updated to u172-b11
 - removed patches:
