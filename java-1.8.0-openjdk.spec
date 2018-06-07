@@ -1119,14 +1119,6 @@ Patch539: pr2888.patch
 
 #############################################
 #
-# Shenandoah fixes
-#
-#############################################
-# PR3573: Fix TCK crash with Shenandoah
-Patch700: pr3573.patch
-
-#############################################
-#
 # Non-OpenJDK fixes
 Patch1000: enableCommentedOutSystemNss.patch
 #
