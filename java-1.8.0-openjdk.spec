@@ -1390,20 +1390,20 @@ Set of links from OpenJDK (sdk) to OpenJFX
 
 %if %{include_debug_build}
 %package openjfx-slowdebug
-Summary: OpenJDK x OpenJFX connector %{for_debug}. his package adds symliks finishing Java FX integration to %{name}-debug
-Requires: %{name}-debug%{?_isa} = %{epoch}:%{version}-%{release}
+Summary: OpenJDK x OpenJFX connector %{for_debug}. his package adds symliks finishing Java FX integration to %{name}-slowdebug
+Requires: %{name}-slowdebug%{?_isa} = %{epoch}:%{version}-%{release}
 Requires: openjfx%{?_isa}
-Provides: javafx-debug = %{epoch}:%{version}-%{release}
-%description openjfx-debug
-Set of links from OpenJDK-debug (jre) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
+Provides: javafx-slowdebug = %{epoch}:%{version}-%{release}
+%description openjfx-slowdebug
+Set of links from OpenJDK-slowdebug (jre) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
 
 %package openjfx-devel-slowdebug
-Summary: OpenJDK x OpenJFX connector for FX developers %{for_debug}. This package adds symliks finishing Java FX integration to %{name}-devel-debug
-Requires: %{name}-devel-debug%{?_isa} = %{epoch}:%{version}-%{release}
+Summary: OpenJDK x OpenJFX connector for FX developers %{for_debug}. This package adds symliks finishing Java FX integration to %{name}-devel-slowdebug
+Requires: %{name}-devel-slowdebug%{?_isa} = %{epoch}:%{version}-%{release}
 Requires: openjfx-devel%{?_isa}
-Provides: javafx-devel-debug = %{epoch}:%{version}-%{release}
-%description openjfx-devel-debug
-Set of links from OpenJDK-debug (sdk) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
+Provides: javafx-devel-slowdebug = %{epoch}:%{version}-%{release}
+%description openjfx-devel-slowdebug
+Set of links from OpenJDK-slowdebug (sdk) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
 %endif
 %endif
 
