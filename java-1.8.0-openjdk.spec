@@ -919,7 +919,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 2.%{buildver}%{?dist}
+Release: 3.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2163,6 +2163,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jun 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-3.b11
+- Bump release and rebuild for fixed gdb. See RHBZ#1589118.
+
 * Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-2.b11
 - quoted sed expressions, changed possibly confussing # by @
 - added vendor(origin) into icons
