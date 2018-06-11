@@ -2256,9 +2256,6 @@ require "copy_jdk_configs.lua"
 - fixed libjvm path for system tap
 - returned patch104 pr3458-rh1540242.patch
 
-* Fri Jun 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-3.b11
-- Bump release and rebuild for fixed gdb. See RHBZ#1589118.
-
 * Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-2.b11
 - quoted sed expressions, changed possibly confussing # by @
 - added vendor(origin) into icons
