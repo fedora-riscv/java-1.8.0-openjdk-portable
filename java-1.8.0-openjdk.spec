@@ -72,14 +72,22 @@
 %global targets all
 %endif
 
+
+%ifarch %{aarch64}
+# Disable hardened build on AArch64 as it didn't bootcycle
+%undefine _hardened_build
+%global ourcppflags "-fstack-protector-strong"
+%global ourldflags %{nil}
+%else
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
 # We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
-%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
+%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||') "-fstack-protector-strong"
 %global ourldflags %{__global_ldflags}
+%endif
 
 # With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
 # the initialisation must be here. Later the pkg-config have buggy behaviour
@@ -919,7 +927,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 3.%{buildver}%{?dist}
+Release: 5.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1035,9 +1043,11 @@ Patch509: rh1176206-root.patch
 Patch523: pr2974-rh1337583.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460.patch
+# RH1566890: CVE-2018-3639
+Patch529: rh1566890_embargoed20180521.patch
 # 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
 #                     linking with unresolved symbols.
-Patch529: rhbz_1538767_fix_linking.patch
+Patch530: rhbz_1538767_fix_linking.patch
 
 #############################################
 #
@@ -1051,14 +1061,18 @@ Patch205: dont-add-unnecessary-debug-links.patch
 Patch206: hotspot-assembler-debuginfo.patch
 
 # Arch-specific upstreamable patches
-# PR2415: JVM -Xmx requirement is too high on s390
+# s390: PR2415: JVM -Xmx requirement is too high on s390
 Patch100: %{name}-s390-java-opts.patch
-# Type fixing for s390
+# s390: Type fixing for s390
 Patch102: %{name}-size_t.patch
-# Use "%z" for size_t on s390 as size_t != intptr_t
-Patch103: s390-size_t_format_flags.patch
-# Fix more cases of missing return statements on AArch64
-Patch104: pr3458-rh1540242.patch
+# s390: PR3593: Use "%z" for size_t on s390 as size_t != intptr_t
+Patch103: pr3593-s390-size_t_format_flags.patch
+# AArch64: Fix more cases of missing return statements
+Patch104: pr3458-rh1540242-aarch64.patch
+# x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
+Patch105: 8199936-pr3533-workaround.patch
+# Zero: Fix more cases of missing return statements
+Patch106: pr3458-rh1540242-zero.patch
 
 #############################################
 #
@@ -1087,11 +1101,32 @@ Patch400: 8154313.patch
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
 Patch538: 8061305-pr3335-rh1423421.patch
-Patch540: rhbz1548475-LDFLAGSusage.patch
 # 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
 Patch560: 8188030-pr3459-rh1484079.patch
-# 8197429, PR3456, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
-Patch561: 8197429-pr3456-rh1536622.patch
+# 8197429, PR3546, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
+Patch561: 8197429-pr3546-rh1536622.patch
+# PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
+Patch562: pr3539-rh1548475.patch
+# 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
+Patch563: 8171000-pr3542-rh1402819.patch
+# 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
+Patch564: 8197546-pr3542-rh1402819.patch
+# 8185723, PR3553: Zero: segfaults on Power PC 32-bit
+Patch565: 8185723-pr3553.patch
+# 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
+Patch566: 8186461-pr3557.patch
+# PR3559: Use ldrexd for atomic reads on ARMv7.
+Patch567: pr3559.patch
+# 8187577, PR3578: JVM crash during gc doing concurrent marking
+Patch568: 8187577-pr3578.patch
+# 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
+Patch569: 8201509-pr3579.patch
+# 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
+Patch570: 8165489-pr3589.patch
+# PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
+Patch571: pr3591.patch
+# 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
+Patch572: 8184309-pr3596.patch
  
 #############################################
 #
@@ -1116,13 +1151,15 @@ Patch525: pr1834-rh1022017.patch
 Patch534: always_assumemp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 Patch539: pr2888.patch
+# PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
+Patch540: pr3575-rh1567204.patch
 
 #############################################
 #
 # Non-OpenJDK fixes
-Patch1000: enableCommentedOutSystemNss.patch
 #
 #############################################
+Patch1000: enableCommentedOutSystemNss.patch
 
 BuildRequires: autoconf
 BuildRequires: automake
@@ -1155,6 +1192,7 @@ BuildRequires: zip
 # Use OpenJDK 7 where available (on RHEL) to avoid
 # having to use the rhel-7.x-java-unsafe-candidate hack
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
+# Require a boot JDK which doesn't fail due to RH1482244
 BuildRequires: java-1.7.0-openjdk-devel >= 1.7.0.151-2.6.11.3
 %else
 BuildRequires: java-1.8.0-openjdk-devel
@@ -1479,12 +1517,16 @@ sh %{SOURCE12}
 %patch104
 %endif
 
+# x86 fixes
+%patch105
+
 # ppc64le fixes
 %patch603
 %patch601
 %patch602
 
 # Zero fixes.
+%patch106
 
 # Upstreamable fixes
 %patch502
@@ -1506,21 +1548,38 @@ sh %{SOURCE12}
 %patch523
 %patch526
 %patch528
+%patch529
 %patch538
-%patch540
 %patch560
-pushd %{top_level_dir_name}/jdk
-%patch529 -p1
-popd # openjdk
+pushd openjdk/jdk
+%patch530 -p1
+popd
 %patch561
+%patch562
+%patch563
+%patch564
+%patch565
+%patch566
+%patch567
+%patch569
+%patch571
+%patch572
 
 # RPM-only fixes
 %patch525
 %patch539
+%patch540
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch534
+%endif
+
+# Shenandoah-only patches
+%if %{use_shenandoah_hotspot}
+%else
+%patch568
+%patch570
 %endif
 
 %patch1000
@@ -2163,6 +2222,40 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jun 11 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-5.b11
+- Read jssecacerts file prior to trying either cacerts file (system or local) (PR3575)
+- Resolves: rhbz#1567204
+- Fix a number of bad bug identifiers (PR3546 should be PR3578, PR3456 should be PR3546)
+- Update Shenandoah tarball to include 2018-05-15 merge.
+- Split PR3458/RH1540242 fix into AArch64 & Zero sections, so former can be skipped on Shenandoah builds.
+- Drop PR3573 patch applied upstream.
+- Restrict 8187577 fix to non-Shenandoah builds, as it's included in the new tarball.
+- Sync with IcedTea 3.8.0.
+- Label architecture-specific fixes with architecture concerned
+- x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
+- PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
+- 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
+- 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
+- 8185723, PR3553: Zero: segfaults on Power PC 32-bit
+- 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
+- PR3559: Use ldrexd for atomic reads on ARMv7.
+- 8187577, PR3578: JVM crash during gc doing concurrent marking
+- 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
+- 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
+- PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
+- 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
+
+* Wed Jun 06 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-1.b11
+- updated to u172-b11
+- removed patches:
+- patch207 8200556-pr3566.patch
+- patch104 pr3458-rh1540242.patch
+- patch209 8035496-hotspot.patch
+- patch700 pr3573.patch
+- fixed issue with atkwrapper wrongly palced broken symlink
+- fixed libjvm path for system tap
+- returned patch104 pr3458-rh1540242.patch
+
 * Fri Jun 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-3.b11
 - Bump release and rebuild for fixed gdb. See RHBZ#1589118.
 
