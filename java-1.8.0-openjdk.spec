@@ -567,8 +567,8 @@ exit 0
 %config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.cfg
 %ifarch %{jit_arches}
 %ifnarch %{power64}
-%ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
-%ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
+%attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
+%attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
 %endif
 %endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/
@@ -920,7 +920,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 9.%{buildver}%{?dist}
+Release: 10.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2215,6 +2215,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jun 20 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.172-10.b11
+- jsa files changed to 444 to pass rpm verification
+
 * Mon Jun 18 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-9.b11
 - Filter private provides/requires: 'lib.so(SUNWprivate_.*'
 
