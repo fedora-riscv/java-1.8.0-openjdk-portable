@@ -1,3 +1,26 @@
+# RPM conditionals so as to be able to dynamically produce
+# slowdebug/release builds. See:
+# http://rpm.org/user_doc/conditional_builds.html
+#
+# Examples:
+#
+# Produce release *and* slowdebug builds on x86_64 (default):
+# $ rpmbuild -ba java-1.8.0-openjdk.spec
+#
+# Produce only release builds (no slowdebug builds) on x86_64:
+# $ rpmbuild -ba java-1.8.0-openjdk.spec --without slowdebug
+#
+# Only produce a release build on x86_64:
+# $ fedpkg mockbuild --without slowdebug
+#
+# Only produce a debug build on x86_64:
+# $ fedpkg local --without release
+#
+# Enable slowdebug builds by default on relevant arches.
+%bcond_without slowdebug
+# Enable release builds by default on relevant arches.
+%bcond_without release
+
 %define _find_debuginfo_opts -g
 # note: parametrized macros are order-sensitive (unlike not-parametrized) even with normal macros
 # also necessary when passing it as parameter to other macros. If not macro, then it is considered a switch
@@ -14,8 +37,12 @@
 %global debug_on with full debug on
 %global for_debug for packages with debug on
 
-# by default we build normal build
+%if %{with release}
 %global include_normal_build 1
+%else
+%global include_normal_build 0
+%endif
+
 %if %{include_normal_build}
 %global build_loop1 %{normal_suffix}
 %else
@@ -30,9 +57,13 @@
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 
 # By default, we build a debug build during main build on JIT architectures
+%if %{with slowdebug}
 %ifarch %{jit_arches}
 %ifnarch %{arm}
 %global include_debug_build 1
+%else
+%global include_debug_build 0
+%endif
 %else
 %global include_debug_build 0
 %endif
@@ -1456,7 +1487,7 @@ else
   exit 12
 fi
 if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
-  echo "You have disabled both include_debug_build and include_debug_build. That is a no go."
+  echo "You have disabled both include_debug_build and include_normal_build. That is a no go."
   exit 13
 fi
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
@@ -2231,6 +2262,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jun 20 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-11.b11
+- Expose release/slowdebug builds being produced via conditionals.
+
 * Wed Jun 20 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.172-11.b11
 - Add additional fix (PR3601) to fix -Wreturn-type failures introduced by 8061651
 - Backport 8064786 (PR3601) to fix -Wreturn-type failure on debug builds.
