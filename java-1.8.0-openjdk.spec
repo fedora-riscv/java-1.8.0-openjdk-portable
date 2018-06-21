@@ -920,7 +920,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 10.%{buildver}%{?dist}
+Release: 11.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1038,9 +1038,11 @@ Patch523: pr2974-rh1337583.patch
 Patch528: pr3083-rh1346460.patch
 # RH1566890: CVE-2018-3639
 Patch529: rh1566890_embargoed20180521.patch
+# PR3601: Fix additional -Wreturn-type issues introduced by 8061651
+Patch530: pr3601.patch
 # 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
 #                     linking with unresolved symbols.
-Patch530: rhbz_1538767_fix_linking.patch
+Patch531: rhbz_1538767_fix_linking.patch
 
 #############################################
 #
@@ -1064,8 +1066,8 @@ Patch103: pr3593-s390-size_t_format_flags.patch
 Patch104: pr3458-rh1540242-aarch64.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
 Patch105: 8199936-pr3533-workaround.patch
-# Zero: Fix more cases of missing return statements
-Patch106: pr3458-rh1540242-zero.patch
+# AArch64: PR3519: Fix further functions with a missing return value (AArch64)
+Patch106: pr3519.patch
 
 #############################################
 #
@@ -1120,7 +1122,17 @@ Patch570: 8165489-pr3589.patch
 Patch571: pr3591.patch
 # 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
 Patch572: 8184309-pr3596.patch
- 
+# 8141570, PR3548: Fix Zero interpreter build for --disable-precompiled-headers
+Patch573: 8141570-pr3548.patch
+# 8143245, PR3548: Zero build requires disabled warnings
+Patch574: 8143245-pr3548.patch
+# 8197981, PR3548: Missing return statement in __sync_val_compare_and_swap_8
+Patch575: 8197981-pr3548.patch
+# 8064786, PR3599: Fix debug build after 8062808: Turn on the -Wreturn-type warning
+Patch576: 8064786-pr3599.patch
+# 8062808, PR3548: Turn on the -Wreturn-type warning
+Patch577: 8062808-pr3548.patch
+
 #############################################
 #
 # Patches ineligible for 8u
@@ -1509,6 +1521,7 @@ sh %{SOURCE12}
 %else
 %patch104
 %endif
+%patch106
 
 # x86 fixes
 %patch105
@@ -1517,9 +1530,6 @@ sh %{SOURCE12}
 %patch603
 %patch601
 %patch602
-
-# Zero fixes.
-%patch106
 
 # Upstreamable fixes
 %patch502
@@ -1542,10 +1552,11 @@ sh %{SOURCE12}
 %patch526
 %patch528
 %patch529
+%patch530
 %patch538
 %patch560
 pushd openjdk/jdk
-%patch530 -p1
+%patch531 -p1
 popd
 %patch561
 %patch562
@@ -1557,6 +1568,11 @@ popd
 %patch569
 %patch571
 %patch572
+%patch573
+%patch574
+%patch575
+%patch576
+%patch577
 
 # RPM-only fixes
 %patch525
@@ -2215,6 +2231,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jun 20 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.172-11.b11
+- Add additional fix (PR3601) to fix -Wreturn-type failures introduced by 8061651
+- Backport 8064786 (PR3601) to fix -Wreturn-type failure on debug builds.
+- Bring in PR3519 from IcedTea 3.7.0 to fix remaining -Wreturn-type failure on AArch64.
+- Sync with IcedTea 3.8.0 patches to use -Wreturn-type.
+- Add backports of 8141570, 8143245, 8197981 & 8062808.
+- Drop pr3458-rh1540242-zero.patch which is covered by 8143245.
+
 * Wed Jun 20 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.172-10.b11
 - jsa files changed to 444 to pass rpm verification
 
