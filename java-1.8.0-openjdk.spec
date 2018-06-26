@@ -951,7 +951,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 11.%{buildver}%{?dist}
+Release: 12.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1757,7 +1757,7 @@ make \
     POST_STRIP_CMD="" \
     LOG=trace \
     SCTP_WERROR= \
-    %{targets}
+    %{targets} || ( find -name "hs_err_pid*.log" | xargs cat && false )
 
 make zip-docs
 
@@ -2262,6 +2262,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jun 25 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-12.b11
+- Add hook to show hs_err*.log files on failures.
+
 * Wed Jun 20 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.172-11.b11
 - Expose release/slowdebug builds being produced via conditionals.
 
