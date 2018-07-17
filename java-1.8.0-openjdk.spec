@@ -24,7 +24,7 @@
 %define _find_debuginfo_opts -g
 # note: parametrized macros are order-sensitive (unlike not-parametrized) even with normal macros
 # also necessary when passing it as parameter to other macros. If not macro, then it is considered a switch
-# see the difference between global and deffine:
+# see the difference between global and define:
 # See https://github.com/rpm-software-management/rpm/issues/127 to comments at  "pmatilai commented on Aug 18, 2017"
 # (initiated in https://bugzilla.redhat.com/show_bug.cgi?id=1482192)
 %global debug_suffix_unquoted -slowdebug
@@ -78,7 +78,6 @@
 %global use_shenandoah_hotspot 0
 %endif
 
-
 %if %{include_debug_build}
 %global build_loop2 %{debug_suffix}
 %else
@@ -105,7 +104,7 @@
 
 
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
-# We filter out -O flags so that the optimisation of HotSpot is not lowered from O3 to O2
+# We filter out -O flags so that the optimization of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
 # We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
@@ -114,7 +113,7 @@
 %global ourldflags %{__global_ldflags}
 
 # With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
-# the initialisation must be here. Later the pkg-config have buggy behaviour
+# the initialization must be here. Later the pkg-config have buggy behavior
 # looks like openjdk RPM specific bug
 # Always set this so the nss.cfg file is not broken
 %global NSS_LIBDIR %(pkg-config --variable=libdir nss)
@@ -259,9 +258,9 @@
 
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
-# We would like these to be in a package specific subdir,
+# We would like these to be in a package specific sub-dir,
 # but currently systemtap doesn't support that, so we have to
-# use the root tapset dir for now. To distinquish between 64
+# use the root tapset dir for now. To distinguish between 64
 # and 32 bit architectures we place the tapsets under the arch
 # specific dir (note that systemtap will only pickup the tapset
 # for the primary arch for now). Systemtap uses the machine name
@@ -344,7 +343,7 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 /bin/touch --no-create %{_datadir}/icons/hicolor &>/dev/null || :
 
 # see pretrans where this file is declared
-# also see that pretrans is only for nondebug
+# also see that pretrans is only for non-debug
 if [ ! "%{?1}" == %{debug_suffix} ]; then
   if [ -f %{_libexecdir}/copy_jdk_configs_fixFiles.sh ] ; then
     sh  %{_libexecdir}/copy_jdk_configs_fixFiles.sh %{rpm_state_dir}/%{name}.%{_arch}  %{_jvmdir}/%{sdkdir -- %{?1}}
@@ -842,7 +841,7 @@ Provides: java%{?1} = %{epoch}:%{javaver}
 Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/
 Requires: javapackages-filesystem
-# Require zoneinfo data provided by tzdata-java sub-package
+# Require zone-info data provided by tzdata-java sub-package
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
@@ -1210,7 +1209,7 @@ BuildRequires: alsa-lib-devel
 BuildRequires: binutils
 BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
-# elfutils only are ok for build without AOT
+# elfutils only are OK for build without AOT
 BuildRequires: elfutils-devel
 BuildRequires: fontconfig
 BuildRequires: freetype-devel
@@ -1349,7 +1348,8 @@ Group:   Development/Languages
 %{java_src_rpo %{nil}}
 
 %description src
-The java-%{origin}-src sub-package contains the complete %{origin_nice} %{majorver} class library source code for use by IDE indexers and debuggers.
+The java-%{origin}-src sub-package contains the complete %{origin_nice} %{majorver}
+class library source code for use by IDE indexers and debuggers.
 %endif
 
 %if %{include_debug_build}
@@ -1360,7 +1360,8 @@ Group:   Development/Languages
 %{java_src_rpo -- %{debug_suffix_unquoted}}
 
 %description src-slowdebug
-The java-%{origin}-src-slowdebug sub-package contains the complete %{origin_nice} %{majorver} class library source code for use by IDE indexers and debuggers. Debugging %{for_debug}.
+The java-%{origin}-src-slowdebug sub-package contains the complete %{origin_nice} %{majorver}
+ class library source code for use by IDE indexers and debuggers. Debugging %{for_debug}.
 %endif
 
 %if %{include_normal_build}
@@ -1677,7 +1678,7 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
 
 %build
-# How many cpu's do we have?
+# How many CPU's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
 %if 0%{?_smp_ncpus_max}
@@ -2082,7 +2083,7 @@ done
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
 -- see https://bugzilla.redhat.com/show_bug.cgi?id=1290388 for pretrans over pre
 -- if copy-jdk-configs is in transaction, it installs in pretrans to temp
--- if copy_jdk_configs is in temp, then it means that copy-jdk-configs is in tranasction  and so is
+-- if copy_jdk_configs is in temp, then it means that copy-jdk-configs is in transaction  and so is
 -- preferred over one in %%{_libexecdir}. If it is not in transaction, then depends
 -- whether copy-jdk-configs is installed or not. If so, then configs are copied
 -- (copy_jdk_configs from %%{_libexecdir} used) or not copied at all
@@ -2103,7 +2104,7 @@ local stat2 = posix.stat(SOURCE2, "type");
 else
   if (stat2 ~= nil) then
   if (debug) then
-    print(SOURCE2 .." exists - copy-jdk-configs alrady installed and NOT in transation. Using.")
+    print(SOURCE2 .." exists - copy-jdk-configs already installed and NOT in transaction. Using.")
   end;
   package.path = package.path .. ";" .. SOURCE2
   else
@@ -2224,7 +2225,7 @@ require "copy_jdk_configs.lua"
 
 # this puts huge file to /usr/share
 # unluckily ti is really a documentation file
-# and unluckily it really is archtecture-depndent, as ag aot and grail are now x86_64 only
+# and unluckily it really is architecture-dependent, as eg. aot and grail are now x86_64 only
 # same for debug variant
 %files javadoc-zip
 %{files_javadoc_zip %{nil}}
