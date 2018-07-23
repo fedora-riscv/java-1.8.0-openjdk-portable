@@ -1088,9 +1088,8 @@ Patch528: pr3083-rh1346460.patch
 Patch529: rh1566890_embargoed20180521.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601.patch
-# 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
-#                     linking with unresolved symbols.
-Patch531: rhbz_1538767_fix_linking.patch
+# PR3183: Support Fedora/RHEL system crypto policy
+Patch300: pr3183.patch
 
 #############################################
 #
@@ -1155,6 +1154,8 @@ Patch575: 8197981-pr3548.patch
 Patch576: 8064786-pr3599.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
 Patch577: 8062808-pr3548.patch
+# 8165852, PR3468: (fs) Mount point not found for a file which is present in overlayfs
+Patch210: 8165852-pr3468.patch
 # 8207057, PR3613: Enable debug information for assembly code files
 Patch206: 8207057-pr3613-hotspot-assembler-debuginfo.patch
 
@@ -1183,6 +1184,9 @@ Patch566: 8186461-pr3557.patch
 Patch569: 8201509-pr3579.patch
 # 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
 Patch570: 8165489-pr3589.patch
+# 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
+#                     linking with unresolved symbols.
+Patch531: 8196516-pr3523-rh1538767.patch
 # 8075942, PR3602: ArrayIndexOutOfBoundsException in sun.java2d.pisces.Dasher.goTo
 Patch578: 8075942-pr3602-rh1582032.patch
 # 8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
@@ -1201,9 +1205,6 @@ Patch204: 8206425-hotspot-remove-debuglink.patch
 #############################################
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
-Patch210: suse_linuxfilestore.patch
-# custom securities
-Patch300: PR3183.patch
 
 #############################################
 #
@@ -1578,6 +1579,7 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
+# AArch64 fixes
 %patch106
 
 # x86 fixes
