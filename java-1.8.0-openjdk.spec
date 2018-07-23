@@ -1108,8 +1108,6 @@ Patch100: %{name}-s390-java-opts.patch
 Patch102: %{name}-size_t.patch
 # s390: PR3593: Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: pr3593-s390-size_t_format_flags.patch
-# AArch64: Fix more cases of missing return statements
-Patch104: pr3458-rh1540242-aarch64.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
 Patch105: 8199936-pr3533-workaround.patch
 # AArch64: PR3519: Fix further functions with a missing return value (AArch64)
@@ -1582,11 +1580,6 @@ sh %{SOURCE12}
 %patch102
 %patch103
 
-# AArch64 fixes
-%if %{use_shenandoah_hotspot}
-%else
-%patch104
-%endif
 %patch106
 
 # x86 fixes
@@ -2304,6 +2297,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 23 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.181-7.b13
+- updated to u181
+- patches aligned according to rhel7 (full credit to gnu_andrew)
+- removed upstreamed patch104 pr3458-rh1540242-aarch64.patch
+
 * Tue Jul 17 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.172-16.b11
 - added Recommends gtk2 for main package
 - added Suggests lksctp-tools, pcsc-lite-devel, cups for headless package
