@@ -1,0 +1,131 @@
+# HG changeset patch
+# User igerasim
+# Date 1528992969 25200
+#      Thu Jun 14 09:16:09 2018 -0700
+# Node ID d9b0b4bd2526818afa73b60da77403245554caa8
+# Parent  1f4b038b9550afaf88a70cee4cf9c1422ecd86d6
+8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
+Summary: Ensure session is properly released in P11Signature class
+Reviewed-by: valeriep
+Contributed-by: Martin Balao <mbalao@redhat.com>
+
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
+@@ -309,47 +309,51 @@
+             session = token.killSession(session);
+             return;
+         }
+-        // "cancel" operation by finishing it
+-        // XXX make sure all this always works correctly
+-        if (mode == M_SIGN) {
+-            try {
+-                if (type == T_UPDATE) {
+-                    token.p11.C_SignFinal(session.id(), 0);
+-                } else {
+-                    byte[] digest;
+-                    if (type == T_DIGEST) {
+-                        digest = md.digest();
+-                    } else { // T_RAW
+-                        digest = buffer;
++        try {
++            // "cancel" operation by finishing it
++            // XXX make sure all this always works correctly
++            if (mode == M_SIGN) {
++                try {
++                    if (type == T_UPDATE) {
++                        token.p11.C_SignFinal(session.id(), 0);
++                    } else {
++                        byte[] digest;
++                        if (type == T_DIGEST) {
++                            digest = md.digest();
++                        } else { // T_RAW
++                            digest = buffer;
++                        }
++                        token.p11.C_Sign(session.id(), digest);
+                     }
+-                    token.p11.C_Sign(session.id(), digest);
++                } catch (PKCS11Exception e) {
++                    throw new ProviderException("cancel failed", e);
+                 }
+-            } catch (PKCS11Exception e) {
+-                throw new ProviderException("cancel failed", e);
++            } else { // M_VERIFY
++                try {
++                    byte[] signature;
++                    if (keyAlgorithm.equals("DSA")) {
++                        signature = new byte[40];
++                    } else {
++                        signature = new byte[(p11Key.length() + 7) >> 3];
++                    }
++                    if (type == T_UPDATE) {
++                        token.p11.C_VerifyFinal(session.id(), signature);
++                    } else {
++                        byte[] digest;
++                        if (type == T_DIGEST) {
++                            digest = md.digest();
++                        } else { // T_RAW
++                            digest = buffer;
++                        }
++                        token.p11.C_Verify(session.id(), digest, signature);
++                    }
++                } catch (PKCS11Exception e) {
++                    // will fail since the signature is incorrect
++                    // XXX check error code
++                }
+             }
+-        } else { // M_VERIFY
+-            try {
+-                byte[] signature;
+-                if (keyAlgorithm.equals("DSA")) {
+-                    signature = new byte[40];
+-                } else {
+-                    signature = new byte[(p11Key.length() + 7) >> 3];
+-                }
+-                if (type == T_UPDATE) {
+-                    token.p11.C_VerifyFinal(session.id(), signature);
+-                } else {
+-                    byte[] digest;
+-                    if (type == T_DIGEST) {
+-                        digest = md.digest();
+-                    } else { // T_RAW
+-                        digest = buffer;
+-                    }
+-                    token.p11.C_Verify(session.id(), digest, signature);
+-                }
+-            } catch (PKCS11Exception e) {
+-                // will fail since the signature is incorrect
+-                // XXX check error code
+-            }
++        } finally {
++            session = token.releaseSession(session);
+         }
+     }
+ 
+@@ -368,6 +372,8 @@
+             }
+             initialized = true;
+         } catch (PKCS11Exception e) {
++            // release session when initialization failed
++            session = token.releaseSession(session);
+             throw new ProviderException("Initialization failed", e);
+         }
+         if (bytesProcessed != 0) {
+@@ -529,6 +535,8 @@
+                 }
+                 bytesProcessed += len;
+             } catch (PKCS11Exception e) {
++                initialized = false;
++                session = token.releaseSession(session);
+                 throw new ProviderException(e);
+             }
+             break;
+@@ -576,6 +584,8 @@
+                 bytesProcessed += len;
+                 byteBuffer.position(ofs + len);
+             } catch (PKCS11Exception e) {
++                initialized = false;
++                session = token.releaseSession(session);
+                 throw new ProviderException("Update failed", e);
+             }
+             break;

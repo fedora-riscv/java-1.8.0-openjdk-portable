@@ -221,7 +221,11 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global project         aarch64-port
 %global repo            jdk8u
-%global revision        aarch64-jdk8u172-b11
+%global revision        aarch64-jdk8u181-b13
+%global shenandoah_project	aarch64-port
+%global shenandoah_repo		jdk8u-shenandoah
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u181-b13
+
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
@@ -957,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}
-Release: 16.%{buildver}%{?dist}
+Release: 7.%{buildver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -993,13 +997,20 @@ URL:      http://openjdk.java.net/
 Source0: %{project}-%{repo}-%{revision}.tar.xz
 
 # Shenandoah HotSpot
-Source1: aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u172-b11--shenandoah-merge-2018-05-15.tar.xz
+# aarch64-port/jdk8u-shenandoah contains an integration forest of
+# OpenJDK 8u, the aarch64 port and Shenandoah
+# To regenerate, use:
+# VERSION=%%{shenandoah_revision}
+# FILE_NAME_ROOT=%%{shenandoah_project}-%%{shenandoah_repo}-${VERSION}
+# REPO_ROOT=<path to checked-out repository> REPOS=hotspot generate_source_tarball.sh
+# where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
+Source1: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
 
 # Use 'generate_tarballs.sh' to generate the following tarballs
-# They are based on code contained in the IcedTea7 project
+# They are based on code contained in the IcedTea project (3.x)
 
 # Systemtap tapsets. Zipped up to keep it small
 Source8: systemtap-tapset-3.6.0pre02.tar.xz
@@ -1087,10 +1098,8 @@ Patch531: rhbz_1538767_fix_linking.patch
 #
 #############################################
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
-Patch204: hotspot-remove-debuglink.patch
-Patch205: dont-add-unnecessary-debug-links.patch
-# Enable debug information for assembly code files
-Patch206: hotspot-assembler-debuginfo.patch
+# 8207234: More libraries with .gnu_debuglink sections added unconditionally
+Patch205: 8207234-dont-add-unnecessary-debug-links.patch
 
 # Arch-specific upstreamable patches
 # s390: PR2415: JVM -Xmx requirement is too high on s390
@@ -1121,40 +1130,21 @@ Patch7: include-all-srcs.patch
 Patch202: system-libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: system-lcms.patch
-# PR2462: Backport "8074839: Resolve disabled warnings for libunpack and the unpack200 binary"
+# S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
-# S8148351, PR2842: Only display resolved symlink for compiler, do not change path
-Patch506: pr2842-01.patch
-Patch507: pr2842-02.patch
 # S8154313: Generated javadoc scattered all over the place
 Patch400: 8154313.patch
-# S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
-Patch526: 6260348-pr3066.patch
-# 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
-Patch538: 8061305-pr3335-rh1423421.patch
-# 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
-Patch560: 8188030-pr3459-rh1484079.patch
 # 8197429, PR3546, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
 Patch561: 8197429-pr3546-rh1536622.patch
-# PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
-Patch562: pr3539-rh1548475.patch
 # 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
 Patch563: 8171000-pr3542-rh1402819.patch
 # 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
 Patch564: 8197546-pr3542-rh1402819.patch
-# 8185723, PR3553: Zero: segfaults on Power PC 32-bit
-Patch565: 8185723-pr3553.patch
-# 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
-Patch566: 8186461-pr3557.patch
 # PR3559: Use ldrexd for atomic reads on ARMv7.
 Patch567: pr3559.patch
 # 8187577, PR3578: JVM crash during gc doing concurrent marking
 Patch568: 8187577-pr3578.patch
-# 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
-Patch569: 8201509-pr3579.patch
-# 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
-Patch570: 8165489-pr3589.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: pr3591.patch
 # 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
@@ -1169,6 +1159,44 @@ Patch575: 8197981-pr3548.patch
 Patch576: 8064786-pr3599.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
 Patch577: 8062808-pr3548.patch
+# 8207057, PR3613: Enable debug information for assembly code files
+Patch206: 8207057-pr3613-hotspot-assembler-debuginfo.patch
+
+#############################################
+#
+# Patches appearing in 8u192
+#
+#############################################
+# S8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
+Patch506: pr2842-01.patch
+# S8148351, PR2842: Only display resolved symlink for compiler, do not change path
+Patch507: pr2842-02.patch
+# S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
+Patch526: 6260348-pr3066.patch
+# 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
+Patch538: 8061305-pr3335-rh1423421.patch
+# 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
+Patch560: 8188030-pr3459-rh1484079.patch
+# 8205104, PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
+Patch562: pr3539-rh1548475.patch
+# 8185723, PR3553: Zero: segfaults on Power PC 32-bit
+Patch565: 8185723-pr3553.patch
+# 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
+Patch566: 8186461-pr3557.patch
+# 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
+Patch569: 8201509-pr3579.patch
+# 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
+Patch570: 8165489-pr3589.patch
+# 8075942, PR3602: ArrayIndexOutOfBoundsException in sun.java2d.pisces.Dasher.goTo
+Patch578: 8075942-pr3602-rh1582032.patch
+# 8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
+Patch579: 8203182-pr3603-rh1568033.patch
+# 8206406, PR3610, RH1597825: StubCodeDesc constructor publishes partially-constructed objects on StubCodeDesc::_list
+Patch580: 8206406-pr3610-rh1597825.patch
+# 8146115, PR3508, RH1463098: Improve docker container detection and resource configuration usage
+Patch581: 8146115-pr3508-rh1463098.patch
+# 8206425: .gnu_debuglink sections added unconditionally when no debuginfo is stripped
+Patch204: 8206425-hotspot-remove-debuglink.patch
 
 #############################################
 #
@@ -1186,7 +1214,6 @@ Patch300: PR3183.patch
 # Local fixes
 #
 #############################################
-
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 Patch525: pr1834-rh1022017.patch
 # Turn on AssumeMP by default on RHEL systems
@@ -1612,6 +1639,10 @@ popd
 %patch575
 %patch576
 %patch577
+%patch578
+%patch579
+%patch580
+%patch581
 
 # RPM-only fixes
 %patch525
