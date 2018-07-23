@@ -1141,8 +1141,6 @@ Patch563: 8171000-pr3542-rh1402819.patch
 Patch564: 8197546-pr3542-rh1402819.patch
 # PR3559: Use ldrexd for atomic reads on ARMv7.
 Patch567: pr3559.patch
-# 8187577, PR3578: JVM crash during gc doing concurrent marking
-Patch568: 8187577-pr3578.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: pr3591.patch
 # 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
@@ -1650,7 +1648,6 @@ popd
 # Shenandoah-only patches
 %if %{use_shenandoah_hotspot}
 %else
-%patch568
 %patch570
 %endif
 
@@ -2301,6 +2298,7 @@ require "copy_jdk_configs.lua"
 - updated to u181
 - patches aligned according to rhel7 (full credit to gnu_andrew)
 - removed upstreamed patch104 pr3458-rh1540242-aarch64.patch
+- removed upstreamed patch568 8187577-pr3578.patch
 
 * Tue Jul 17 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.172-16.b11
 - added Recommends gtk2 for main package
