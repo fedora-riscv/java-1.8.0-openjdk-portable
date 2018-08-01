@@ -960,8 +960,8 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 %global __jar_repack 0
 
 Name:    java-%{javaver}-%{origin}
-Version: %{javaver}.%{updatever}
-Release: 7.%{buildver}%{?dist}
+Version: %{javaver}.%{updatever}.%{buildver}
+Release: 7%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2296,13 +2296,16 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mon Jul 23 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.181-7.b13
+* Wed Aug 01 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.181.b13-7
+- build number moved from release to version
+
+* Mon Jul 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.181-7.b13
 - updated to u181
 - patches aligned according to rhel7 (full credit to gnu_andrew)
 - removed upstreamed patch104 pr3458-rh1540242-aarch64.patch
 - removed upstreamed patch568 8187577-pr3578.patch
 
-* Tue Jul 17 2018 Jiri Vanek <jvanek@redhat.com> - 11:1.8.0.172-16.b11
+* Tue Jul 17 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.172-16.b11
 - added Recommends gtk2 for main package
 - added Suggests lksctp-tools, pcsc-lite-devel, cups for headless package
 - see RHBZ1598152
