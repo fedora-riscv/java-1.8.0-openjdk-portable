@@ -961,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 1%{?dist}
+Release: 2%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1039,21 +1039,7 @@ Source101: config.sub
 # Ignore AWTError when assistive technologies are loaded 
 Patch1:   %{name}-accessible-toolkit.patch
 # Restrict access to java-atk-wrapper classes
-Patch3: java-atk-wrapper-security.patch
-
-#############################################
-#
-# Upstreamable patches
-#
-#############################################
-# PR2737: Allow multiple initialization of PKCS11 libraries
-Patch5: multiple-pkcs11-library-init.patch
-# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
-Patch504: rh1163501.patch
-# S4890063, PR2304, RH1214835: HPROF: default text truncated when using doe=n option
-Patch511: rh1214835.patch
-# Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
-Patch512: no_strict_overflow.patch
+Patch3:   java-atk-wrapper-security.patch
 # Support for building the SunEC provider with the system NSS installation
 # PR1983: Support using the system installation of NSS with the SunEC provider
 # PR2127: SunEC provider crashes when built using system NSS
@@ -1068,10 +1054,20 @@ Patch516: pr2815.patch
 Patch517: pr2899.patch
 Patch518: pr2934.patch
 Patch519: pr3479-rh1486025.patch
-# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
-# In progress: http://mail.openjdk.java.net/pipermail/awt-dev/2016-March/010742.html
-Patch508: rh1176206-jdk.patch
-Patch509: rh1176206-root.patch
+# PR3183, RH1340845: Support Fedora/RHEL system crypto policy
+Patch300: pr3183-rh1340845-system-crypto-policy.patch
+
+#############################################
+#
+# Upstreamable patches
+#
+#############################################
+# PR2737: Allow multiple initialization of PKCS11 libraries
+Patch5: multiple-pkcs11-library-init.patch
+# PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
+Patch504: rh1163501.patch
+# Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
+Patch512: no_strict_overflow.patch
 # RH1337583, PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
 Patch523: pr2974-rh1337583.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
@@ -1080,23 +1076,9 @@ Patch528: pr3083-rh1346460.patch
 Patch529: rh1566890_embargoed20180521.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601.patch
-# PR3183: Support Fedora/RHEL system crypto policy
-Patch300: pr3183.patch
-
-#############################################
-#
-# Upstreamable debugging patches
-#
-#############################################
-# Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
-# 8207234: More libraries with .gnu_debuglink sections added unconditionally
-Patch205: 8207234-dont-add-unnecessary-debug-links.patch
 
 # Arch-specific upstreamable patches
-# s390: PR2415: JVM -Xmx requirement is too high on s390
-Patch100: %{name}-s390-java-opts.patch
-# s390: Type fixing for s390
-Patch102: %{name}-size_t.patch
+
 # s390: PR3593: Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: pr3593-s390-size_t_format_flags.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
@@ -1115,10 +1097,6 @@ Patch602: %{name}-rh1191652-jdk.patch
 Patch603: %{name}-rh1191652-hotspot-aarch64.patch
 # Include all sources in src.zip
 Patch7: include-all-srcs.patch
-# 8035341: Allow using a system installed libpng
-Patch202: system-libpng.patch
-# 8042159: Allow using a system-installed lcms2
-Patch203: system-lcms.patch
 # S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
@@ -1146,8 +1124,8 @@ Patch575: 8197981-pr3548.patch
 Patch576: 8064786-pr3599.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
 Patch577: 8062808-pr3548.patch
-# 8207057, PR3613: Enable debug information for assembly code files
-Patch206: 8207057-pr3613-hotspot-assembler-debuginfo.patch
+# s390: JDK-8203030, Type fixing for s390
+Patch102: 8203030-size_t-fixes.patch
 
 #############################################
 #
@@ -1155,9 +1133,9 @@ Patch206: 8207057-pr3613-hotspot-assembler-debuginfo.patch
 #
 #############################################
 # S8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
-Patch506: pr2842-01.patch
+Patch506: 8031668-pr2842-01.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
-Patch507: pr2842-02.patch
+Patch507: 8148351-pr2842-02.patch
 # S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
 Patch526: 6260348-pr3066.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
@@ -1165,7 +1143,7 @@ Patch538: 8061305-pr3335-rh1423421.patch
 # 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
 Patch560: 8188030-pr3459-rh1484079.patch
 # 8205104, PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
-Patch562: pr3539-rh1548475.patch
+Patch562: 8205104-pr3539-rh1548475.patch
 # 8185723, PR3553: Zero: segfaults on Power PC 32-bit
 Patch565: 8185723-pr3553.patch
 # 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
@@ -1180,8 +1158,26 @@ Patch579: 8203182-pr3603-rh1568033.patch
 Patch580: 8206406-pr3610-rh1597825.patch
 # 8146115, PR3508, RH1463098: Improve docker container detection and resource configuration usage
 Patch581: 8146115-pr3508-rh1463098.patch
+# Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
 # 8206425: .gnu_debuglink sections added unconditionally when no debuginfo is stripped
 Patch204: 8206425-hotspot-remove-debuglink.patch
+# 8036003: Add --with-native-debug-symbols=[none|internal|external|zipped]
+Patch205: 8036003-add-with-native-debug-symbols-configure-flag.patch
+# s390: JDK-8201495, PR2415: JVM -Xmx requirement is too high on s390
+Patch100: 8201495-s390-java-opts.patch
+
+#############################################
+#
+# Patches appearing in 8u202
+#
+#############################################
+# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
+Patch508: 8150954-pr2866-rh1176206-screenshot-xcomposite-jdk.patch
+# 8207057, PR3613: Enable debug information for assembly code files
+Patch206: 8207057-pr3613-assembler-debuginfo-hotspot.patch
+Patch207: 8207057-pr3613-assembler-debuginfo-root.patch
+# 8165852, PR3468: (fs) Mount point not found for a file which is present in overlayfs
+Patch210: 8165852-pr3468.patch
 
 #############################################
 #
@@ -1190,6 +1186,10 @@ Patch204: 8206425-hotspot-remove-debuglink.patch
 #############################################
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
+# 8035341: Allow using a system installed libpng
+Patch202: system-libpng.patch
+# 8042159: Allow using a system-installed lcms2
+Patch203: system-lcms.patch
 
 #############################################
 #
@@ -1546,6 +1546,8 @@ sh %{SOURCE12}
 %patch204
 %patch205
 %patch206
+%patch207
+%patch210
 
 %patch300
 
@@ -1576,8 +1578,6 @@ sh %{SOURCE12}
 %patch506
 %patch507
 %patch508
-%patch509
-%patch511
 %patch512
 %patch513
 %patch514
@@ -1727,7 +1727,7 @@ bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
 %endif
-    --disable-zip-debug-info \
+    --with-native-debug-symbols=internal \
     --with-milestone="fcs" \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
@@ -1760,10 +1760,7 @@ cat hotspot-spec.gmk
 # ignore all the other logic about which debug options and just do '-g'.
 
 make \
-    DEBUG_BINARIES=true \
     JAVAC_FLAGS=-g \
-    STRIP_POLICY=no_strip \
-    POST_STRIP_CMD="" \
     LOG=trace \
     SCTP_WERROR= \
     %{targets} || ( pwd; find $top_dir_abs_path -name "hs_err_pid*.log" | xargs cat && false )
@@ -2271,6 +2268,31 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Sep 18 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-2
+- Update(s) from upstreamed patches:
+  - 8036003-dont-add-unnecessary-debug-links.patch =>
+    8036003-add-with-native-debug-symbols-configure-flag.patch
+  - rh1176206-jdk.patch =>
+    8150954-pr2866-rh1176206-screenshot-xcomposite-jdk.patch =>
+    Deleted rh1176206-root.patch as thats no longer needed with
+    upstream 8150954.
+  - Refreshed 8165852-pr3468.patch from upstream.
+  - Refreshed 8201495-s390-java-opts.patch from upstream.
+  - 8207057-pr3613-hotspot-assembler-debuginfo.patch =>
+    8207057-pr3613-assembler-debuginfo-hotspot.patch and
+    8207057-pr3613-assembler-debuginfo-root.patch. From JDK 8u
+    review.
+- Renamed pr2842-02.patch => 8148351-pr2842-02.patch.
+- Renamed spec-only patch:
+  pr3183.patch => pr3183-rh1340845-system-crypto-policy.patch
+- Renamed java-1.8.0-openjdk-size_t.patch =>
+  8201495-s390-java-opts.patch
+- Moved SunEC provider via system NSS to RPM specific patches section.
+- Moved upstream 8u patches to appropriate sections (8u192/8u202).
+- Removed rh1214835.patch since it's invalid. See:
+  https://icedtea.classpath.org/bugzilla/show_bug.cgi?id=2304#c3
+- Use --with-native-debug-symbols=internal which JDK-8036003 adds.
+
 * Tue Sep 11 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.181.b15-1
 - fixed unexpanded arch in policy tool desktop file
 - fixed versions (8->1.8.0) of images used in desktop files

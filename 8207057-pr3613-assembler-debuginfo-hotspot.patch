@@ -1,0 +1,13 @@
+--- openjdk/hotspot/make/linux/makefiles/gcc.make	2018-09-17 15:40:56.933127667 +0200
++++ openjdk/hotspot/make/linux/makefiles/gcc.make	2018-09-17 15:40:56.831127850 +0200
+@@ -184,6 +184,10 @@
+ LFLAGS     += $(ARCHFLAG)
+ ASFLAGS    += $(ARCHFLAG)
+ 
++ifeq ($(DEBUG_BINARIES), true)
++  ASFLAGS    += $(ASFLAGS_DEBUG_SYMBOLS)
++endif
++
+ # Use C++ Interpreter
+ ifdef CC_INTERP
+   CFLAGS += -DCC_INTERP

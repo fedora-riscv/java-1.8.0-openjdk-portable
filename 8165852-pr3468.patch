@@ -1,0 +1,87 @@
+
+# HG changeset patch
+# User bpb
+# Date 1515783982 28800
+# Node ID b8843bca95b5e0eed5bbb4dc195c89c727c7aede
+# Parent  61d7ce442d95f5f30c84037a50cf6361bf7c37e1
+8165852: (fs) Mount point not found for a file which is present in overlayfs
+Summary: Check /proc/mounts when the device ID boundary is reached
+Reviewed-by: alanb
+
+diff -r 61d7ce442d95 -r b8843bca95b5 src/solaris/classes/sun/nio/fs/LinuxFileStore.java
+--- openjdk/jdk/src/solaris/classes/sun/nio/fs/LinuxFileStore.java	Tue Jul 24 05:10:45 2018 -0400
++++ openjdk/jdk/src/solaris/classes/sun/nio/fs/LinuxFileStore.java	Fri Jan 12 11:06:22 2018 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -66,6 +66,8 @@
+         }
+ 
+         // step 2: find mount point
++        List<UnixMountEntry> procMountsEntries =
++            fs.getMountEntries("/proc/mounts");
+         UnixPath parent = path.getParent();
+         while (parent != null) {
+             UnixFileAttributes attrs = null;
+@@ -74,16 +76,23 @@
+             } catch (UnixException x) {
+                 x.rethrowAsIOException(parent);
+             }
+-            if (attrs.dev() != dev())
+-                break;
++            if (attrs.dev() != dev()) {
++                // step 3: lookup mounted file systems (use /proc/mounts to
++                // ensure we find the file system even when not in /etc/mtab)
++                byte[] dir = path.asByteArray();
++                for (UnixMountEntry entry : procMountsEntries) {
++                    if (Arrays.equals(dir, entry.dir()))
++                        return entry;
++                }
++            }
+             path = parent;
+             parent = parent.getParent();
+         }
+ 
+-        // step 3: lookup mounted file systems (use /proc/mounts to ensure we
+-        // find the file system even when not in /etc/mtab)
++        // step 3: lookup mounted file systems (use /proc/mounts to
++        // ensure we find the file system even when not in /etc/mtab)
+         byte[] dir = path.asByteArray();
+-        for (UnixMountEntry entry: fs.getMountEntries("/proc/mounts")) {
++        for (UnixMountEntry entry : procMountsEntries) {
+             if (Arrays.equals(dir, entry.dir()))
+                 return entry;
+         }
+diff -r 61d7ce442d95 -r b8843bca95b5 src/solaris/classes/sun/nio/fs/LinuxFileSystem.java
+--- openjdk/jdk/src/solaris/classes/sun/nio/fs/LinuxFileSystem.java	Tue Jul 24 05:10:45 2018 -0400
++++ openjdk/jdk/src/solaris/classes/sun/nio/fs/LinuxFileSystem.java	Fri Jan 12 11:06:22 2018 -0800
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2008, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -75,7 +75,7 @@
+     /**
+      * Returns object to iterate over the mount entries in the given fstab file.
+      */
+-    Iterable<UnixMountEntry> getMountEntries(String fstab) {
++    List<UnixMountEntry> getMountEntries(String fstab) {
+         ArrayList<UnixMountEntry> entries = new ArrayList<>();
+         try {
+             long fp = setmntent(Util.toBytes(fstab), Util.toBytes("r"));
+@@ -101,7 +101,7 @@
+      * Returns object to iterate over the mount entries in /etc/mtab
+      */
+     @Override
+-    Iterable<UnixMountEntry> getMountEntries() {
++    List<UnixMountEntry> getMountEntries() {
+         return getMountEntries("/etc/mtab");
+     }
+ 
+
