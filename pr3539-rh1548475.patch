@@ -85,8 +85,8 @@ diff --git openjdk.orig/hotspot/make/linux/makefiles/jsig.make openjdk/hotspot/m
  # cause problems with interposing. See CR: 6466665
  # LFLAGS_JSIG += $(MAPFLAG:FILENAME=$(LIBJSIG_MAPFILE))
  
--LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE)
-+LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE) $(EXTRA_LDFLAGS)
+-LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE) $(LDFLAGS_NO_EXEC_STACK)
++LFLAGS_JSIG += -D_GNU_SOURCE -D_REENTRANT $(LDFLAGS_HASH_STYLE) $(LDFLAGS_NO_EXEC_STACK) $(EXTRA_LDFLAGS)
  
  # DEBUG_BINARIES overrides everything, use full -g debug information
  ifeq ($(DEBUG_BINARIES), true)
@@ -105,7 +105,7 @@ diff --git openjdk.orig/hotspot/make/linux/makefiles/saproc.make openjdk/hotspot
 diff --git openjdk.orig/hotspot/make/linux/makefiles/vm.make openjdk/hotspot/make/linux/makefiles/vm.make
 --- openjdk.orig/hotspot/make/linux/makefiles/vm.make
 +++ openjdk/hotspot/make/linux/makefiles/vm.make
-@@ -130,7 +130,7 @@
+@@ -122,7 +122,7 @@
  
  # Extra flags from gnumake's invocation or environment
  CFLAGS += $(EXTRA_CFLAGS)

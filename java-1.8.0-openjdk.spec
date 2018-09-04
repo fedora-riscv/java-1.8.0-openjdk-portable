@@ -219,12 +219,13 @@
 %global origin_nice     OpenJDK
 %global top_level_dir_name   %{origin}
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
-%global project         aarch64-port
-%global repo            jdk8u
-%global revision        aarch64-jdk8u181-b13
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u181-b13
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u181-b15
+# Define old aarch64/jdk8u tree variables for compatibility
+%global project         %{shenandoah_project}
+%global repo            %{shenandoah_repo}
+%global revision        %{shenandoah_revision}
 
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
@@ -960,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 7%{?dist}
+Release: 0%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -988,22 +989,15 @@ Group:   Development/Languages
 License:  ASL 1.1 and ASL 2.0 and BSD and BSD with advertising and GPL+ and GPLv2 and GPLv2 with exceptions and IJG and LGPLv2+ and MIT and MPLv2.0 and Public Domain and W3C and zlib
 URL:      http://openjdk.java.net/
 
-# aarch64-port now contains integration forest of both aarch64 and normal jdk
-# Source from upstream OpenJDK8 project. To regenerate, use
-# VERSION=%%{revision} FILE_NAME_ROOT=%%{project}-%%{repo}-${VERSION}
-# REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
-# where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source0: %{project}-%{repo}-%{revision}.tar.xz
-
 # Shenandoah HotSpot
 # aarch64-port/jdk8u-shenandoah contains an integration forest of
 # OpenJDK 8u, the aarch64 port and Shenandoah
 # To regenerate, use:
 # VERSION=%%{shenandoah_revision}
 # FILE_NAME_ROOT=%%{shenandoah_project}-%%{shenandoah_repo}-${VERSION}
-# REPO_ROOT=<path to checked-out repository> REPOS=hotspot generate_source_tarball.sh
+# REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source1: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
+Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -1152,8 +1146,6 @@ Patch575: 8197981-pr3548.patch
 Patch576: 8064786-pr3599.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
 Patch577: 8062808-pr3548.patch
-# 8165852, PR3468: (fs) Mount point not found for a file which is present in overlayfs
-Patch210: 8165852-pr3468.patch
 # 8207057, PR3613: Enable debug information for assembly code files
 Patch206: 8207057-pr3613-hotspot-assembler-debuginfo.patch
 
@@ -1180,11 +1172,6 @@ Patch565: 8185723-pr3553.patch
 Patch566: 8186461-pr3557.patch
 # 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
 Patch569: 8201509-pr3579.patch
-# 8165489, PR3589: Missing G1 barrier in Unsafe_GetObjectVolatile
-Patch570: 8165489-pr3589.patch
-# 8196516, RH1538767: libfontmanager.so needs to be built with LDFLAGS so as to allow
-#                     linking with unresolved symbols.
-Patch531: 8196516-pr3523-rh1538767.patch
 # 8075942, PR3602: ArrayIndexOutOfBoundsException in sun.java2d.pisces.Dasher.goTo
 Patch578: 8075942-pr3602-rh1582032.patch
 # 8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
@@ -1218,8 +1205,12 @@ Patch539: pr2888.patch
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
 Patch540: pr3575-rh1567204.patch
 
-#############################################
-#
+# Shenandoah fixes
+# PR3619: Shenandoah broken on s390
+Patch582: pr3619.patch
+# PR3620: Shenandoah broken on ppc64
+Patch583: pr3620.patch
+
 # Non-OpenJDK fixes
 #
 #############################################
@@ -1528,17 +1519,7 @@ if [ $prioritylength -ne 7 ] ; then
  exit 14
 fi
 # For old patches
-ln -s openjdk jdk8
-%if %{use_shenandoah_hotspot}
-# On Shenandoah-supported architectures, replace HotSpot with
-# the Shenandoah version
-pushd openjdk
-tar -xf %{SOURCE1}
-rm -rf hotspot
-mv openjdk/hotspot .
-rm -rf openjdk
-popd
-%endif
+ln -s %{top_level_dir_name} jdk8
 
 cp %{SOURCE2} .
 
@@ -1563,7 +1544,6 @@ sh %{SOURCE12}
 %patch204
 %patch205
 %patch206
-%patch210
 
 %patch300
 
@@ -1612,9 +1592,6 @@ sh %{SOURCE12}
 %patch530
 %patch538
 %patch560
-pushd openjdk/jdk
-%patch531 -p1
-popd
 %patch561
 %patch562
 %patch563
@@ -1645,11 +1622,9 @@ popd
 %patch534
 %endif
 
-# Shenandoah-only patches
-%if %{use_shenandoah_hotspot}
-%else
-%patch570
-%endif
+# Shenandoah patches
+%patch582
+%patch583
 
 %patch1000
 
@@ -2294,6 +2269,39 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Aug 23 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181.b15-0
+- Move to single OpenJDK tarball build, based on aarch64/shenandoah-jdk8u.
+- Update to aarch64-shenandoah-jdk8u181-b15.
+- Drop 8165489-pr3589.patch which was only applied to aarch64/jdk8u builds.
+- Move buildver to where it should be in the OpenJDK version.
+- Split ppc64 Shenandoah fix into separate patch file with its own bug ID (PR3620).
+- Update pr3539-rh1548475.patch to apply after 8187045.
+- Resolves: rhbz#1594249
+
+* Sat Aug 11 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- Remove unneeded functions from ppc shenandoahBarrierSet.
+- Resolves: rhbz#1594249
+
+* Wed Aug 08 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- Add missing shenandoahBarrierSet implementation for ppc64{be,le}.
+- Resolves: rhbz#1594249
+
+* Tue Aug 07 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- Fix wrong format specifiers in Shenandoah code.
+- Resolves: rhbz#1594249
+
+* Tue Aug 07 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- Avoid changing variable types to fix size_t, at least for now.
+- Resolves: rhbz#1594249
+
+* Tue Aug 07 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- More size_t fixes for Shenandoah.
+- Resolves: rhbz#1594249
+
+* Fri Aug 03 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181-8.b13
+- Add additional s390 size_t case for Shenandoah.
+- Resolves: rhbz#1594249
+
 * Wed Aug 01 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.181.b13-7
 - build number moved from release to version
 
