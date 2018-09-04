@@ -41,8 +41,13 @@ diff -r 984a4af2ed4e make/lib/SecurityLibraries.gmk
        LANG := C++, \
        OPTIMIZATION := LOW, \
        CFLAGS := $(filter-out $(ECC_JNI_SOLSPARC_FILTER), $(CFLAGS_JDKLIB)) \
-@@ -248,8 +257,8 @@
-       LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK), \
+@@ -245,11 +254,12 @@
+       CXXFLAGS := $(filter-out $(ECC_JNI_SOLSPARC_FILTER), $(CXXFLAGS_JDKLIB)) \
+           $(BUILD_LIBSUNEC_FLAGS), \
+       MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsunec/mapfile-vers, \
+-      LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK), \
++      LDFLAGS := $(subst -Xlinker --as-needed,, \
++        $(subst -Wl$(COMMA)--as-needed,, $(LDFLAGS_JDKLIB))) $(LDFLAGS_CXX_JDK), \
        LDFLAGS_macosx := $(call SET_SHARED_LIBRARY_ORIGIN), \
        LDFLAGS_SUFFIX := $(LIBCXX), \
 -      LDFLAGS_SUFFIX_linux := -lc, \

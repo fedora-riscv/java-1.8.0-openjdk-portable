@@ -1211,6 +1211,8 @@ Patch582: pr3619.patch
 # PR3620: Shenandoah broken on ppc64
 Patch583: pr3620.patch
 
+#############################################
+#
 # Non-OpenJDK fixes
 #
 #############################################
@@ -2269,6 +2271,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Aug 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b13-9
+- Adjust system jpeg patch, system-libjpeg.patch, so as to filter
+  -Wl,--as-needed. Resolves RHBZ#1622186.
+
+* Mon Aug 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b13-8
+- Adjust system NSS patch, pr1983-jdk.patch, so as to filter
+  -Wl,--as-needed. Resolves RHBZ#1622186.
+
 * Thu Aug 23 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181.b15-0
 - Move to single OpenJDK tarball build, based on aarch64/shenandoah-jdk8u.
 - Update to aarch64-shenandoah-jdk8u181-b15.
