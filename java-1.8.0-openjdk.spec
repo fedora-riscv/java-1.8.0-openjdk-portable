@@ -236,7 +236,6 @@
 %global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
 
 %global javaver         1.%{majorver}.0
-%global systemtap_javaver 9
 
 # parametrized macros are order-sensitive
 %global compatiblename  %{name}
@@ -1009,11 +1008,10 @@ Source1: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
 # Custom README for -src subpackage
 Source2:  README.md
 
-# Use 'generate_tarballs.sh' to generate the following tarballs
-# They are based on code contained in the IcedTea project (3.x)
 
-# Systemtap tapsets. Zipped up to keep it small
-Source8: systemtap-tapset-3.6.0pre02.tar.xz
+# run update_systemtap.sh to regenerate or update systemtap sources
+# update_package.sh contains hard-coded repos, revisions, tags, and projects to regenerate the source archives
+Source8: systemtap_3.2_tapsets_hg-icedtea8-9d464368e06d.tar.xz
 
 # Desktop files. Adapted from IcedTea
 Source9: jconsole.desktop.in
@@ -1657,7 +1655,7 @@ popd
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
-tar -x -I xz -f %{SOURCE8}
+tar --strip-components=1 -x -I xz -f %{SOURCE8}
 %if %{include_debug_build}
 cp -r tapset tapset%{debug_suffix}
 %endif
@@ -1665,7 +1663,7 @@ cp -r tapset tapset%{debug_suffix}
 
 for suffix in %{build_loop} ; do
   for file in "tapset"$suffix/*.in; do
-    OUTPUT_FILE=`echo $file | sed -e "s:%{systemtap_javaver}\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g"`
+    OUTPUT_FILE=`echo $file | sed -e "s:\.stp\.in$:%{version}-%{release}.%{_arch}.stp:g"`
     sed -e "s:@ABS_SERVER_LIBJVM_SO@:%{_jvmdir}/%{sdkdir -- $suffix}/jre/lib/%{archinstall}/server/libjvm.so:g" $file > $file.1
 # TODO find out which architectures other than i686 have a client vm
 %ifarch %{ix86}
