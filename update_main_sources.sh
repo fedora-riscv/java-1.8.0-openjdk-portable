@@ -28,10 +28,10 @@ if [ "x$PROJECT_NAME" = "x" ] ; then
     PROJECT_NAME="aarch64-port"
 fi
 if [ "x$REPO_NAME" = "x" ] ; then
-    REPO_NAME="jdk8u"
+    REPO_NAME="jdk8u-shenandoah"
 fi
 if [ "x$VERSION" = "x" ] ; then
-    VERSION="aarch64-jdk8u181-b13"
+    VERSION="aarch64-shenandoah-jdk8u181-b15"
 fi
 
 if [ "x$COMPRESSION" = "x" ] ; then
@@ -63,98 +63,11 @@ fi
 
 
 echo "Touching spec: $SPEC"
-sed -i "s/^%global\s\+project.*/%global project         ${PROJECT_NAME}/" $SPEC 
-sed -i "s/^%global\s\+repo.*/%global repo            ${REPO_NAME}/" $SPEC 
-sed -i "s/^%global\s\+revision.*/%global revision        ${VERSION}/" $SPEC 
+echo sed -i "s/^%global\s\+project.*/%global project         ${PROJECT_NAME}/" $SPEC 
+echo sed -i "s/^%global\s\+repo.*/%global repo            ${REPO_NAME}/" $SPEC 
+echo sed -i "s/^%global\s\+revision.*/%global revision        ${VERSION}/" $SPEC 
 # updated sources, resetting release
-sed -i "s/^Release:.*/Release: $RELEASE.%{buildver}%{?dist}/" $SPEC
-
-#https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Bash
-function levenshtein {
-	if [ "$#" -ne "2" ]; then
-		echo "Usage: $0 word1 word2" >&2
-	elif [ "${#1}" -lt "${#2}" ]; then
-		levenshtein "$2" "$1"
-	else
-		local str1len=$((${#1}))
-		local str2len=$((${#2}))
-		local d i j
-		for i in $(seq 0 $(((str1len+1)*(str2len+1)))); do
-			d[i]=0
-		done
-		for i in $(seq 0 $((str1len)));	do
-			d[$((i+0*str1len))]=$i
-		done
-		for j in $(seq 0 $((str2len)));	do
-			d[$((0+j*(str1len+1)))]=$j
-		done
-
-		for j in $(seq 1 $((str2len))); do
-			for i in $(seq 1 $((str1len))); do
-				[ "${1:i-1:1}" = "${2:j-1:1}" ] && local cost=0 || local cost=1
-				local del=$((d[(i-1)+str1len*j]+1))
-				local ins=$((d[i+str1len*(j-1)]+1))
-				local alt=$((d[(i-1)+str1len*(j-1)]+cost))
-				d[i+str1len*j]=$(echo -e "$del\n$ins\n$alt" | sort -n | head -1)
-			done
-		done
-		echo ${d[str1len+str1len*(str2len)]}
-	fi
-}
-# generate shenandoah hotspot
-# that means supply the underlying script with new values
-# to new filename.
-MAIN_VERSION=$VERSION
-if [ "x$VERSION" = "xtip" ] ; then
-    VERSION="tip"
-else
-	#hardcoding version for anything else except tip
-    VERSION="aarch64-shenandoah-jdk8u181-b13"
-fi
-MAIN_REPO_NAME=$REPO_NAME
-REPO_NAME=jdk8u-shenandoah
-MAIN_FILE_NAME_ROOT=$FILE_NAME_ROOT
-FILE_NAME_ROOT=${PROJECT_NAME}-${REPO_NAME}-${VERSION}
-FILENAME_SH=${FILE_NAME_ROOT}.tar.${COMPRESSION}
-REPOS="hotspot"
-
-if [ ! -f ${FILENAME_SH} ] ; then
-echo "Generating ${FILENAME_SH}"
-. ./generate_source_tarball.sh
-else 
-echo "${FILENAME_SH} already exists, using"
-fi
-
-sed -i "s/^Source1:.*/Source1: ${FILENAME_SH}/" $SPEC
-git --no-pager diff $SPEC
-
-# find the most similar sources name and replace it by newly generated one.
-echo "Old sources"
-cat sources
-a_sources=`cat sources | sed "s/.*(//g" | sed "s/).*//g" | sed "s/.*\s\+//g"`
-winner=""
-winnerDistance=999999
-for x in $a_sources ; do
-  distance=`levenshtein $x ${FILENAME}`
-  if [ $distance -lt $winnerDistance ] ; then
-    winner=$x
-    winnerDistance=$distance
-  fi
-done
-sum=`md5sum ${FILENAME}`
-sed -i "s;.*$winner;$sum;" sources
-# now shenandoah hotspot
-winner=""
-winnerDistance=999999
-for x in $a_sources ; do
-  distance=`levenshtein $x ${FILENAME_SH}`
-  if [ $distance -lt $winnerDistance ] ; then
-    winner=$x
-    winnerDistance=$distance
-  fi
-done
-sum=`md5sum ${FILENAME_SH}`
-sed -i "s;.*$winner;$sum;" sources
+echo sed -i "s/^Release:.*/Release: $RELEASE.%{buildver}%{?dist}/" $SPEC
 
 echo "New sources"
 cat sources
