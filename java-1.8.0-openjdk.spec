@@ -961,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 0%{?dist}
+Release: 1%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1666,7 +1666,7 @@ for file in %{SOURCE9} %{SOURCE10} ; do
     sed    -e  "s:@JAVA_HOME@:%{sdkbindir -- $suffix}:g" $file > $OUTPUT_FILE
     sed -i -e  "s:@JRE_HOME@:%{jrebindir -- $suffix}:g" $OUTPUT_FILE
     sed -i -e  "s:@ARCH@:%{version}-%{release}.%{_arch}$suffix:g" $OUTPUT_FILE
-    sed -i -e  "s:@JAVA_MAJOR_VERSION@:%{majorver}:g" $OUTPUT_FILE
+    sed -i -e  "s:@JAVA_MAJOR_VERSION@:%{javaver}:g" $OUTPUT_FILE
     sed -i -e  "s:@JAVA_VENDOR@:%{origin}:g" $OUTPUT_FILE
 done
 done
@@ -2271,6 +2271,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Sep 11 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.181.b15-1
+- fixed unexpanded arch in policy tool desktop file
+- fixed versions (8->1.8.0) of images used in desktop files
+
 * Mon Aug 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b13-9
 - Adjust system jpeg patch, system-libjpeg.patch, so as to filter
   -Wl,--as-needed. Resolves RHBZ#1622186.
