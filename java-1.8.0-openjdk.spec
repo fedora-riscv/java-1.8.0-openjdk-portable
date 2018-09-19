@@ -104,8 +104,8 @@
 
 
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
-# We filter out -O flags so that the optimization of HotSpot is not lowered from O3 to O2
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
+# We filter out -O flags so that the optimization of HotSpot is not lowered from O3 to O2
 # We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
@@ -961,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 3%{?dist}
+Release: 4%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1126,6 +1126,18 @@ Patch576: 8064786-pr3599.patch
 Patch577: 8062808-pr3548.patch
 # s390: JDK-8203030, Type fixing for s390
 Patch102: 8203030-size_t-fixes.patch
+# 8210761: libjsig is being compiled without optimization
+Patch620: 8210761-rh1630426-jsig-opt-fix.patch
+# 8210647: libsaproc is being compiled without optimization
+Patch621: 8210647-rh1630426-saproc-opt-fix.patch
+# 8210416: [linux] Poor StrictMath performance due to non-optimized compilation
+Patch622: 8210416-rh1630426-strict-math-opt.patch
+# 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
+#          Upstream 8u part.
+Patch623: 8210425-01-rh1630426-hotspot-opt-fix.patch
+# 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
+#          Aarch64-port 8u local part
+Patch624: 8210425-02-rh1630426-hotspot-opt-fix-aarch64.patch
 
 #############################################
 #
@@ -1613,6 +1625,11 @@ sh %{SOURCE12}
 %patch579
 %patch580
 %patch581
+%patch620
+%patch621
+%patch622
+%patch623
+%patch624
 
 # RPM-only fixes
 %patch525
@@ -2268,6 +2285,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Sep 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-4
+- Add fixes for optimization gaps (annocheck issues):
+  - 8210761: libjsig is being compiled without optimization
+  - 8210647: libsaproc is being compiled without optimization
+  - 8210416: [linux] Poor StrictMath performance due to non-optimized compilation
+  - 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
+             8u upstream and aarch64/jdk8u upstream versions.
+
 * Wed Sep 26 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-3
 - Renamed more patches for clarity:
   include-all-srcs.patch => 8044235-include-all-srcs.patch

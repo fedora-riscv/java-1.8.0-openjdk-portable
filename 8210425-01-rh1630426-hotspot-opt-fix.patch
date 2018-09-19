@@ -1,0 +1,83 @@
+diff --git openjdk.orig/hotspot/make/linux/makefiles/amd64.make openjdk/hotspot/make/linux/makefiles/amd64.make
+--- openjdk.orig/hotspot/make/linux/makefiles/amd64.make
++++ openjdk/hotspot/make/linux/makefiles/amd64.make
+@@ -22,10 +22,13 @@
+ #  
+ #
+ 
+-# The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
+-OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
+-# The copied fdlibm routines in sharedRuntimeTrans.o must not be optimized
+-OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
++ifeq ($(OPT_CFLAGS_NO_FMA),)
++  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
++  OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
++else
++  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++  OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++endif
+ # Must also specify if CPU is little endian
+ CFLAGS += -DVM_LITTLE_ENDIAN
+ 
+diff --git openjdk.orig/hotspot/make/linux/makefiles/gcc.make openjdk/hotspot/make/linux/makefiles/gcc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/gcc.make
++++ openjdk/hotspot/make/linux/makefiles/gcc.make
+@@ -225,6 +225,16 @@
+ OPT_CFLAGS/SIZE=-Os
+ OPT_CFLAGS/SPEED=-O3
+ 
++ifeq ($(USE_CLANG),)
++  # Only GCC 4.6 and better have machine independent -ffp-contract=off.
++  # For other versions we need to explicitly set arch specific machine
++  # flags or keep optimization off for them.
++  ifeq "$(shell expr \( $(CC_VER_MAJOR) \> 4 \) \| \( \( $(CC_VER_MAJOR) = 4 \) \& \( $(CC_VER_MINOR) \>= 6 \) \))" "1"
++    OPT_CFLAGS_NO_FMA = -ffp-contract=off
++  endif
++endif
++
++
+ # Hotspot uses very unstrict aliasing turn this optimization off
+ # This option is added to CFLAGS rather than OPT_CFLAGS
+ # so that OPT_CFLAGS overrides get this option too.
+diff --git openjdk.orig/hotspot/make/linux/makefiles/i486.make openjdk/hotspot/make/linux/makefiles/i486.make
+--- openjdk.orig/hotspot/make/linux/makefiles/i486.make
++++ openjdk/hotspot/make/linux/makefiles/i486.make
+@@ -24,10 +24,13 @@
+ 
+ # TLS helper, assembled from .s file
+ 
+-# The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
+-OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
+-# The copied fdlibm routines in sharedRuntimeTrans.o must not be optimized
+-OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
++ifeq ($(OPT_CFLAGS_NO_FMA),)
++  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
++  OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
++else
++  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++  OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++endif
+ # Must also specify if CPU is little endian
+ CFLAGS += -DVM_LITTLE_ENDIAN
+ 
+diff --git openjdk.orig/hotspot/make/linux/makefiles/ppc64.make openjdk/hotspot/make/linux/makefiles/ppc64.make
+--- openjdk.orig/hotspot/make/linux/makefiles/ppc64.make
++++ openjdk/hotspot/make/linux/makefiles/ppc64.make
+@@ -49,3 +49,17 @@
+   # Use Power8, this is the first CPU to support PPC64 LE with ELFv2 ABI.
+   CFLAGS += -mcpu=power7 -mtune=power8 -minsert-sched-nops=regroup_exact -mno-multiple -mno-string
+ endif
++
++ifeq ($(OPT_CFLAGS_NO_FMA),)
++  ifeq ($(OPENJDK_TARGET_CPU_ENDIAN),big)
++    OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/SPEED) -mno-fused-madd -fno-strict-aliasing
++    OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/SPEED) -mno-fused-madd -fno-strict-aliasing
++  else
++    OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
++    OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/NOOPT)
++  endif
++else
++  OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++  OPT_CFLAGS/sharedRuntimeTrans.o = $(OPT_CFLAGS/SPEED) $(OPT_CFLAGS_NO_FMA)
++endif
++
