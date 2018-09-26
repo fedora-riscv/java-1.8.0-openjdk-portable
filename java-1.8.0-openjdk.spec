@@ -961,7 +961,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 2%{?dist}
+Release: 3%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1092,11 +1092,11 @@ Patch106: pr3519.patch
 #
 #############################################
 # S8073139, RH1191652; fix name of ppc64le architecture
-Patch601: %{name}-rh1191652-root.patch
-Patch602: %{name}-rh1191652-jdk.patch
-Patch603: %{name}-rh1191652-hotspot-aarch64.patch
-# Include all sources in src.zip
-Patch7: include-all-srcs.patch
+Patch601: 8073139-rh1191652-root.patch
+Patch602: 8073139-rh1191652-jdk.patch
+Patch603: 8073139-rh1191652-hotspot-aarch64.patch
+# 8044235: src.zip should include all sources
+Patch7:   8044235-include-all-srcs.patch
 # S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462.patch
@@ -2268,6 +2268,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Sep 26 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-3
+- Renamed more patches for clarity:
+  include-all-srcs.patch => 8044235-include-all-srcs.patch
+  java-1.8.0-openjdk-rh1191652-hotspot-aarch64.patch => 8073139-rh1191652-hotspot-aarch64.patch
+  java-1.8.0-openjdk-rh1191652-jdk.patch => 8073139-rh1191652-jdk.patch
+  java-1.8.0-openjdk-rh1191652-root.patch => 8073139-rh1191652-root.patch
+
 * Tue Sep 18 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-2
 - Update(s) from upstreamed patches:
   - 8036003-dont-add-unnecessary-debug-links.patch =>
