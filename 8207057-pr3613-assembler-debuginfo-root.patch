@@ -1,0 +1,39 @@
+--- openjdk/common/autoconf/toolchain.m4	2018-09-17 15:35:40.783695320 +0200
++++ openjdk/common/autoconf/toolchain.m4	2018-09-17 15:35:40.608695635 +0200
+@@ -814,6 +814,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
+ 
+   C_FLAG_DEPS="-MMD -MF"
+   CXX_FLAG_DEPS="-MMD -MF"
++  # By default don't set any specific assembler debug
++  # info flags for toolchains unless we know they work.
++  # See JDK-8207057.
++  ASFLAGS_DEBUG_SYMBOLS=""
+ 
+   case $COMPILER_TYPE in
+     CC )
+@@ -842,6 +846,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
+             CFLAGS_DEBUG_SYMBOLS="-g1"
+             CXXFLAGS_DEBUG_SYMBOLS="-g1"
+           fi
++          ASFLAGS_DEBUG_SYMBOLS="-g"
+           ;;
+         ossc )
+           #
+@@ -969,6 +974,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
+   AC_SUBST(CXX_O_FLAG_NONE)
+   AC_SUBST(C_FLAG_DEPS)
+   AC_SUBST(CXX_FLAG_DEPS)
++  AC_SUBST(ASFLAGS_DEBUG_SYMBOLS)
+ ])
+ 
+ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_JDK],
+--- openjdk/common/autoconf/spec.gmk.in	2018-09-17 15:35:43.324690758 +0200
++++ openjdk/common/autoconf/spec.gmk.in	2018-09-17 15:35:43.169691036 +0200
+@@ -414,6 +414,7 @@
+ # Options for generating debug symbols
+ ENABLE_DEBUG_SYMBOLS:=@ENABLE_DEBUG_SYMBOLS@
+ CFLAGS_DEBUG_SYMBOLS:=@CFLAGS_DEBUG_SYMBOLS@
++ASFLAGS_DEBUG_SYMBOLS:=@ASFLAGS_DEBUG_SYMBOLS@
+ CXXFLAGS_DEBUG_SYMBOLS:=@CXXFLAGS_DEBUG_SYMBOLS@
+ ZIP_DEBUGINFO_FILES:=@ZIP_DEBUGINFO_FILES@
+ STRIP_POLICY:=@STRIP_POLICY@
