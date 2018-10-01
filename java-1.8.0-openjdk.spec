@@ -1771,11 +1771,6 @@ bash ../../configure \
 cat spec.gmk
 cat hotspot-spec.gmk
 
-# The combination of FULL_DEBUG_SYMBOLS=0 and ALT_OBJCOPY=/does_not_exist
-# disables FDS for all build configs and reverts to pre-FDS make logic.
-# STRIP_POLICY=none says don't do any stripping. DEBUG_BINARIES=true says
-# ignore all the other logic about which debug options and just do '-g'.
-
 make \
     JAVAC_FLAGS=-g \
     LOG=trace \
