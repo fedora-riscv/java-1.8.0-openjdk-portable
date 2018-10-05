@@ -1,20 +1,28 @@
-diff --git a/common/autoconf/hotspot-spec.gmk.in b/common/autoconf/hotspot-spec.gmk.in
---- openjdk///common/autoconf/hotspot-spec.gmk.in
-+++ openjdk///common/autoconf/hotspot-spec.gmk.in
-@@ -71,6 +71,10 @@
- LIBARCH=$(OPENJDK_TARGET_CPU_LEGACY_LIB)
- # Set the cpu architecture
- ARCH=$(OPENJDK_TARGET_CPU_ARCH)
-+# ppc64le uses the HotSpot ppc64 build
-+ifeq ($(OPENJDK_TARGET_CPU), ppc64le)
-+  ARCH=ppc64
-+endif
- # Legacy setting for building for a 64 bit machine.
- # If yes then this expands to _LP64:=1
- @LP64@
+# HG changeset patch
+# User sgehwolf
+# Date 1537883922 -7200
+#      Tue Sep 25 15:58:42 2018 +0200
+# Node ID 2fabe07c0bd8bf21400313f3bb9b8e80fcb31724
+# Parent  91867683f73de3882ef88981a79995beeeb1e980
+8073139: PPC64: User-visible arch directory and os.arch value on ppc64le cause issues with Java tooling
+Reviewed-by: erikj, goetz, dholmes
+
+diff --git a/common/autoconf/toolchain.m4 b/common/autoconf/toolchain.m4
+--- openjdk/common/autoconf/toolchain.m4
++++ openjdk/common/autoconf/toolchain.m4
+@@ -1125,6 +1125,9 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_JDK],
+   else
+     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_BIG_ENDIAN"
+   fi
++  if test "x$OPENJDK_TARGET_CPU" = xppc64le; then
++    COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DABI_ELFv2"
++  fi
+   if test "x$OPENJDK_TARGET_OS" = xlinux; then
+     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DLINUX"
+   fi
 diff --git a/common/autoconf/jdk-options.m4 b/common/autoconf/jdk-options.m4
---- openjdk///common/autoconf/jdk-options.m4
-+++ openjdk///common/autoconf/jdk-options.m4
+--- openjdk/common/autoconf/jdk-options.m4
++++ openjdk/common/autoconf/jdk-options.m4
 @@ -158,7 +158,7 @@
    if test "x$JVM_VARIANT_ZEROSHARK" = xtrue ; then
      INCLUDE_SA=false
@@ -25,8 +33,8 @@ diff --git a/common/autoconf/jdk-options.m4 b/common/autoconf/jdk-options.m4
    fi
    if test "x$OPENJDK_TARGET_CPU" = xaarch64; then
 diff --git a/common/autoconf/platform.m4 b/common/autoconf/platform.m4
---- openjdk///common/autoconf/platform.m4
-+++ openjdk///common/autoconf/platform.m4
+--- openjdk/common/autoconf/platform.m4
++++ openjdk/common/autoconf/platform.m4
 @@ -67,7 +67,7 @@
        VAR_CPU_ENDIAN=big
        ;;
@@ -36,16 +44,3 @@ diff --git a/common/autoconf/platform.m4 b/common/autoconf/platform.m4
        VAR_CPU_ARCH=ppc
        VAR_CPU_BITS=64
        VAR_CPU_ENDIAN=little
-diff --git a/common/autoconf/toolchain.m4 b/common/autoconf/toolchain.m4
---- openjdk///common/autoconf/toolchain.m4
-+++ openjdk///common/autoconf/toolchain.m4
-@@ -1123,6 +1123,9 @@
-   else
-     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_BIG_ENDIAN"
-   fi
-+  if test "x$OPENJDK_TARGET_CPU" = xppc64le; then
-+    COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DABI_ELFv2"
-+  fi
-   if test "x$OPENJDK_TARGET_OS" = xlinux; then
-     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DLINUX"
-   fi
