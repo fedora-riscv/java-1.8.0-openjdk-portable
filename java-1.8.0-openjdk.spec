@@ -964,7 +964,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 5%{?dist}
+Release: 6%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2284,6 +2284,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Oct 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-6
+- Refreshed upstreamed patches (from 8u202):
+  - 8044235-include-all-srcs.patch: src.zip should include all sources.
+  - 8073139-rh1191652-hotspot-aarch64.patch,
+    8073139-rh1191652-jdk.patch,
+    8073139-rh1191652-root.patch: PPC64LE JVM reporting issues.
+- Moved both patch series to 8u202 sections.
+
 * Mon Oct 01 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-5
 - Add explicit requirement for libXcomposite which is used when performing
   screenshots from Java.
