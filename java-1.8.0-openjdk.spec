@@ -964,7 +964,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 6%{?dist}
+Release: 7%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1135,6 +1135,9 @@ Patch623: 8210425-01-rh1630426-hotspot-opt-fix.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Aarch64-port 8u local part
 Patch624: 8210425-02-rh1630426-hotspot-opt-fix-aarch64.patch
+# 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
+#          Zero part of the fix for (arm/s390 arches)
+Patch625: 8210425-03-rh1630426-hotspot-opt-fix-zero.patch
 
 #############################################
 #
@@ -1634,6 +1637,7 @@ sh %{SOURCE12}
 %patch622
 %patch623
 %patch624
+%patch625
 
 # RPM-only fixes
 %patch525
@@ -2284,6 +2288,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Oct 12 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-7
+- Add patch 8210425-03-rh1630426-hotspot-opt-fix-zero.patch:
+  - Annother fix for optimization gaps (annocheck issues)
+  - Zero 8u version fix was missing. Hence, only shows up on Zero arches.
+
 * Mon Oct 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-6
 - Refreshed upstreamed patches (from 8u202):
   - 8044235-include-all-srcs.patch: src.zip should include all sources.
