@@ -71,7 +71,7 @@
 %global include_debug_build 0
 %endif
 
-# On x86_64 and AArch64, we use the Shenandoah HotSpot
+# Shenandoah HotSpot used everywhere, but built only on x86_64 and AArch64
 %ifarch x86_64 %{aarch64}
 %global use_shenandoah_hotspot 1
 %else
@@ -244,7 +244,7 @@
 # images stub
 %global jdkimage       j2sdk-image
 # output dir stub
-%define buildoutputdir() %{expand:openjdk/build/jdk8.build%{?1}}
+%define buildoutputdir() %{expand:%{top_level_dir_name}/build/jdk8.build%{?1}}
 # we can copy the javadoc to not arched dir, or make it not noarch
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
 # main id and dir of this jdk
@@ -1548,8 +1548,8 @@ cp %{SOURCE2} .
 #
 # the configure macro will do this too, but it also passes a few flags not
 # supported by openjdk configure script
-cp %{SOURCE100} openjdk/common/autoconf/build-aux/
-cp %{SOURCE101} openjdk/common/autoconf/build-aux/
+cp %{SOURCE100} %{top_level_dir_name}/common/autoconf/build-aux/
+cp %{SOURCE101} %{top_level_dir_name}/common/autoconf/build-aux/
 
 # OpenJDK patches
 
@@ -1991,7 +1991,7 @@ cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{
 # Install icons and menu entries
 for s in 16 24 32 48 ; do
   install -D -p -m 644 \
-    openjdk/jdk/src/solaris/classes/sun/awt/X11/java-icon${s}.png \
+    %{top_level_dir_name}/jdk/src/solaris/classes/sun/awt/X11/java-icon${s}.png \
     $RPM_BUILD_ROOT%{_datadir}/icons/hicolor/${s}x${s}/apps/java-%{javaver}-%{origin}.png
 done
 
