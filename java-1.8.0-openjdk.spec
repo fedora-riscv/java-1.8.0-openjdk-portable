@@ -1288,7 +1288,7 @@ BuildRequires: systemtap-sdt-devel
 %{java_rpo %{nil}}
 
 %description
-The %{origin_nice} runtime environment.
+The %{origin_nice} runtime environment %{majorver}.
 
 %if %{include_debug_build}
 %package slowdebug
@@ -1297,7 +1297,7 @@ Group:   Development/Languages
 
 %{java_rpo -- %{debug_suffix_unquoted}}
 %description slowdebug
-The %{origin_nice} runtime environment.
+The %{origin_nice} runtime environment %{majorver}.
 %{debug_warning}
 %endif
 
@@ -1314,7 +1314,7 @@ The %{origin_nice} runtime environment %{majorver} without audio and video suppo
 
 %if %{include_debug_build}
 %package headless-slowdebug
-Summary: %{origin_nice} Runtime Environment %{debug_on}
+Summary: %{origin_nice} Runtime Environment %{majorver} %{debug_on}
 Group:   Development/Languages
 
 %{java_headless_rpo -- %{debug_suffix_unquoted}}
