@@ -1057,7 +1057,7 @@ Patch516: pr2815.patch
 Patch517: pr2899.patch
 Patch518: pr2934.patch
 Patch519: pr3479-rh1486025.patch
-# PR3183, RH1340845: Support Fedora/RHEL system crypto policy
+# PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
 Patch300: pr3183-rh1340845-system-crypto-policy.patch
 
 #############################################
@@ -1168,8 +1168,6 @@ Patch578: 8075942-pr3602-rh1582032.patch
 Patch579: 8203182-pr3603-rh1568033.patch
 # 8206406, PR3610, RH1597825: StubCodeDesc constructor publishes partially-constructed objects on StubCodeDesc::_list
 Patch580: 8206406-pr3610-rh1597825.patch
-# 8146115, PR3508, RH1463098: Improve docker container detection and resource configuration usage
-Patch581: 8146115-pr3508-rh1463098.patch
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
 # 8206425: .gnu_debuglink sections added unconditionally when no debuginfo is stripped
 Patch204: 8206425-hotspot-remove-debuglink.patch
@@ -1224,10 +1222,8 @@ Patch539: pr2888.patch
 Patch540: pr3575-rh1567204.patch
 
 # Shenandoah fixes
-# PR3619: Shenandoah broken on s390
-Patch582: pr3619.patch
-# PR3620: Shenandoah broken on ppc64
-Patch583: pr3620.patch
+# PR3634: Shenandoah still broken on s390 with aarch64-shenandoah-jdk8u181-b16
+Patch582: pr3634.patch
 
 #############################################
 #
@@ -1631,7 +1627,6 @@ sh %{SOURCE12}
 %patch578
 %patch579
 %patch580
-%patch581
 %patch620
 %patch621
 %patch622
@@ -1651,7 +1646,6 @@ sh %{SOURCE12}
 
 # Shenandoah patches
 %patch582
-%patch583
 
 %patch1000
 
@@ -2288,6 +2282,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-1
+- updated to aarch64-shenandoah-jdk8u191-b12
+- deleted 8146115-pr3508-rh1463098.patch, pr3619.patch, pr3620.patch - should be upstreamed
+- create pr3634.patch to fix build failure on s390
+
 * Fri Oct 12 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-7
 - Add patch 8210425-03-rh1630426-hotspot-opt-fix-zero.patch:
   - Annother fix for optimization gaps (annocheck issues)
