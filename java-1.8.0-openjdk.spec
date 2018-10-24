@@ -830,6 +830,7 @@ Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 # for java-X-openjdk package's desktop binding
 Recommends: gtk2%{?_isa}
+Suggests: cups
 
 Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
@@ -869,7 +870,7 @@ Requires(postun): %{_sbindir}/alternatives
 # in version 1.7 and higher for --family switch
 Requires(postun):   chkconfig >= 1.7
 # for optional support of kernel stream control, card reader and printing bindings
-Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}, cups
+Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}
 
 # Standard JPackage base provides
 Provides: jre-headless%{?1} = %{epoch}:%{javaver}
@@ -2282,6 +2283,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-2
+- cups moved to headful package
+
 * Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-1
 - updated to aarch64-shenandoah-jdk8u191-b12
 - deleted 8146115-pr3508-rh1463098.patch, pr3619.patch, pr3620.patch - should be upstreamed
