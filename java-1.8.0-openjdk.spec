@@ -965,7 +965,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 7%{?dist}
+Release: 8%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1195,6 +1195,8 @@ Patch602: 8073139-rh1191652-jdk.patch
 Patch603: 8073139-rh1191652-hotspot-aarch64.patch
 # 8044235: src.zip should include all sources
 Patch7:   8044235-include-all-srcs.patch
+Patch583: jdk8172850-rh1640127-register_allocator_crash_01.patch
+Patch584: jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
 
 #############################################
 #
@@ -1634,6 +1636,8 @@ sh %{SOURCE12}
 %patch623
 %patch624
 %patch625
+%patch583
+%patch584
 
 # RPM-only fixes
 %patch525
@@ -2283,6 +2287,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Oct 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-8
+- added Patch583 jdk8172850-rh1640127-register_allocator_crash_01.patch
+- added Patch584 jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
+
 * Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-2
 - cups moved to headful package
 
