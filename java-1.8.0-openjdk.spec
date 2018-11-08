@@ -1049,6 +1049,8 @@ Patch1:   %{name}-accessible-toolkit.patch
 # Restrict access to java-atk-wrapper classes
 Patch3:   java-atk-wrapper-security.patch
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
+# Not currently suitable to go upstream as it disables curves
+# for all providers unconditionally
 Patch525: pr1834-rh1022017.patch
 # Turn on AssumeMP by default on RHEL systems
 Patch534: always_assumemp.patch
@@ -2328,6 +2330,9 @@ require "copy_jdk_configs.lua"
 %changelog
 * Wed Nov 07 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-9
 - headfull suggests of cups, replaced by Requires of cups-libs in headless
+
+* Wed Nov 07 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-9
+- Note why PR1834/RH1022017 is not suitable to go upstream in its current form.
 
 * Mon Nov 05 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-9
 - Document patch sections.
