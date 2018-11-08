@@ -1045,22 +1045,10 @@ Source101: config.sub
 Patch1:   %{name}-accessible-toolkit.patch
 # Restrict access to java-atk-wrapper classes
 Patch3:   java-atk-wrapper-security.patch
-# Support for building the SunEC provider with the system NSS installation
-# PR1983: Support using the system installation of NSS with the SunEC provider
-# PR2127: SunEC provider crashes when built using system NSS
-# PR2815: Race condition in SunEC provider with system NSS
-# PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
-# PR2934: SunEC provider throwing KeyException with current NSS
-# PR3479, RH1486025: ECC and NSS JVM crash
-Patch513: pr1983-jdk.patch
-Patch514: pr1983-root.patch
-Patch515: pr2127.patch
-Patch516: pr2815.patch
-Patch517: pr2899.patch
-Patch518: pr2934.patch
-Patch519: pr3479-rh1486025.patch
-# PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
-Patch300: pr3183-rh1340845-system-crypto-policy.patch
+# PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
+Patch525: pr1834-rh1022017.patch
+# Turn on AssumeMP by default on RHEL systems
+Patch534: always_assumemp.patch
 
 #############################################
 #
@@ -1081,6 +1069,26 @@ Patch528: pr3083-rh1346460.patch
 Patch529: rh1566890_embargoed20180521.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601.patch
+# Support for building the SunEC provider with the system NSS installation
+# PR1983: Support using the system installation of NSS with the SunEC provider
+# PR2127: SunEC provider crashes when built using system NSS
+# PR2815: Race condition in SunEC provider with system NSS
+# PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
+# PR2934: SunEC provider throwing KeyException with current NSS
+# PR3479, RH1486025: ECC and NSS JVM crash
+Patch513: pr1983-jdk.patch
+Patch514: pr1983-root.patch
+Patch515: pr2127.patch
+Patch516: pr2815.patch
+Patch517: pr2899.patch
+Patch518: pr2934.patch
+Patch519: pr3479-rh1486025.patch
+# PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
+Patch539: pr2888.patch
+# PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
+Patch540: pr3575-rh1567204.patch
+# PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
+Patch300: pr3183-rh1340845-system-crypto-policy.patch
 
 # Arch-specific upstreamable patches
 
@@ -1125,6 +1133,10 @@ Patch576: 8064786-pr3599.patch
 Patch577: 8062808-pr3548.patch
 # s390: JDK-8203030, Type fixing for s390
 Patch102: 8203030-size_t-fixes.patch
+# 8035341: Allow using a system installed libpng
+Patch202: system-libpng.patch
+# 8042159: Allow using a system-installed lcms2
+Patch203: system-lcms.patch
 # 8210761: libjsig is being compiled without optimization
 Patch620: 8210761-rh1630426-jsig-opt-fix.patch
 # 8210647: libsaproc is being compiled without optimization
@@ -1206,26 +1218,12 @@ Patch584: jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
 #############################################
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
-# 8035341: Allow using a system installed libpng
-Patch202: system-libpng.patch
-# 8042159: Allow using a system-installed lcms2
-Patch203: system-lcms.patch
 
 #############################################
 #
-# Local fixes
-#
-#############################################
-# PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
-Patch525: pr1834-rh1022017.patch
-# Turn on AssumeMP by default on RHEL systems
-Patch534: always_assumemp.patch
-# PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
-Patch539: pr2888.patch
-# PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
-Patch540: pr3575-rh1567204.patch
-
 # Shenandoah fixes
+#
+#############################################
 # PR3634: Shenandoah still broken on s390 with aarch64-shenandoah-jdk8u181-b16
 Patch582: pr3634.patch
 
@@ -2290,6 +2288,13 @@ require "copy_jdk_configs.lua"
 %changelog
 * Wed Nov 07 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-9
 - headfull suggests of cups, replaced by Requires of cups-libs in headless
+
+* Mon Nov 05 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-9
+- Fix patch organisation in the spec file:
+-   * Move ECC patches back to upstreamable section
+-   * Move system cacerts & crypto policy patches to upstreamable section
+-   * Merge "Local fixes" and "RPM fixes" which amount to the same thing
+-   * Move system libpng & lcms patches back to 8u upstreamable section
 
 * Fri Oct 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-8
 - added Patch583 jdk8172850-rh1640127-register_allocator_crash_01.patch
