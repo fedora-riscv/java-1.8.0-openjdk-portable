@@ -1038,6 +1038,9 @@ Source101: config.sub
 #
 # RPM/distribution specific patches
 #
+# This section includes patches specific to
+# Fedora/RHEL which can not be upstreamed
+# either in their current form or at all.
 ############################################
 
 # Accessibility patches
@@ -1054,6 +1057,9 @@ Patch534: always_assumemp.patch
 #
 # Upstreamable patches
 #
+# This section includes patches which need to
+# be reviewed & pushed to the current development
+# tree of OpenJDK.
 #############################################
 # PR2737: Allow multiple initialization of PKCS11 libraries
 Patch5: multiple-pkcs11-library-init.patch
@@ -1090,8 +1096,17 @@ Patch540: pr3575-rh1567204.patch
 # PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
 Patch300: pr3183-rh1340845-system-crypto-policy.patch
 
+#############################################
+#
 # Arch-specific upstreamable patches
-
+#
+# This section includes patches which need to
+# be reviewed & pushed upstream and are specific
+# to certain architectures. This usually means the
+# current OpenJDK development branch, but may also
+# include other trees e.g. for the AArch64 port for
+# OpenJDK 8u.
+#############################################
 # s390: PR3593: Use "%z" for size_t on s390 as size_t != intptr_t
 Patch103: pr3593-s390-size_t_format_flags.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
@@ -1103,6 +1118,10 @@ Patch106: pr3519.patch
 #
 # Patches which need backporting to 8u
 #
+# This section includes patches which have
+# been pushed upstream to the latest OpenJDK
+# development tree, but need to be backported
+# to OpenJDK 8u.
 #############################################
 # S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
@@ -1157,6 +1176,10 @@ Patch625: 8210425-03-rh1630426-hotspot-opt-fix-zero.patch
 #
 # Patches appearing in 8u192
 #
+# This section includes patches which are present
+# in the listed OpenJDK 8u release and should be
+# able to be removed once that release is out
+# and used by this RPM.
 #############################################
 # S8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
 Patch506: 8031668-pr2842-01.patch
@@ -1194,6 +1217,10 @@ Patch100: 8201495-s390-java-opts.patch
 #
 # Patches appearing in 8u202
 #
+# This section includes patches which are present
+# in the listed OpenJDK 8u release and should be
+# able to be removed once that release is out
+# and used by this RPM.
 #############################################
 # S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
 Patch508: 8150954-pr2866-rh1176206-screenshot-xcomposite-jdk.patch
@@ -1215,6 +1242,8 @@ Patch584: jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
 #
 # Patches ineligible for 8u
 #
+# This section includes patches which are present
+# upstream, but ineligible for upstream 8u backport.
 #############################################
 # 8043805: Allow using a system-installed libjpeg
 Patch201: system-libjpeg.patch
@@ -1223,6 +1252,10 @@ Patch201: system-libjpeg.patch
 #
 # Shenandoah fixes
 #
+# This section includes patches which are
+# specific to the Shenandoah garbage collector
+# and should be upstreamed to the appropriate
+# trees.
 #############################################
 # PR3634: Shenandoah still broken on s390 with aarch64-shenandoah-jdk8u181-b16
 Patch582: pr3634.patch
@@ -1231,9 +1264,16 @@ Patch582: pr3634.patch
 #
 # Non-OpenJDK fixes
 #
+# This section includes patches to code other
+# that from OpenJDK.
 #############################################
 Patch1000: enableCommentedOutSystemNss.patch
 
+#############################################
+#
+# Dependencies
+#
+#############################################
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
@@ -2288,6 +2328,9 @@ require "copy_jdk_configs.lua"
 %changelog
 * Wed Nov 07 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-9
 - headfull suggests of cups, replaced by Requires of cups-libs in headless
+
+* Mon Nov 05 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-9
+- Document patch sections.
 
 * Mon Nov 05 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-9
 - Fix patch organisation in the spec file:
