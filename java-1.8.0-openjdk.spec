@@ -966,7 +966,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 9%{?dist}
+Release: 10%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2328,6 +2328,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Nov 13 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-10
+- Revise Shenandoah PR3634 patch following upstream discussion.
+
 * Wed Nov 07 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-9
 - headfull suggests of cups, replaced by Requires of cups-libs in headless
 
