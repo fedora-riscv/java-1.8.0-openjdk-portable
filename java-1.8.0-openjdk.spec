@@ -1045,15 +1045,15 @@ Source101: config.sub
 
 # Accessibility patches
 # Ignore AWTError when assistive technologies are loaded 
-Patch1:   %{name}-accessible-toolkit.patch
+Patch1:   rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch
 # Restrict access to java-atk-wrapper classes
-Patch3:   java-atk-wrapper-security.patch
+Patch3:   rh1648644-java_access_bridge_privileged_security.patch
 # PR1834, RH1022017: Reduce curves reported by SSL to those in NSS
 # Not currently suitable to go upstream as it disables curves
 # for all providers unconditionally
-Patch525: pr1834-rh1022017.patch
+Patch525: pr1834-rh1022017-reduce_ellipticcurvesextension_to_provide_only_three_nss_supported_nist_curves_23_24_25.patch
 # Turn on AssumeMP by default on RHEL systems
-Patch534: always_assumemp.patch
+Patch534: rh1648246-always_instruct_vm_to_assume_multiple_processors_are_available.patch
 
 #############################################
 #
@@ -1064,19 +1064,19 @@ Patch534: always_assumemp.patch
 # tree of OpenJDK.
 #############################################
 # PR2737: Allow multiple initialization of PKCS11 libraries
-Patch5: multiple-pkcs11-library-init.patch
+Patch5: pr2737-allow_multiple_pkcs11_library_initialisation_to_be_a_non_critical_error.patch
 # PR2095, RH1163501: 2048-bit DH upper bound too small for Fedora infrastructure (sync with IcedTea 2.x)
-Patch504: rh1163501.patch
+Patch504: rh1163501-increase_2048_bit_dh_upper_bound_fedora_infrastructure_in_dhparametergenerator.patch
 # Turn off strict overflow on IndicRearrangementProcessor{,2}.cpp following 8140543: Arrange font actions
-Patch512: no_strict_overflow.patch
+Patch512: rh1649664-awt2dlibraries_compiled_with_no_strict_overflow.patch
 # RH1337583, PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
-Patch523: pr2974-rh1337583.patch
+Patch523: pr2974-rh1337583-add_systemlineendings_option_to_keytool_and_use_line_separator_instead_of_crlf_in_pkcs10.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
-Patch528: pr3083-rh1346460.patch
+Patch528: pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch
 # RH1566890: CVE-2018-3639
-Patch529: rh1566890_embargoed20180521.patch
+Patch529: rh1566890_speculative_store_bypass_so_added_more_per_task_speculation_control_CVE_2018_3639.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
-Patch530: pr3601.patch
+Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_prims_jvm_cpp.patch
 # Support for building the SunEC provider with the system NSS installation
 # PR1983: Support using the system installation of NSS with the SunEC provider
 # PR2127: SunEC provider crashes when built using system NSS
@@ -1084,19 +1084,19 @@ Patch530: pr3601.patch
 # PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
 # PR2934: SunEC provider throwing KeyException with current NSS
 # PR3479, RH1486025: ECC and NSS JVM crash
-Patch513: pr1983-jdk.patch
-Patch514: pr1983-root.patch
-Patch515: pr2127.patch
-Patch516: pr2815.patch
-Patch517: pr2899.patch
-Patch518: pr2934.patch
-Patch519: pr3479-rh1486025.patch
+Patch513: pr1983-rh1565658-support_using_the_system_installation_of_nss_with_the_sunec_provider_jdk8.patch
+Patch514: pr1983-rh1565658-support_using_the_system_installation_of_nss_with_the_sunec_provider_root8.patch
+Patch515: pr2127-sunec_provider_crashes_when_built_using_system_nss_thus_use_of_nss_memory_management_functions.patch
+Patch516: pr2815-race_condition_in_sunec_provider_with_system_nss_fix.patch
+Patch517: pr2899-dont_use_withseed_versions_of_nss_functions_as_they_dont_fully_process_the_seed.patch
+Patch518: pr2934-sunec_provider_throwing_keyexception_withine.separator_current_nss_thus_initialise_the_random_number_generator_and_feed_the_seed_to_it.patch
+Patch519: pr3479-rh1486025-sunec_provider_can_have_multiple_instances_leading_to_premature_nss_shutdown.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
-Patch539: pr2888.patch
+Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
-Patch540: pr3575-rh1567204.patch
+Patch540: pr3575-rh1567204-system_cacerts_database_handling_no_longer_affect_jssecacerts.patch
 # PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
-Patch300: pr3183-rh1340845-system-crypto-policy.patch
+Patch300: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 
 #############################################
 #
@@ -1110,11 +1110,11 @@ Patch300: pr3183-rh1340845-system-crypto-policy.patch
 # OpenJDK 8u.
 #############################################
 # s390: PR3593: Use "%z" for size_t on s390 as size_t != intptr_t
-Patch103: pr3593-s390-size_t_format_flags.patch
+Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_equals_to_int.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
-Patch105: 8199936-pr3533-workaround.patch
+Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
 # AArch64: PR3519: Fix further functions with a missing return value (AArch64)
-Patch106: pr3519.patch
+Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 
 #############################################
 #
@@ -1127,52 +1127,52 @@ Patch106: pr3519.patch
 #############################################
 # S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
-Patch502: pr2462.patch
+Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binary.patch
 # S8154313: Generated javadoc scattered all over the place
-Patch400: 8154313.patch
+Patch400: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
 # 8197429, PR3546, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
-Patch561: 8197429-pr3546-rh1536622.patch
+Patch561: jdk8197429-pr3546-rh1536622-increased_stack_guard_causes_segfaults_on_x86_32.patch
 # 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
-Patch563: 8171000-pr3542-rh1402819.patch
+Patch563: jdk8171000-pr3542-rh1402819-robot_createScreenCapture_crashes_in_wayland_mode.patch
 # 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
-Patch564: 8197546-pr3542-rh1402819.patch
+Patch564: jdk8197546-pr3542-rh1402819-fix_for_8171000_breaks_solaris_linux_builds.patch
 # PR3559: Use ldrexd for atomic reads on ARMv7.
-Patch567: pr3559.patch
+Patch567: pr3559-use_ldrexd_for_atomic_reads_on_armv7_zero.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
-Patch571: pr3591.patch
+Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
-Patch572: 8184309-pr3596.patch
+Patch572: jdk8184309-pr3596-build_warnings_from_gcc_7_1_on_fedora_26.patch
 # 8141570, PR3548: Fix Zero interpreter build for --disable-precompiled-headers
-Patch573: 8141570-pr3548.patch
+Patch573: jdk8141570-pr3548-fix_zero_interpreter_build_for_disable_precompiled_headers.patch
 # 8143245, PR3548: Zero build requires disabled warnings
-Patch574: 8143245-pr3548.patch
+Patch574: jdk8143245-pr3548-zero_build_requires_disabled_warnings.patch
 # 8197981, PR3548: Missing return statement in __sync_val_compare_and_swap_8
-Patch575: 8197981-pr3548.patch
+Patch575: jdk8197981-pr3548-missing_return_statement_in_sync_val_compare_and_swap_8.patch
 # 8064786, PR3599: Fix debug build after 8062808: Turn on the -Wreturn-type warning
-Patch576: 8064786-pr3599.patch
+Patch576: jdk8064786-pr3599-fix_debug_build_after_8062808_Turn_on_the_wreturn_type_warning.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
-Patch577: 8062808-pr3548.patch
+Patch577: jdk8062808-pr3548-turn_on_the_wreturn_type_warning.patch
 # s390: JDK-8203030, Type fixing for s390
-Patch102: 8203030-size_t-fixes.patch
+Patch102: jdk8203030-zero_s390_31_bit_size_t_type_conflicts_in_shared_code.patch
 # 8035341: Allow using a system installed libpng
-Patch202: system-libpng.patch
+Patch202: jkd8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
-Patch203: system-lcms.patch
+Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # 8210761: libjsig is being compiled without optimization
-Patch620: 8210761-rh1630426-jsig-opt-fix.patch
+Patch620: jdk8210761-rh1632174-libjsig_is_being_compiled_without_optimization.patch
 # 8210647: libsaproc is being compiled without optimization
-Patch621: 8210647-rh1630426-saproc-opt-fix.patch
+Patch621: jdk8210647-rh1632174-libsaproc_is_being_compiled_without_optimization.patch
 # 8210416: [linux] Poor StrictMath performance due to non-optimized compilation
-Patch622: 8210416-rh1630426-strict-math-opt.patch
+Patch622: jdk8210416-rh1632174-compile_fdlibm_with_o2_ffp_contract_off_on_gcc_clang_arches.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Upstream 8u part.
-Patch623: 8210425-01-rh1630426-hotspot-opt-fix.patch
+Patch623: jdk8210425-rh1632174-01-compile_with_o2_and_ffp_contract_off_as_for_fdlibm.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Aarch64-port 8u local part
-Patch624: 8210425-02-rh1630426-hotspot-opt-fix-aarch64.patch
+Patch624: jdk8210425-rh1632174-02-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_aarch64.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Zero part of the fix for (arm/s390 arches)
-Patch625: 8210425-03-rh1630426-hotspot-opt-fix-zero.patch
+Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_zero.patch
 
 #############################################
 #
@@ -1184,36 +1184,36 @@ Patch625: 8210425-03-rh1630426-hotspot-opt-fix-zero.patch
 # and used by this RPM.
 #############################################
 # S8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
-Patch506: 8031668-pr2842-01.patch
+Patch506: jdk8031668-pr2842-01-toolchain_find_compiler_unexpectedly_resolves_symbolic_links.patch
 # S8148351, PR2842: Only display resolved symlink for compiler, do not change path
-Patch507: 8148351-pr2842-02.patch
+Patch507: jdk8148351-pr2842-02-only_display_resolved_symlink_for_compiler_do_not_change_path.patch
 # S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
-Patch526: 6260348-pr3066.patch
+Patch526: jdk6260348-pr3066-gtk_laf_jtextcomponent_not_respecting_desktop_caret_blink_rate.patch
 # 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
-Patch538: 8061305-pr3335-rh1423421.patch
+Patch538: jdk8061305-pr3335-rh1423421-javadoc_crashes_when_method_name_ends_with_property.patch
 # 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
-Patch560: 8188030-pr3459-rh1484079.patch
+Patch560: jdk8188030-pr3459-rh1484079-awt_java_apps_fail_to_start_when_some_minimal_fonts_are_present.patch
 # 8205104, PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
-Patch562: 8205104-pr3539-rh1548475.patch
+Patch562: jdk8205104-pr3539-rh1548475-pass_extra_ldflags_to_hotspot_build.patch
 # 8185723, PR3553: Zero: segfaults on Power PC 32-bit
-Patch565: 8185723-pr3553.patch
+Patch565: jdk8185723-pr3553-zero_segfaults_on_power_pc_32_bit.patch
 # 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
-Patch566: 8186461-pr3557.patch
+Patch566: jdk8186461-pr3557-zeros_atomic_copy64_should_use_spe_instructions_on_linux_powerpcspe.patch
 # 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
-Patch569: 8201509-pr3579.patch
+Patch569: jdk8201509-pr3579-zero_S390_31bit_atomic_copy64_inline_assembler_is_wrong.patch
 # 8075942, PR3602: ArrayIndexOutOfBoundsException in sun.java2d.pisces.Dasher.goTo
-Patch578: 8075942-pr3602-rh1582032.patch
+Patch578: jdk8075942-pr3602-rh1582032-arrayindexoutOfboundsException_in_sun_java2d_pisces_Dasher_goto.patch
 # 8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
-Patch579: 8203182-pr3603-rh1568033.patch
+Patch579: jdk8203182-pr3603-rh1568033_release_session_if_initialization_of_sunpkcs11_signature_fails.patch
 # 8206406, PR3610, RH1597825: StubCodeDesc constructor publishes partially-constructed objects on StubCodeDesc::_list
-Patch580: 8206406-pr3610-rh1597825.patch
+Patch580: jdk8206406-pr3610-rh1597825-tubcodedesc_constructor_publishes_partially_constructed_objects_on_stubCodeDesc_list.patch
 # Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
 # 8206425: .gnu_debuglink sections added unconditionally when no debuginfo is stripped
-Patch204: 8206425-hotspot-remove-debuglink.patch
+Patch204: jdk8206425-gnu_debuglink_sections_added_unconditionally_when_no_debuginfo_is_stripped.patch
 # 8036003: Add --with-native-debug-symbols=[none|internal|external|zipped]
-Patch205: 8036003-add-with-native-debug-symbols-configure-flag.patch
+Patch205: jdk8036003-add_with_native_debug_symbols_configure_flag.patch
 # s390: JDK-8201495, PR2415: JVM -Xmx requirement is too high on s390
-Patch100: 8201495-s390-java-opts.patch
+Patch100: jdk8201495-zero_reduce_limits_of_max_heap_size_for_boot_JDK_on_s390.patch
 
 #############################################
 #
@@ -1225,20 +1225,20 @@ Patch100: 8201495-s390-java-opts.patch
 # and used by this RPM.
 #############################################
 # S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
-Patch508: 8150954-pr2866-rh1176206-screenshot-xcomposite-jdk.patch
+Patch508: jdk8150954-pr2866-rh1176206-screenshot_xcomposite_jdk.patch
 # 8207057, PR3613: Enable debug information for assembly code files
-Patch206: 8207057-pr3613-assembler-debuginfo-hotspot.patch
-Patch207: 8207057-pr3613-assembler-debuginfo-root.patch
+Patch206: jdk8207057-pr3613-no_debug_info_for_assembler_files_hotspot.patch
+Patch207: jdk8207057-pr3613-no_debug_info_for_assembler_files_root.patch
 # 8165852, PR3468: (fs) Mount point not found for a file which is present in overlayfs
-Patch210: 8165852-pr3468.patch
+Patch210: jdk8165852-pr3468-mount_point_not_found_for_a_file_which_is_present_in_overlayfs.patch
 # S8073139, RH1191652; fix name of ppc64le architecture
-Patch601: 8073139-rh1191652-root.patch
-Patch602: 8073139-rh1191652-jdk.patch
-Patch603: 8073139-rh1191652-hotspot-aarch64.patch
+Patch601: jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_root.patch
+Patch602: jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_jdk.patch
+Patch603: jdk8073139-pr2236-rh1191652--use_ppc64le_as_the_arch_directory_on_that_platform_and_report_it_in_os_arch_aarch64_forest.patch
 # 8044235: src.zip should include all sources
-Patch7:   8044235-include-all-srcs.patch
-Patch583: jdk8172850-rh1640127-register_allocator_crash_01.patch
-Patch584: jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
+Patch7:   jdk8044235-src_zip_should_include_all_sources.patch
+Patch583: jdk8172850-rh1640127-01-register_allocator_crash.patch
+Patch584: jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
 
 #############################################
 #
@@ -1248,7 +1248,7 @@ Patch584: jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
 # upstream, but ineligible for upstream 8u backport.
 #############################################
 # 8043805: Allow using a system-installed libjpeg
-Patch201: system-libjpeg.patch
+Patch201: jdk8043805-allow_using_system_installed_libjpeg.patch
 
 #############################################
 #
@@ -1260,7 +1260,7 @@ Patch201: system-libjpeg.patch
 # trees.
 #############################################
 # PR3634: Shenandoah still broken on s390 with aarch64-shenandoah-jdk8u181-b16
-Patch582: pr3634.patch
+Patch582: pr3634-fix_shenandoah_for_size_t_on_s390.patch
 
 #############################################
 #
@@ -1269,7 +1269,7 @@ Patch582: pr3634.patch
 # This section includes patches to code other
 # that from OpenJDK.
 #############################################
-Patch1000: enableCommentedOutSystemNss.patch
+Patch1000: rh1648249-add_commented_out_nss_cfg_provider_to_java_security.patch
 
 #############################################
 #
@@ -2348,8 +2348,8 @@ require "copy_jdk_configs.lua"
 -   * Move system libpng & lcms patches back to 8u upstreamable section
 
 * Fri Oct 26 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-8
-- added Patch583 jdk8172850-rh1640127-register_allocator_crash_01.patch
-- added Patch584 jdk8209639-rh1640127-coalesce_attempted_spill_non_spillable_02.patch
+- added Patch583 jdk8172850-rh1640127-01-register_allocator_crash.patch
+- added Patch584 jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
 
 * Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-2
 - cups moved to headful package
@@ -2357,19 +2357,19 @@ require "copy_jdk_configs.lua"
 * Tue Oct 23 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-1
 - updated to aarch64-shenandoah-jdk8u191-b12
 - deleted 8146115-pr3508-rh1463098.patch, pr3619.patch, pr3620.patch - should be upstreamed
-- create pr3634.patch to fix build failure on s390
+- create pr3634-fix_shenandoah_for_size_t_on_s390.patch to fix build failure on s390
 
 * Fri Oct 12 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-7
-- Add patch 8210425-03-rh1630426-hotspot-opt-fix-zero.patch:
+- Add patch jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_zero.patch:
   - Annother fix for optimization gaps (annocheck issues)
   - Zero 8u version fix was missing. Hence, only shows up on Zero arches.
 
 * Mon Oct 08 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-6
 - Refreshed upstreamed patches (from 8u202):
-  - 8044235-include-all-srcs.patch: src.zip should include all sources.
-  - 8073139-rh1191652-hotspot-aarch64.patch,
-    8073139-rh1191652-jdk.patch,
-    8073139-rh1191652-root.patch: PPC64LE JVM reporting issues.
+  - jdk8044235-src_zip_should_include_all_sources.patch: src.zip should include all sources.
+  - jdk8073139-pr2236-rh1191652--use_ppc64le_as_the_arch_directory_on_that_platform_and_report_it_in_os_arch_aarch64_forest.patch,
+    jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_jdk.patch,
+    jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_root.patch: PPC64LE JVM reporting issues.
 - Moved both patch series to 8u202 sections.
 
 * Mon Oct 01 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-5
@@ -2387,30 +2387,30 @@ require "copy_jdk_configs.lua"
 
 * Wed Sep 26 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-3
 - Renamed more patches for clarity:
-  include-all-srcs.patch => 8044235-include-all-srcs.patch
-  java-1.8.0-openjdk-rh1191652-hotspot-aarch64.patch => 8073139-rh1191652-hotspot-aarch64.patch
-  java-1.8.0-openjdk-rh1191652-jdk.patch => 8073139-rh1191652-jdk.patch
-  java-1.8.0-openjdk-rh1191652-root.patch => 8073139-rh1191652-root.patch
+  include-all-srcs.patch => jdk8044235-src_zip_should_include_all_sources.patch
+  java-1.8.0-openjdk-rh1191652-hotspot-aarch64.patch => jdk8073139-pr2236-rh1191652--use_ppc64le_as_the_arch_directory_on_that_platform_and_report_it_in_os_arch_aarch64_forest.patch
+  java-1.8.0-openjdk-rh1191652-jdk.patch => jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_jdk.patch
+  java-1.8.0-openjdk-rh1191652-root.patch => jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_root.patch
 
 * Tue Sep 18 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b15-2
 - Update(s) from upstreamed patches:
   - 8036003-dont-add-unnecessary-debug-links.patch =>
-    8036003-add-with-native-debug-symbols-configure-flag.patch
+    jdk8036003-add_with_native_debug_symbols_configure_flag.patch
   - rh1176206-jdk.patch =>
-    8150954-pr2866-rh1176206-screenshot-xcomposite-jdk.patch =>
+    jdk8150954-pr2866-rh1176206-screenshot_xcomposite_jdk.patch =>
     Deleted rh1176206-root.patch as thats no longer needed with
     upstream 8150954.
-  - Refreshed 8165852-pr3468.patch from upstream.
-  - Refreshed 8201495-s390-java-opts.patch from upstream.
+  - Refreshed jdk8165852-pr3468-mount_point_not_found_for_a_file_which_is_present_in_overlayfs.patch from upstream.
+  - Refreshed jdk8201495-zero_reduce_limits_of_max_heap_size_for_boot_JDK_on_s390.patch from upstream.
   - 8207057-pr3613-hotspot-assembler-debuginfo.patch =>
-    8207057-pr3613-assembler-debuginfo-hotspot.patch and
-    8207057-pr3613-assembler-debuginfo-root.patch. From JDK 8u
+    jdk8207057-pr3613-no_debug_info_for_assembler_files_hotspot.patch and
+    jdk8207057-pr3613-no_debug_info_for_assembler_files_root.patch. From JDK 8u
     review.
-- Renamed pr2842-02.patch => 8148351-pr2842-02.patch.
+- Renamed pr2842-02.patch => jdk8148351-pr2842-02-only_display_resolved_symlink_for_compiler_do_not_change_path.patch.
 - Renamed spec-only patch:
-  pr3183.patch => pr3183-rh1340845-system-crypto-policy.patch
+  pr3183.patch => pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 - Renamed java-1.8.0-openjdk-size_t.patch =>
-  8201495-s390-java-opts.patch
+  jdk8201495-zero_reduce_limits_of_max_heap_size_for_boot_JDK_on_s390.patch
 - Moved SunEC provider via system NSS to RPM specific patches section.
 - Moved upstream 8u patches to appropriate sections (8u192/8u202).
 - Removed rh1214835.patch since it's invalid. See:
@@ -2422,11 +2422,11 @@ require "copy_jdk_configs.lua"
 - fixed versions (8->1.8.0) of images used in desktop files
 
 * Mon Aug 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b13-9
-- Adjust system jpeg patch, system-libjpeg.patch, so as to filter
+- Adjust system jpeg patch, jdk8043805-allow_using_system_installed_libjpeg.patch, so as to filter
   -Wl,--as-needed. Resolves RHBZ#1622186.
 
 * Mon Aug 27 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.181.b13-8
-- Adjust system NSS patch, pr1983-jdk.patch, so as to filter
+- Adjust system NSS patch, pr1983-rh1565658-support_using_the_system_installation_of_nss_with_the_sunec_provider_jdk8.patch, so as to filter
   -Wl,--as-needed. Resolves RHBZ#1622186.
 
 * Thu Aug 23 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.181.b15-0
@@ -2554,7 +2554,7 @@ require "copy_jdk_configs.lua"
 - patch207 8200556-pr3566.patch
 - patch104 pr3458-rh1540242.patch
 - patch209 8035496-hotspot.patch
-- patch700 pr3573.patch
+- patch700 pr3573-fix_TCK_crash_with_shenandoah_in_shenandoahsupport_cpp_in_case_of_dead_brnach_in_is_independent.patch
 - fixed issue with atkwrapper wrongly palced broken symlink
 - fixed libjvm path for system tap
 - returned patch104 pr3458-rh1540242.patch
@@ -2578,7 +2578,7 @@ require "copy_jdk_configs.lua"
 - patch207 8200556-pr3566.patch
 - patch104 pr3458-rh1540242.patch
 - patch209 8035496-hotspot.patch
-- patch700 pr3573.patch
+- patch700 pr3573-fix_TCK_crash_with_shenandoah_in_shenandoahsupport_cpp_in_case_of_dead_brnach_in_is_independent.patch
 
 * Thu May 17 2018 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.171-6.b10
 - Move to javapackages-filesystem over javapackages-tools
@@ -2747,7 +2747,7 @@ require "copy_jdk_configs.lua"
 * Tue Jun 06 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-3.b12
 - source999 moved to source1
 - added two pathces 8181055-pr3394-rh1448880.patch and 8175813/PR3394/RH1448880
-- enabled (commented out) system NSS via patch1000, enableCommentedOutSystemNss.patch
+- enabled (commented out) system NSS via patch1000, rh1648249-add_commented_out_nss_cfg_provider_to_java_security.patch
 
 * Tue May 09 2017 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.131-1.b12
 - added javafx binding subpackages
@@ -2808,7 +2808,7 @@ require "copy_jdk_configs.lua"
 - used openjdk8-forests-latest-aarch64-aarch64-jdk8u121-b14.tar.xz as new sources
 - used openjdk8-forests-latest-shenandoah-aarch64-shenandoah-jdk8u121-b14.tar.xz as new sources for hotspot
 - deleted:    8044762-pr2960.patch 8049226-pr2960.patch 8154210.patch 8158260-pr2991-rh1341258.patch 8159244-pr3074.patch
-- adapted java-1.8.0-openjdk-size_t.patch pr1834-rh1022017.patch rh1163501.patch
+- adapted java-1.8.0-openjdk-size_t.patch pr1834-rh1022017-reduce_ellipticcurvesextension_to_provide_only_three_nss_supported_nist_curves_23_24_25.patch rh1163501-increase_2048_bit_dh_upper_bound_fedora_infrastructure_in_dhparametergenerator.patch
 - updated from internal (rhel) repo  OPENJDK_URL_DEFAULT=ssh://t...redhat.com//...ty/
 - with custom PR2126=/.../pr2126.patch (removed newly added brainpool curves)
 - withspecial values of PROJECT_NAME="openjdk8-forests", REPO_NAME="latest-aarch64"
@@ -2871,8 +2871,8 @@ require "copy_jdk_configs.lua"
 - used aarch64-port-jdk8u-aarch64-jdk8u101-b14.tar.xz as new sources
 - used aarch64-port-jdk8u-shenandoah-aarch64-shenandoah-jdk8u101-b14-shenandoah-merge-2016-07-25.tar.xz as new sources for hotspot
 - priority lowered for ine zero digit, tip moved to 999
-- added 6260348-pr3066.patch, pr3083-rh1346460.patch, 8159244-pr3074.patch, corba_typo_fix.patch
-renamed: jdk8-archivedJavadoc.patch -> 8154313.patch, pr2991-rh1341258.patch -> 8158260-pr2991-rh1341258.patch
+- added jdk6260348-pr3066-gtk_laf_jtextcomponent_not_respecting_desktop_caret_blink_rate.patch, pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch, 8159244-pr3074.patch, corba_typo_fix.patch
+renamed: jdk8-archivedJavadoc.patch -> jdk8154313-generated_javadoc_scattered_all_over_the_place.patch, pr2991-rh1341258.patch -> 8158260-pr2991-rh1341258.patch
 - not added 8147771-additional_hunk.patch, already in b14
 
 * Tue Jul 12 2016 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.92-5.b14
@@ -2886,7 +2886,7 @@ renamed: jdk8-archivedJavadoc.patch -> 8154313.patch, pr2991-rh1341258.patch -> 
 - removed upstreamed patches 8132051-aarch64.patch, 8143855.patch, criticalShenandoahFix.patch, rhbz1206656_fix_current_stack_pointer.patch
 - 8132051-zero.patch, remove_aarch64_template_for_gcc6.patch
 - jdwpCrash.abrt.patch renamed to 8044762-pr2960.patch
-- httpsFix1329342.patch renamed to pr2934.patch
+- httpsFix1329342.patch renamed to pr2934-sunec_provider_throwing_keyexception_withine.separator_current_nss_thus_initialise_the_random_number_generator_and_feed_the_seed_to_it.patch
 - added known regresisonos fixes for u92 scheduled for next u (519-525)
 
 * Thu May 19 2016 jvanek <jvanek@redhat.com> - 1:1.8.0.91-7.b14
@@ -3340,8 +3340,8 @@ added and applied patch604: aarch64-ifdefbugfix.patch to fix rhbz1276959
 
 * Wed Aug 27 2014 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.40-1.b01
 - updated to u40-b01
-- adapted  java-1.8.0-openjdk-accessible-toolkit.patch
-- adapted  system-lcms.patch
+- adapted  rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch
+- adapted  jdk8042159-allow_using_system_installed_lcms2.patch
 - removed patch8 set-active-window.patch
 - removed patch9 javadoc-error-jdk-8029145.patch
 - removed patch10 javadoc-error-jdk-8037484.patch
