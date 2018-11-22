@@ -1,0 +1,2269 @@
+# HG changeset patch
+# User mbalao
+# Date 1541016287 10800
+#      Wed Oct 31 17:04:47 2018 -0300
+# Node ID fa06cdb4c6f7b5ca148f26d345090d48014fecff
+# Parent  478a4add975beb90696a4ead5f8fcd9c17fc1a83
+8029661, PR3642, RH1477159: Support TLS v1.2 algorithm in SunPKCS11 provider
+Summary: TLS v1.2 algorithms for key and MAC derivation added to SunPKCS11 crypto provider. 8210912 fix is included as part of this changeset.
+Reviewed-by: valeriep
+
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsKeyMaterialGenerator.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsKeyMaterialGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsKeyMaterialGenerator.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsKeyMaterialGenerator.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -95,9 +95,9 @@
+             throw new InvalidAlgorithmParameterException("init() failed", e);
+         }
+         version = (spec.getMajorVersion() << 8) | spec.getMinorVersion();
+-        if ((version < 0x0300) && (version > 0x0302)) {
+-            throw new InvalidAlgorithmParameterException
+-                    ("Only SSL 3.0, TLS 1.0, and TLS 1.1 are supported");
++        if ((version < 0x0300) && (version > 0x0303)) {
++            throw new InvalidAlgorithmParameterException("Only SSL 3.0," +
++                    " TLS 1.0, TLS 1.1, and TLS 1.2 are supported");
+         }
+         // we assume the token supports both the CKM_SSL3_* and the CKM_TLS_*
+         // mechanisms
+@@ -112,8 +112,11 @@
+             throw new IllegalStateException
+                 ("TlsKeyMaterialGenerator must be initialized");
+         }
+-        mechanism = (version == 0x0300) ? CKM_SSL3_KEY_AND_MAC_DERIVE
+-                                         : CKM_TLS_KEY_AND_MAC_DERIVE;
++        if (version == 0x0300) {
++            mechanism = CKM_SSL3_KEY_AND_MAC_DERIVE;
++        } else if (version == 0x0301 || version == 0x0302) {
++            mechanism = CKM_TLS_KEY_AND_MAC_DERIVE;
++        }
+         int macBits = spec.getMacKeyLength() << 3;
+         int ivBits = spec.getIvLength() << 3;
+ 
+@@ -129,8 +132,18 @@
+ 
+         CK_SSL3_RANDOM_DATA random = new CK_SSL3_RANDOM_DATA
+                             (spec.getClientRandom(), spec.getServerRandom());
+-        CK_SSL3_KEY_MAT_PARAMS params = new CK_SSL3_KEY_MAT_PARAMS
+-                            (macBits, keyBits, ivBits, isExportable, random);
++        Object params = null;
++        CK_MECHANISM ckMechanism = null;
++        if (version < 0x0303) {
++            params = new CK_SSL3_KEY_MAT_PARAMS
++                    (macBits, keyBits, ivBits, isExportable, random);
++            ckMechanism = new CK_MECHANISM(mechanism, (CK_SSL3_KEY_MAT_PARAMS)params);
++        } else if (version == 0x0303) {
++            params = new CK_TLS12_KEY_MAT_PARAMS
++                    (macBits, keyBits, ivBits, isExportable, random,
++                            Functions.getHashMechId(spec.getPRFHashAlg()));
++            ckMechanism = new CK_MECHANISM(mechanism, (CK_TLS12_KEY_MAT_PARAMS)params);
++        }
+ 
+         String cipherAlgorithm = spec.getCipherAlgorithm();
+         long keyType = P11SecretKeyFactory.getKeyType(cipherAlgorithm);
+@@ -162,9 +175,14 @@
+                 (O_GENERATE, CKO_SECRET_KEY, keyType, attributes);
+             // the returned keyID is a dummy, ignore
+             long keyID = token.p11.C_DeriveKey(session.id(),
+-                new CK_MECHANISM(mechanism, params), p11Key.keyID, attributes);
++                    ckMechanism, p11Key.keyID, attributes);
+ 
+-            CK_SSL3_KEY_MAT_OUT out = params.pReturnedKeyMaterial;
++            CK_SSL3_KEY_MAT_OUT out = null;
++            if (params instanceof CK_SSL3_KEY_MAT_PARAMS) {
++                out = ((CK_SSL3_KEY_MAT_PARAMS)params).pReturnedKeyMaterial;
++            } else if (params instanceof CK_TLS12_KEY_MAT_PARAMS) {
++                out = ((CK_TLS12_KEY_MAT_PARAMS)params).pReturnedKeyMaterial;
++            }
+             // Note that the MAC keys do not inherit all attributes from the
+             // template, but they do inherit the sensitive/extractable/token
+             // flags, which is all P11Key cares about.
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsMasterSecretGenerator.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsMasterSecretGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsMasterSecretGenerator.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsMasterSecretGenerator.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2007, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -89,9 +89,9 @@
+             throw new InvalidAlgorithmParameterException("init() failed", e);
+         }
+         version = (spec.getMajorVersion() << 8) | spec.getMinorVersion();
+-        if ((version < 0x0300) || (version > 0x0302)) {
+-            throw new InvalidAlgorithmParameterException
+-                ("Only SSL 3.0, TLS 1.0, and TLS 1.1 supported");
++        if ((version < 0x0300) && (version > 0x0303)) {
++            throw new InvalidAlgorithmParameterException("Only SSL 3.0," +
++                    " TLS 1.0, TLS 1.1, and TLS 1.2 are supported");
+         }
+         // We assume the token supports the required mechanism. If it does not,
+         // generateKey() will fail and the failover should take care of us.
+@@ -106,10 +106,20 @@
+             throw new IllegalStateException
+                 ("TlsMasterSecretGenerator must be initialized");
+         }
++        final boolean isTlsRsaPremasterSecret =
++                p11Key.getAlgorithm().equals("TlsRsaPremasterSecret");
++        if (version == 0x0300) {
++            mechanism = isTlsRsaPremasterSecret ?
++                    CKM_SSL3_MASTER_KEY_DERIVE : CKM_SSL3_MASTER_KEY_DERIVE_DH;
++        } else if (version == 0x0301 || version == 0x0302) {
++            mechanism = isTlsRsaPremasterSecret ?
++                    CKM_TLS_MASTER_KEY_DERIVE : CKM_TLS_MASTER_KEY_DERIVE_DH;
++        } else if (version == 0x0303) {
++            mechanism = isTlsRsaPremasterSecret ?
++                    CKM_TLS12_MASTER_KEY_DERIVE : CKM_TLS12_MASTER_KEY_DERIVE_DH;
++        }
+         CK_VERSION ckVersion;
+-        if (p11Key.getAlgorithm().equals("TlsRsaPremasterSecret")) {
+-            mechanism = (version == 0x0300) ? CKM_SSL3_MASTER_KEY_DERIVE
+-                                             : CKM_TLS_MASTER_KEY_DERIVE;
++        if (isTlsRsaPremasterSecret) {
+             ckVersion = new CK_VERSION(0, 0);
+         } else {
+             // Note: we use DH for all non-RSA premaster secrets. That includes
+@@ -118,16 +128,23 @@
+             // TLS PRF (or the SSL equivalent).
+             // The only thing special about RSA master secret calculation is
+             // that it extracts the version numbers from the premaster secret.
+-            mechanism = (version == 0x0300) ? CKM_SSL3_MASTER_KEY_DERIVE_DH
+-                                             : CKM_TLS_MASTER_KEY_DERIVE_DH;
+             ckVersion = null;
+         }
+         byte[] clientRandom = spec.getClientRandom();
+         byte[] serverRandom = spec.getServerRandom();
+         CK_SSL3_RANDOM_DATA random =
+                 new CK_SSL3_RANDOM_DATA(clientRandom, serverRandom);
+-        CK_SSL3_MASTER_KEY_DERIVE_PARAMS params =
+-                new CK_SSL3_MASTER_KEY_DERIVE_PARAMS(random, ckVersion);
++        CK_MECHANISM ckMechanism = null;
++        if (version < 0x0303) {
++            CK_SSL3_MASTER_KEY_DERIVE_PARAMS params =
++                    new CK_SSL3_MASTER_KEY_DERIVE_PARAMS(random, ckVersion);
++            ckMechanism = new CK_MECHANISM(mechanism, params);
++        } else if (version == 0x0303) {
++            CK_TLS12_MASTER_KEY_DERIVE_PARAMS params =
++                    new CK_TLS12_MASTER_KEY_DERIVE_PARAMS(random, ckVersion,
++                            Functions.getHashMechId(spec.getPRFHashAlg()));
++            ckMechanism = new CK_MECHANISM(mechanism, params);
++        }
+ 
+         Session session = null;
+         try {
+@@ -135,9 +152,8 @@
+             CK_ATTRIBUTE[] attributes = token.getAttributes(O_GENERATE,
+                 CKO_SECRET_KEY, CKK_GENERIC_SECRET, new CK_ATTRIBUTE[0]);
+             long keyID = token.p11.C_DeriveKey(session.id(),
+-                new CK_MECHANISM(mechanism, params), p11Key.keyID, attributes);
++                    ckMechanism, p11Key.keyID, attributes);
+             int major, minor;
+-            ckVersion = params.pVersion;
+             if (ckVersion == null) {
+                 major = -1;
+                 minor = -1;
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsPrfGenerator.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsPrfGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsPrfGenerator.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsPrfGenerator.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -124,8 +124,46 @@
+         if (spec == null) {
+             throw new IllegalStateException("TlsPrfGenerator must be initialized");
+         }
++        byte[] seed = spec.getSeed();
++
++        // TLS 1.2
++        if (mechanism == CKM_TLS_MAC) {
++            SecretKey k = null;
++            int ulServerOrClient = 0;
++            if (spec.getLabel().equals("server finished")) {
++                ulServerOrClient = 1;
++            }
++            if (spec.getLabel().equals("client finished")) {
++                ulServerOrClient = 2;
++            }
++
++            if (ulServerOrClient != 0) {
++                // Finished message
++                CK_TLS_MAC_PARAMS params = new CK_TLS_MAC_PARAMS(
++                        Functions.getHashMechId(spec.getPRFHashAlg()),
++                        spec.getOutputLength(), ulServerOrClient);
++                Session session = null;
++                try {
++                    session = token.getOpSession();
++                    token.p11.C_SignInit(session.id(),
++                            new CK_MECHANISM(mechanism, params), p11Key.keyID);
++                    token.p11.C_SignUpdate(session.id(), 0, seed, 0, seed.length);
++                    byte[] out = token.p11.C_SignFinal
++                            (session.id(), spec.getOutputLength());
++                    k = new SecretKeySpec(out, "TlsPrf");
++                } catch (PKCS11Exception e) {
++                    throw new ProviderException("Could not calculate PRF", e);
++                } finally {
++                    token.releaseSession(session);
++                }
++            } else {
++                throw new ProviderException("Only Finished message authentication code"+
++                        " generation supported for TLS 1.2.");
++            }
++            return k;
++        }
++
+         byte[] label = P11Util.getBytesUTF8(spec.getLabel());
+-        byte[] seed = spec.getSeed();
+ 
+         if (mechanism == CKM_NSS_TLS_PRF_GENERAL) {
+             Session session = null;
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsRsaPremasterSecretGenerator.java openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsRsaPremasterSecretGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/P11TlsRsaPremasterSecretGenerator.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/P11TlsRsaPremasterSecretGenerator.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -57,6 +57,8 @@
+     // mechanism id
+     private long mechanism;
+ 
++    private int version;
++
+     private TlsRsaPremasterSecretParameterSpec spec;
+ 
+     P11TlsRsaPremasterSecretGenerator(Token token, String algorithm, long mechanism)
+@@ -77,6 +79,11 @@
+             throw new InvalidAlgorithmParameterException(MSG);
+         }
+         this.spec = (TlsRsaPremasterSecretParameterSpec)params;
++        version = (spec.getMajorVersion() << 8) | spec.getMinorVersion();
++        if ((version < 0x0300) && (version > 0x0303)) {
++            throw new InvalidAlgorithmParameterException
++                ("Only SSL 3.0, TLS 1.0, TLS 1.1, and TLS 1.2 are supported");
++        }
+     }
+ 
+     protected void engineInit(int keysize, SecureRandom random) {
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2013, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -720,38 +720,28 @@
+                 s("1.2.840.113549.1.1.13", "OID.1.2.840.113549.1.1.13"),
+                 m(CKM_SHA512_RSA_PKCS, CKM_RSA_PKCS, CKM_RSA_X_509));
+ 
+-        /*
+-         * TLS 1.2 uses a different hash algorithm than 1.0/1.1 for the
+-         * PRF calculations.  As of 2010, there is no PKCS11-level
+-         * support for TLS 1.2 PRF calculations, and no known OS's have
+-         * an internal variant we could use.  Therefore for TLS 1.2, we
+-         * are updating JSSE to request different provider algorithms
+-         * (e.g. "SunTls12Prf"), and currently only SunJCE has these
+-         * TLS 1.2 algorithms.
+-         *
+-         * If we reused the names such as "SunTlsPrf", the PKCS11
+-         * providers would need be updated to fail correctly when
+-         * presented with the wrong version number (via
+-         * Provider.Service.supportsParameters()), and we would also
+-         * need to add the appropriate supportsParamters() checks into
+-         * KeyGenerators (not currently there).
+-         *
+-         * In the future, if PKCS11 support is added, we will restructure
+-         * this.
+-         */
+         d(KG, "SunTlsRsaPremasterSecret",
+                     "sun.security.pkcs11.P11TlsRsaPremasterSecretGenerator",
++                    s("SunTls12RsaPremasterSecret"),
+                 m(CKM_SSL3_PRE_MASTER_KEY_GEN, CKM_TLS_PRE_MASTER_KEY_GEN));
+         d(KG, "SunTlsMasterSecret",
+                     "sun.security.pkcs11.P11TlsMasterSecretGenerator",
+                 m(CKM_SSL3_MASTER_KEY_DERIVE, CKM_TLS_MASTER_KEY_DERIVE,
+                     CKM_SSL3_MASTER_KEY_DERIVE_DH,
+                     CKM_TLS_MASTER_KEY_DERIVE_DH));
++        d(KG, "SunTls12MasterSecret",
++                "sun.security.pkcs11.P11TlsMasterSecretGenerator",
++            m(CKM_TLS12_MASTER_KEY_DERIVE, CKM_TLS12_MASTER_KEY_DERIVE_DH));
+         d(KG, "SunTlsKeyMaterial",
+                     "sun.security.pkcs11.P11TlsKeyMaterialGenerator",
+                 m(CKM_SSL3_KEY_AND_MAC_DERIVE, CKM_TLS_KEY_AND_MAC_DERIVE));
++        d(KG, "SunTls12KeyMaterial",
++                "sun.security.pkcs11.P11TlsKeyMaterialGenerator",
++            m(CKM_TLS12_KEY_AND_MAC_DERIVE));
+         d(KG, "SunTlsPrf", "sun.security.pkcs11.P11TlsPrfGenerator",
+                 m(CKM_TLS_PRF, CKM_NSS_TLS_PRF_GENERAL));
++        d(KG, "SunTls12Prf", "sun.security.pkcs11.P11TlsPrfGenerator",
++                m(CKM_TLS_MAC));
+     }
+ 
+     // background thread that periodically checks for token insertion
+@@ -1016,13 +1006,16 @@
+                 if (algorithm == "SunTlsRsaPremasterSecret") {
+                     return new P11TlsRsaPremasterSecretGenerator(
+                         token, algorithm, mechanism);
+-                } else if (algorithm == "SunTlsMasterSecret") {
++                } else if (algorithm == "SunTlsMasterSecret"
++                        || algorithm == "SunTls12MasterSecret") {
+                     return new P11TlsMasterSecretGenerator(
+                         token, algorithm, mechanism);
+-                } else if (algorithm == "SunTlsKeyMaterial") {
++                } else if (algorithm == "SunTlsKeyMaterial"
++                        || algorithm == "SunTls12KeyMaterial") {
+                     return new P11TlsKeyMaterialGenerator(
+                         token, algorithm, mechanism);
+-                } else if (algorithm == "SunTlsPrf") {
++                } else if (algorithm == "SunTlsPrf"
++                        || algorithm == "SunTls12Prf") {
+                     return new P11TlsPrfGenerator(token, algorithm, mechanism);
+                 } else {
+                     return new P11KeyGenerator(token, algorithm, mechanism);
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_MECHANISM.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_MECHANISM.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_MECHANISM.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_MECHANISM.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -112,14 +112,26 @@
+         init(mechanism, params);
+     }
+ 
++    public CK_MECHANISM(long mechanism, CK_TLS12_MASTER_KEY_DERIVE_PARAMS params) {
++        init(mechanism, params);
++    }
++
+     public CK_MECHANISM(long mechanism, CK_SSL3_KEY_MAT_PARAMS params) {
+         init(mechanism, params);
+     }
+ 
++    public CK_MECHANISM(long mechanism, CK_TLS12_KEY_MAT_PARAMS params) {
++        init(mechanism, params);
++    }
++
+     public CK_MECHANISM(long mechanism, CK_TLS_PRF_PARAMS params) {
+         init(mechanism, params);
+     }
+ 
++    public CK_MECHANISM(long mechanism, CK_TLS_MAC_PARAMS params) {
++        init(mechanism, params);
++    }
++
+     public CK_MECHANISM(long mechanism, CK_ECDH1_DERIVE_PARAMS params) {
+         init(mechanism, params);
+     }
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_KEY_MAT_PARAMS.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_KEY_MAT_PARAMS.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_KEY_MAT_PARAMS.java
+@@ -0,0 +1,151 @@
++/*
++ * Copyright (c) 2018, Red Hat, Inc. and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.security.pkcs11.wrapper;
++
++/**
++ * CK_TLS12_KEY_MAT_PARAMS from PKCS#11 v2.40.
++ */
++public class CK_TLS12_KEY_MAT_PARAMS {
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_ULONG ulMacSizeInBits;
++     * </PRE>
++     */
++    public long ulMacSizeInBits;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_ULONG ulKeySizeInBits;
++     * </PRE>
++     */
++    public long ulKeySizeInBits;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_ULONG ulIVSizeInBits;
++     * </PRE>
++     */
++    public long ulIVSizeInBits;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_BBOOL bIsExport;
++     * </PRE>
++     */
++    public boolean bIsExport;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_SSL3_RANDOM_DATA RandomInfo;
++     * </PRE>
++     */
++    public CK_SSL3_RANDOM_DATA RandomInfo;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_SSL3_KEY_MAT_OUT_PTR pReturnedKeyMaterial;
++     * </PRE>
++     */
++    public CK_SSL3_KEY_MAT_OUT pReturnedKeyMaterial;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_MECHANISM_TYPE prfHashMechanism;
++     * </PRE>
++     */
++    public long prfHashMechanism;
++
++    public CK_TLS12_KEY_MAT_PARAMS(
++            int macSize, int keySize, int ivSize, boolean export,
++            CK_SSL3_RANDOM_DATA random, long prfHashMechanism) {
++        ulMacSizeInBits = macSize;
++        ulKeySizeInBits = keySize;
++        ulIVSizeInBits = ivSize;
++        bIsExport = export;
++        RandomInfo = random;
++        pReturnedKeyMaterial = new CK_SSL3_KEY_MAT_OUT();
++        if (ivSize != 0) {
++            int n = ivSize >> 3;
++            pReturnedKeyMaterial.pIVClient = new byte[n];
++            pReturnedKeyMaterial.pIVServer = new byte[n];
++        }
++        this.prfHashMechanism = prfHashMechanism;
++    }
++
++    /**
++     * Returns the string representation of CK_TLS12_KEY_MAT_PARAMS.
++     *
++     * @return the string representation of CK_TLS12_KEY_MAT_PARAMS
++     */
++    public String toString() {
++        StringBuilder buffer = new StringBuilder();
++
++        buffer.append(Constants.INDENT);
++        buffer.append("ulMacSizeInBits: ");
++        buffer.append(ulMacSizeInBits);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("ulKeySizeInBits: ");
++        buffer.append(ulKeySizeInBits);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("ulIVSizeInBits: ");
++        buffer.append(ulIVSizeInBits);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("bIsExport: ");
++        buffer.append(bIsExport);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("RandomInfo: ");
++        buffer.append(RandomInfo);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("pReturnedKeyMaterial: ");
++        buffer.append(pReturnedKeyMaterial);
++        buffer.append(Constants.NEWLINE);
++
++        buffer.append(Constants.INDENT);
++        buffer.append("prfHashMechanism: ");
++        buffer.append(prfHashMechanism);
++
++        return buffer.toString();
++    }
++
++}
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_MASTER_KEY_DERIVE_PARAMS.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_MASTER_KEY_DERIVE_PARAMS.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS12_MASTER_KEY_DERIVE_PARAMS.java
+@@ -0,0 +1,65 @@
++/*
++ * Copyright (c) 2018, Red Hat, Inc. and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.security.pkcs11.wrapper;
++
++/**
++ * CK_TLS12_MASTER_KEY_DERIVE_PARAMS from PKCS#11 v2.40.
++ */
++public class CK_TLS12_MASTER_KEY_DERIVE_PARAMS {
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_SSL3_RANDOM_DATA RandomInfo;
++     * </PRE>
++     */
++    public CK_SSL3_RANDOM_DATA RandomInfo;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_VERSION_PTR pVersion;
++     * </PRE>
++     */
++    public CK_VERSION pVersion;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_MECHANISM_TYPE prfHashMechanism;
++     * </PRE>
++     */
++    public long prfHashMechanism;
++
++    public CK_TLS12_MASTER_KEY_DERIVE_PARAMS(
++            CK_SSL3_RANDOM_DATA random, CK_VERSION version,
++            long prfHashMechanism) {
++        RandomInfo = random;
++        pVersion = version;
++        this.prfHashMechanism = prfHashMechanism;
++    }
++
++}
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS_MAC_PARAMS.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS_MAC_PARAMS.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/CK_TLS_MAC_PARAMS.java
+@@ -0,0 +1,64 @@
++/*
++ * Copyright (c) 2018, Red Hat, Inc. and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.security.pkcs11.wrapper;
++
++/**
++ * CK_TLS_MAC_PARAMS from PKCS#11 v2.40.
++ */
++public class CK_TLS_MAC_PARAMS {
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_MECHANISM_TYPE prfMechanism;
++     * </PRE>
++     */
++    public long prfMechanism;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_ULONG ulMacLength;
++     * </PRE>
++     */
++    public long ulMacLength;
++
++    /**
++     * <B>PKCS#11:</B>
++     * <PRE>
++     *   CK_ULONG ulServerOrClient;
++     * </PRE>
++     */
++    public long ulServerOrClient;
++
++    public CK_TLS_MAC_PARAMS(long prfMechanism,
++            long ulMacLength, long ulServerOrClient) {
++        this.prfMechanism = prfMechanism;
++        this.ulMacLength = ulMacLength;
++        this.ulServerOrClient = ulServerOrClient;
++    }
++
++}
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/Functions.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -73,6 +73,9 @@
+     private static final Map<String,Integer> mechIds =
+         new HashMap<String,Integer>();
+ 
++    private static final Map<String, Long> hashMechIds =
++            new HashMap<String, Long>();
++
+     // key types (CKK_*)
+     private static final Map<Integer,String> keyNames =
+         new HashMap<Integer,String>();
+@@ -94,7 +97,6 @@
+     private static final Map<String,Integer> objectClassIds =
+         new HashMap<String,Integer>();
+ 
+-
+     /**
+      * For converting numbers to their hex presentation.
+      */
+@@ -444,6 +446,10 @@
+         return getId(objectClassIds, name);
+     }
+ 
++    public static long getHashMechId(String name) {
++        return hashMechIds.get(name);
++    }
++
+     /**
+      * Check the given arrays for equalitiy. This method considers both arrays as
+      * equal, if both are <code>null</code> or both have the same length and
+@@ -589,6 +595,10 @@
+         addMapping(objectClassNames, objectClassIds, id, name);
+     }
+ 
++    private static void addHashMech(long id, String name) {
++        hashMechIds.put(name, id);
++    }
++
+     static {
+         addMech(CKM_RSA_PKCS_KEY_PAIR_GEN,      "CKM_RSA_PKCS_KEY_PAIR_GEN");
+         addMech(CKM_RSA_PKCS,                   "CKM_RSA_PKCS");
+@@ -719,6 +729,10 @@
+         addMech(CKM_TLS_PRF,                    "CKM_TLS_PRF");
+         addMech(CKM_SSL3_MD5_MAC,               "CKM_SSL3_MD5_MAC");
+         addMech(CKM_SSL3_SHA1_MAC,              "CKM_SSL3_SHA1_MAC");
++        addMech(CKM_TLS12_MASTER_KEY_DERIVE,    "CKM_TLS12_MASTER_KEY_DERIVE");
++        addMech(CKM_TLS12_KEY_AND_MAC_DERIVE,   "CKM_TLS12_KEY_AND_MAC_DERIVE");
++        addMech(CKM_TLS12_MASTER_KEY_DERIVE_DH, "CKM_TLS12_MASTER_KEY_DERIVE_DH");
++        addMech(CKM_TLS_MAC,                    "CKM_TLS_MAC");
+         addMech(CKM_MD5_KEY_DERIVATION,         "CKM_MD5_KEY_DERIVATION");
+         addMech(CKM_MD2_KEY_DERIVATION,         "CKM_MD2_KEY_DERIVATION");
+         addMech(CKM_SHA1_KEY_DERIVATION,        "CKM_SHA1_KEY_DERIVATION");
+@@ -794,6 +808,12 @@
+         addMech(PCKM_SECURERANDOM,              "SecureRandom");
+         addMech(PCKM_KEYSTORE,                  "KeyStore");
+ 
++        addHashMech(CKM_SHA_1, "SHA-1");
++        addHashMech(CKM_SHA224, "SHA-224");
++        addHashMech(CKM_SHA256, "SHA-256");
++        addHashMech(CKM_SHA384, "SHA-384");
++        addHashMech(CKM_SHA512, "SHA-512");
++
+         addKeyType(CKK_RSA,                     "CKK_RSA");
+         addKeyType(CKK_DSA,                     "CKK_DSA");
+         addKeyType(CKK_DH,                      "CKK_DH");
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11Constants.java openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11Constants.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11Constants.java
++++ openjdk/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11Constants.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -625,6 +625,14 @@
+     public static final long  CKM_PKCS5_PBKD2                = 0x000003B0L;
+ 
+     public static final long  CKM_PBA_SHA1_WITH_SHA1_HMAC    = 0x000003C0L;
++
++    /* CKM_TLS12_MASTER_KEY_DERIVE, CKM_TLS12_KEY_AND_MAC_DERIVE,
++     * CKM_TLS12_MASTER_KEY_DERIVE_DH and CKM_TLS_MAC are new for v2.40 */
++    public static final long  CKM_TLS12_MASTER_KEY_DERIVE    = 0x000003E0L;
++    public static final long  CKM_TLS12_KEY_AND_MAC_DERIVE   = 0x000003E1L;
++    public static final long  CKM_TLS12_MASTER_KEY_DERIVE_DH = 0x000003E2L;
++    public static final long  CKM_TLS_MAC                    = 0x000003E4L;
++
+     public static final long  CKM_KEY_WRAP_LYNKS             = 0x00000400L;
+     public static final long  CKM_KEY_WRAP_SET_OAEP          = 0x00000401L;
+ 
+diff --git openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_convert.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -457,67 +457,113 @@
+     return ckAttribute ;
+ }
+ 
+-/*
+- * converts the Java CK_SSL3_MASTER_KEY_DERIVE_PARAMS object to a
+- * CK_SSL3_MASTER_KEY_DERIVE_PARAMS structure
+- *
+- * @param env - used to call JNI funktions to get the Java classes and objects
+- * @param jParam - the Java CK_SSL3_MASTER_KEY_DERIVE_PARAMS object to convert
+- * @return - the new CK_SSL3_MASTER_KEY_DERIVE_PARAMS structure
+- */
+-CK_SSL3_MASTER_KEY_DERIVE_PARAMS jSsl3MasterKeyDeriveParamToCKSsl3MasterKeyDeriveParam(JNIEnv *env, jobject jParam)
+-{
+-    // XXX don't return structs
+-    // XXX prefetch class and field ids
+-    jclass jSsl3MasterKeyDeriveParamsClass;
+-    CK_SSL3_MASTER_KEY_DERIVE_PARAMS ckParam;
++void masterKeyDeriveParamToCKMasterKeyDeriveParam(JNIEnv *env, jobject jParam,
++        jclass masterKeyDeriveParamClass,
++        CK_VERSION_PTR* cKMasterKeyDeriveParamVersion,
++        CK_SSL3_RANDOM_DATA* cKMasterKeyDeriveParamRandomInfo) {
+     jfieldID fieldID;
+     jclass jSsl3RandomDataClass;
+     jobject jRandomInfo, jRIClientRandom, jRIServerRandom, jVersion;
+-    memset(&ckParam, 0, sizeof(CK_SSL3_MASTER_KEY_DERIVE_PARAMS));
+ 
+     /* get RandomInfo */
+-    jSsl3MasterKeyDeriveParamsClass = (*env)->FindClass(env, CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS);
+-    if (jSsl3MasterKeyDeriveParamsClass == NULL) { return ckParam; }
+-    fieldID = (*env)->GetFieldID(env, jSsl3MasterKeyDeriveParamsClass, "RandomInfo", "Lsun/security/pkcs11/wrapper/CK_SSL3_RANDOM_DATA;");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, masterKeyDeriveParamClass, "RandomInfo",
++            "Lsun/security/pkcs11/wrapper/CK_SSL3_RANDOM_DATA;");
++    if (fieldID == NULL) { return; }
+     jRandomInfo = (*env)->GetObjectField(env, jParam, fieldID);
+ 
+     /* get pClientRandom and ulClientRandomLength out of RandomInfo */
+     jSsl3RandomDataClass = (*env)->FindClass(env, CLASS_SSL3_RANDOM_DATA);
+-    if (jSsl3RandomDataClass == NULL) { return ckParam; }
++    if (jSsl3RandomDataClass == NULL) { return; }
+     fieldID = (*env)->GetFieldID(env, jSsl3RandomDataClass, "pClientRandom", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRIClientRandom = (*env)->GetObjectField(env, jRandomInfo, fieldID);
+ 
+     /* get pServerRandom and ulServerRandomLength out of RandomInfo */
+     fieldID = (*env)->GetFieldID(env, jSsl3RandomDataClass, "pServerRandom", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRIServerRandom = (*env)->GetObjectField(env, jRandomInfo, fieldID);
+ 
+     /* get pVersion */
+-    fieldID = (*env)->GetFieldID(env, jSsl3MasterKeyDeriveParamsClass, "pVersion",  "Lsun/security/pkcs11/wrapper/CK_VERSION;");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, masterKeyDeriveParamClass, "pVersion",
++            "Lsun/security/pkcs11/wrapper/CK_VERSION;");
++    if (fieldID == NULL) { return; }
+     jVersion = (*env)->GetObjectField(env, jParam, fieldID);
+ 
+     /* populate java values */
+-    ckParam.pVersion = jVersionToCKVersionPtr(env, jVersion);
+-    if ((*env)->ExceptionCheck(env)) { return ckParam; }
+-    jByteArrayToCKByteArray(env, jRIClientRandom, &(ckParam.RandomInfo.pClientRandom), &(ckParam.RandomInfo.ulClientRandomLen));
++    *cKMasterKeyDeriveParamVersion = jVersionToCKVersionPtr(env, jVersion);
++    if ((*env)->ExceptionCheck(env)) { return; }
++    jByteArrayToCKByteArray(env, jRIClientRandom,
++            &(cKMasterKeyDeriveParamRandomInfo->pClientRandom),
++            &(cKMasterKeyDeriveParamRandomInfo->ulClientRandomLen));
+     if ((*env)->ExceptionCheck(env)) {
+-        free(ckParam.pVersion);
+-        return ckParam;
++        free(*cKMasterKeyDeriveParamVersion);
++        return;
+     }
+-    jByteArrayToCKByteArray(env, jRIServerRandom, &(ckParam.RandomInfo.pServerRandom), &(ckParam.RandomInfo.ulServerRandomLen));
++    jByteArrayToCKByteArray(env, jRIServerRandom,
++            &(cKMasterKeyDeriveParamRandomInfo->pServerRandom),
++            &(cKMasterKeyDeriveParamRandomInfo->ulServerRandomLen));
+     if ((*env)->ExceptionCheck(env)) {
+-        free(ckParam.pVersion);
+-        free(ckParam.RandomInfo.pClientRandom);
+-        return ckParam;
++        free(*cKMasterKeyDeriveParamVersion);
++        free(cKMasterKeyDeriveParamRandomInfo->pClientRandom);
++        return;
+     }
+-
+-    return ckParam ;
+ }
+ 
++/*
++ * converts the Java CK_SSL3_MASTER_KEY_DERIVE_PARAMS object to a
++ * CK_SSL3_MASTER_KEY_DERIVE_PARAMS structure
++ *
++ * @param env - used to call JNI functions to get the Java classes and objects
++ * @param jParam - the Java CK_SSL3_MASTER_KEY_DERIVE_PARAMS object to convert
++ * @return - the new CK_SSL3_MASTER_KEY_DERIVE_PARAMS structure
++ */
++CK_SSL3_MASTER_KEY_DERIVE_PARAMS
++jSsl3MasterKeyDeriveParamToCKSsl3MasterKeyDeriveParam(JNIEnv *env,
++        jobject jParam)
++{
++    CK_SSL3_MASTER_KEY_DERIVE_PARAMS ckParam;
++    jclass jSsl3MasterKeyDeriveParamsClass;
++    memset(&ckParam, 0, sizeof(CK_SSL3_MASTER_KEY_DERIVE_PARAMS));
++    jSsl3MasterKeyDeriveParamsClass =
++            (*env)->FindClass(env, CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS);
++    if (jSsl3MasterKeyDeriveParamsClass == NULL) { return ckParam; }
++    masterKeyDeriveParamToCKMasterKeyDeriveParam(env, jParam,
++            jSsl3MasterKeyDeriveParamsClass,
++            &ckParam.pVersion, &ckParam.RandomInfo);
++    return ckParam;
++}
++
++/*
++ * converts the Java CK_TLS12_MASTER_KEY_DERIVE_PARAMS object to a
++ * CK_TLS12_MASTER_KEY_DERIVE_PARAMS structure
++ *
++ * @param env - used to call JNI functions to get the Java classes and objects
++ * @param jParam - the Java CK_TLS12_MASTER_KEY_DERIVE_PARAMS object to convert
++ * @return - the new CK_TLS12_MASTER_KEY_DERIVE_PARAMS structure
++ */
++CK_TLS12_MASTER_KEY_DERIVE_PARAMS
++jTls12MasterKeyDeriveParamToCKTls12MasterKeyDeriveParam(JNIEnv *env,
++        jobject jParam)
++{
++    CK_TLS12_MASTER_KEY_DERIVE_PARAMS ckParam;
++    jclass jTls12MasterKeyDeriveParamsClass;
++    jfieldID fieldID;
++    memset(&ckParam, 0, sizeof(CK_TLS12_MASTER_KEY_DERIVE_PARAMS));
++    jTls12MasterKeyDeriveParamsClass =
++            (*env)->FindClass(env, CLASS_TLS12_MASTER_KEY_DERIVE_PARAMS);
++    if (jTls12MasterKeyDeriveParamsClass == NULL) { return ckParam; }
++    masterKeyDeriveParamToCKMasterKeyDeriveParam(env, jParam,
++            jTls12MasterKeyDeriveParamsClass, &ckParam.pVersion,
++            &ckParam.RandomInfo);
++    fieldID = (*env)->GetFieldID(env,
++            jTls12MasterKeyDeriveParamsClass, "prfHashMechanism", "J");
++    if (fieldID != NULL) {
++        jlong prfHashMechanism =
++                (*env)->GetLongField(env, jParam, fieldID);
++        ckParam.prfHashMechanism = (CK_MECHANISM_TYPE)prfHashMechanism;
++    }
++    return ckParam;
++}
+ 
+ /*
+  * converts the Java CK_TLS_PRF_PARAMS object to a CK_TLS_PRF_PARAMS structure
+@@ -576,126 +622,220 @@
+ }
+ 
+ /*
+- * converts the Java CK_SSL3_KEY_MAT_PARAMS object to a CK_SSL3_KEY_MAT_PARAMS structure
+- *
+- * @param env - used to call JNI funktions to get the Java classes and objects
+- * @param jParam - the Java CK_SSL3_KEY_MAT_PARAMS object to convert
+- * @return - the new CK_SSL3_KEY_MAT_PARAMS structure
++ * converts the Java CK_TLS_MAC_PARAMS object to a CK_TLS_MAC_PARAMS structure
+  */
+-CK_SSL3_KEY_MAT_PARAMS jSsl3KeyMatParamToCKSsl3KeyMatParam(JNIEnv *env, jobject jParam)
++CK_TLS_MAC_PARAMS jTlsMacParamsToCKTlsMacParam(JNIEnv *env, jobject jParam)
+ {
+-    // XXX don't return structs
+-    // XXX prefetch class and field ids
+-    jclass jSsl3KeyMatParamsClass, jSsl3RandomDataClass, jSsl3KeyMatOutClass;
+-    CK_SSL3_KEY_MAT_PARAMS ckParam;
++    jclass jTlsMacParamsClass;
++    CK_TLS_MAC_PARAMS ckParam;
++    jfieldID fieldID;
++    jlong jPrfMechanism, jUlMacLength, jUlServerOrClient;
++    memset(&ckParam, 0, sizeof(CK_TLS_MAC_PARAMS));
++
++    jTlsMacParamsClass = (*env)->FindClass(env, CLASS_TLS_MAC_PARAMS);
++    if (jTlsMacParamsClass == NULL) { return ckParam; }
++
++    /* get prfMechanism */
++    fieldID = (*env)->GetFieldID(env, jTlsMacParamsClass, "prfMechanism", "J");
++    if (fieldID == NULL) { return ckParam; }
++    jPrfMechanism = (*env)->GetLongField(env, jParam, fieldID);
++
++    /* get ulMacLength */
++    fieldID = (*env)->GetFieldID(env, jTlsMacParamsClass, "ulMacLength", "J");
++    if (fieldID == NULL) { return ckParam; }
++    jUlMacLength = (*env)->GetLongField(env, jParam, fieldID);
++
++    /* get ulServerOrClient */
++    fieldID = (*env)->GetFieldID(env, jTlsMacParamsClass, "ulServerOrClient", "J");
++    if (fieldID == NULL) { return ckParam; }
++    jUlServerOrClient = (*env)->GetLongField(env, jParam, fieldID);
++
++    /* populate java values */
++    ckParam.prfMechanism = jLongToCKULong(jPrfMechanism);
++    ckParam.ulMacLength = jLongToCKULong(jUlMacLength);
++    ckParam.ulServerOrClient = jLongToCKULong(jUlServerOrClient);
++
++    return ckParam;
++}
++
++void keyMatParamToCKKeyMatParam(JNIEnv *env, jobject jParam,
++        jclass jKeyMatParamClass,
++        CK_ULONG* cKKeyMatParamUlMacSizeInBits,
++        CK_ULONG* cKKeyMatParamUlKeySizeInBits,
++        CK_ULONG* cKKeyMatParamUlIVSizeInBits,
++        CK_BBOOL* cKKeyMatParamBIsExport,
++        CK_SSL3_RANDOM_DATA* cKKeyMatParamRandomInfo,
++        CK_SSL3_KEY_MAT_OUT_PTR* cKKeyMatParamPReturnedKeyMaterial)
++{
++    jclass jSsl3RandomDataClass, jSsl3KeyMatOutClass;
+     jfieldID fieldID;
+     jlong jMacSizeInBits, jKeySizeInBits, jIVSizeInBits;
+     jboolean jIsExport;
+     jobject jRandomInfo, jRIClientRandom, jRIServerRandom;
+     jobject jReturnedKeyMaterial, jRMIvClient, jRMIvServer;
+     CK_ULONG ckTemp;
+-    memset(&ckParam, 0, sizeof(CK_SSL3_KEY_MAT_PARAMS));
+ 
+     /* get ulMacSizeInBits */
+-    jSsl3KeyMatParamsClass = (*env)->FindClass(env, CLASS_SSL3_KEY_MAT_PARAMS);
+-    if (jSsl3KeyMatParamsClass == NULL) { return ckParam; }
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "ulMacSizeInBits", "J");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "ulMacSizeInBits", "J");
++    if (fieldID == NULL) { return; }
+     jMacSizeInBits = (*env)->GetLongField(env, jParam, fieldID);
+ 
+     /* get ulKeySizeInBits */
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "ulKeySizeInBits", "J");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "ulKeySizeInBits", "J");
++    if (fieldID == NULL) { return; }
+     jKeySizeInBits = (*env)->GetLongField(env, jParam, fieldID);
+ 
+     /* get ulIVSizeInBits */
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "ulIVSizeInBits", "J");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "ulIVSizeInBits", "J");
++    if (fieldID == NULL) { return; }
+     jIVSizeInBits = (*env)->GetLongField(env, jParam, fieldID);
+ 
+     /* get bIsExport */
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "bIsExport", "Z");
+-    if (fieldID == NULL) { return ckParam; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "bIsExport", "Z");
++    if (fieldID == NULL) { return; }
+     jIsExport = (*env)->GetBooleanField(env, jParam, fieldID);
+ 
+     /* get RandomInfo */
+     jSsl3RandomDataClass = (*env)->FindClass(env, CLASS_SSL3_RANDOM_DATA);
+-    if (jSsl3RandomDataClass == NULL) { return ckParam; }
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "RandomInfo",  "Lsun/security/pkcs11/wrapper/CK_SSL3_RANDOM_DATA;");
+-    if (fieldID == NULL) { return ckParam; }
++    if (jSsl3RandomDataClass == NULL) { return; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "RandomInfo",
++            "Lsun/security/pkcs11/wrapper/CK_SSL3_RANDOM_DATA;");
++    if (fieldID == NULL) { return; }
+     jRandomInfo = (*env)->GetObjectField(env, jParam, fieldID);
+ 
+     /* get pClientRandom and ulClientRandomLength out of RandomInfo */
+     fieldID = (*env)->GetFieldID(env, jSsl3RandomDataClass, "pClientRandom", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRIClientRandom = (*env)->GetObjectField(env, jRandomInfo, fieldID);
+ 
+     /* get pServerRandom and ulServerRandomLength out of RandomInfo */
+     fieldID = (*env)->GetFieldID(env, jSsl3RandomDataClass, "pServerRandom", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRIServerRandom = (*env)->GetObjectField(env, jRandomInfo, fieldID);
+ 
+     /* get pReturnedKeyMaterial */
+     jSsl3KeyMatOutClass = (*env)->FindClass(env, CLASS_SSL3_KEY_MAT_OUT);
+-    if (jSsl3KeyMatOutClass == NULL) { return ckParam; }
+-    fieldID = (*env)->GetFieldID(env, jSsl3KeyMatParamsClass, "pReturnedKeyMaterial",  "Lsun/security/pkcs11/wrapper/CK_SSL3_KEY_MAT_OUT;");
+-    if (fieldID == NULL) { return ckParam; }
++    if (jSsl3KeyMatOutClass == NULL) { return; }
++    fieldID = (*env)->GetFieldID(env, jKeyMatParamClass, "pReturnedKeyMaterial",
++            "Lsun/security/pkcs11/wrapper/CK_SSL3_KEY_MAT_OUT;");
++    if (fieldID == NULL) { return; }
+     jReturnedKeyMaterial = (*env)->GetObjectField(env, jParam, fieldID);
+ 
+     /* get pIVClient out of pReturnedKeyMaterial */
+     fieldID = (*env)->GetFieldID(env, jSsl3KeyMatOutClass, "pIVClient", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRMIvClient = (*env)->GetObjectField(env, jReturnedKeyMaterial, fieldID);
+ 
+     /* get pIVServer out of pReturnedKeyMaterial */
+     fieldID = (*env)->GetFieldID(env, jSsl3KeyMatOutClass, "pIVServer", "[B");
+-    if (fieldID == NULL) { return ckParam; }
++    if (fieldID == NULL) { return; }
+     jRMIvServer = (*env)->GetObjectField(env, jReturnedKeyMaterial, fieldID);
+ 
+     /* populate java values */
+-    ckParam.ulMacSizeInBits = jLongToCKULong(jMacSizeInBits);
+-    ckParam.ulKeySizeInBits = jLongToCKULong(jKeySizeInBits);
+-    ckParam.ulIVSizeInBits = jLongToCKULong(jIVSizeInBits);
+-    ckParam.bIsExport = jBooleanToCKBBool(jIsExport);
+-    jByteArrayToCKByteArray(env, jRIClientRandom, &(ckParam.RandomInfo.pClientRandom), &(ckParam.RandomInfo.ulClientRandomLen));
+-    if ((*env)->ExceptionCheck(env)) { return ckParam; }
+-    jByteArrayToCKByteArray(env, jRIServerRandom, &(ckParam.RandomInfo.pServerRandom), &(ckParam.RandomInfo.ulServerRandomLen));
++    *cKKeyMatParamUlMacSizeInBits = jLongToCKULong(jMacSizeInBits);
++    *cKKeyMatParamUlKeySizeInBits = jLongToCKULong(jKeySizeInBits);
++    *cKKeyMatParamUlIVSizeInBits = jLongToCKULong(jIVSizeInBits);
++    *cKKeyMatParamBIsExport = jBooleanToCKBBool(jIsExport);
++    jByteArrayToCKByteArray(env, jRIClientRandom,
++            &(cKKeyMatParamRandomInfo->pClientRandom),
++            &(cKKeyMatParamRandomInfo->ulClientRandomLen));
++    if ((*env)->ExceptionCheck(env)) { return; }
++    jByteArrayToCKByteArray(env, jRIServerRandom,
++            &(cKKeyMatParamRandomInfo->pServerRandom),
++            &(cKKeyMatParamRandomInfo->ulServerRandomLen));
+     if ((*env)->ExceptionCheck(env)) {
+-        free(ckParam.RandomInfo.pClientRandom);
+-        return ckParam;
++        free(cKKeyMatParamRandomInfo->pClientRandom);
++        return;
+     }
+     /* allocate memory for pRetrunedKeyMaterial */
+-    ckParam.pReturnedKeyMaterial = (CK_SSL3_KEY_MAT_OUT_PTR) malloc(sizeof(CK_SSL3_KEY_MAT_OUT));
+-    if (ckParam.pReturnedKeyMaterial == NULL) {
+-        free(ckParam.RandomInfo.pClientRandom);
+-        free(ckParam.RandomInfo.pServerRandom);
++    *cKKeyMatParamPReturnedKeyMaterial =
++            (CK_SSL3_KEY_MAT_OUT_PTR)malloc(sizeof(CK_SSL3_KEY_MAT_OUT));
++    if (*cKKeyMatParamPReturnedKeyMaterial == NULL) {
++        free(cKKeyMatParamRandomInfo->pClientRandom);
++        free(cKKeyMatParamRandomInfo->pServerRandom);
+         throwOutOfMemoryError(env, 0);
+-        return ckParam;
++        return;
+     }
+ 
+     // the handles are output params only, no need to fetch them from Java
+-    ckParam.pReturnedKeyMaterial->hClientMacSecret = 0;
+-    ckParam.pReturnedKeyMaterial->hServerMacSecret = 0;
+-    ckParam.pReturnedKeyMaterial->hClientKey = 0;
+-    ckParam.pReturnedKeyMaterial->hServerKey = 0;
++    (*cKKeyMatParamPReturnedKeyMaterial)->hClientMacSecret = 0;
++    (*cKKeyMatParamPReturnedKeyMaterial)->hServerMacSecret = 0;
++    (*cKKeyMatParamPReturnedKeyMaterial)->hClientKey = 0;
++    (*cKKeyMatParamPReturnedKeyMaterial)->hServerKey = 0;
+ 
+-    jByteArrayToCKByteArray(env, jRMIvClient, &(ckParam.pReturnedKeyMaterial->pIVClient), &ckTemp);
++    jByteArrayToCKByteArray(env, jRMIvClient,
++            &((*cKKeyMatParamPReturnedKeyMaterial)->pIVClient), &ckTemp);
+     if ((*env)->ExceptionCheck(env)) {
+-        free(ckParam.RandomInfo.pClientRandom);
+-        free(ckParam.RandomInfo.pServerRandom);
+-        free(ckParam.pReturnedKeyMaterial);
+-        return ckParam;
++        free(cKKeyMatParamRandomInfo->pClientRandom);
++        free(cKKeyMatParamRandomInfo->pServerRandom);
++        free((*cKKeyMatParamPReturnedKeyMaterial));
++        return;
+     }
+-    jByteArrayToCKByteArray(env, jRMIvServer, &(ckParam.pReturnedKeyMaterial->pIVServer), &ckTemp);
++    jByteArrayToCKByteArray(env, jRMIvServer,
++            &((*cKKeyMatParamPReturnedKeyMaterial)->pIVServer), &ckTemp);
+     if ((*env)->ExceptionCheck(env)) {
+-        free(ckParam.RandomInfo.pClientRandom);
+-        free(ckParam.RandomInfo.pServerRandom);
+-        free(ckParam.pReturnedKeyMaterial->pIVClient);
+-        free(ckParam.pReturnedKeyMaterial);
+-        return ckParam;
++        free(cKKeyMatParamRandomInfo->pClientRandom);
++        free(cKKeyMatParamRandomInfo->pServerRandom);
++        free((*cKKeyMatParamPReturnedKeyMaterial)->pIVClient);
++        free((*cKKeyMatParamPReturnedKeyMaterial));
++        return;
+     }
+ 
+-    return ckParam ;
++    return;
++}
++/*
++ * converts the Java CK_SSL3_KEY_MAT_PARAMS object to a
++ * CK_SSL3_KEY_MAT_PARAMS structure
++ *
++ * @param env - used to call JNI funktions to get the Java classes and objects
++ * @param jParam - the Java CK_SSL3_KEY_MAT_PARAMS object to convert
++ * @return - the new CK_SSL3_KEY_MAT_PARAMS structure
++ */
++CK_SSL3_KEY_MAT_PARAMS
++jSsl3KeyMatParamToCKSsl3KeyMatParam(JNIEnv *env, jobject jParam)
++{
++    CK_SSL3_KEY_MAT_PARAMS ckParam;
++    jclass jSsl3KeyMatParamsClass;
++    memset(&ckParam, 0, sizeof(CK_SSL3_KEY_MAT_PARAMS));
++    jSsl3KeyMatParamsClass = (*env)->FindClass(env,
++            CLASS_SSL3_KEY_MAT_PARAMS);
++    if (jSsl3KeyMatParamsClass == NULL) { return ckParam; }
++    keyMatParamToCKKeyMatParam(env, jParam, jSsl3KeyMatParamsClass,
++            &ckParam.ulMacSizeInBits, &ckParam.ulKeySizeInBits,
++            &ckParam.ulIVSizeInBits, &ckParam.bIsExport,
++            &ckParam.RandomInfo, &ckParam.pReturnedKeyMaterial);
++    return ckParam;
++}
++
++/*
++ * converts the Java CK_TLS12_KEY_MAT_PARAMS object to a
++ * CK_TLS12_KEY_MAT_PARAMS structure
++ *
++ * @param env - used to call JNI functions to get the Java classes and objects
++ * @param jParam - the Java CK_TLS12_KEY_MAT_PARAMS object to convert
++ * @return - the new CK_TLS12_KEY_MAT_PARAMS structure
++ */
++CK_TLS12_KEY_MAT_PARAMS jTls12KeyMatParamToCKTls12KeyMatParam(JNIEnv *env,
++        jobject jParam)
++{
++    CK_TLS12_KEY_MAT_PARAMS ckParam;
++    jclass jTls12KeyMatParamsClass;
++    jfieldID fieldID;
++    memset(&ckParam, 0, sizeof(CK_TLS12_KEY_MAT_PARAMS));
++    jTls12KeyMatParamsClass = (*env)->FindClass(env,
++            CLASS_TLS12_KEY_MAT_PARAMS);
++    if (jTls12KeyMatParamsClass == NULL) { return ckParam; }
++    keyMatParamToCKKeyMatParam(env, jParam, jTls12KeyMatParamsClass,
++            &ckParam.ulMacSizeInBits, &ckParam.ulKeySizeInBits,
++            &ckParam.ulIVSizeInBits, &ckParam.bIsExport,
++            &ckParam.RandomInfo, &ckParam.pReturnedKeyMaterial);
++    fieldID = (*env)->GetFieldID(env, jTls12KeyMatParamsClass,
++            "prfHashMechanism", "J");
++    if (fieldID != NULL) {
++        jlong prfHashMechanism = (*env)->GetLongField(env, jParam, fieldID);
++        ckParam.prfHashMechanism = (CK_MECHANISM_TYPE)prfHashMechanism;
++    }
++    return ckParam;
+ }
+ 
+ /*
+@@ -980,8 +1120,11 @@
+ void jMechanismParameterToCKMechanismParameterSlow(JNIEnv *env, jobject jParam, CK_VOID_PTR *ckpParamPtr, CK_ULONG *ckpLength)
+ {
+     /* get all Java mechanism parameter classes */
+-    jclass jVersionClass, jSsl3MasterKeyDeriveParamsClass, jSsl3KeyMatParamsClass;
+-    jclass jTlsPrfParamsClass, jAesCtrParamsClass, jRsaPkcsOaepParamsClass;
++    jclass jVersionClass, jSsl3MasterKeyDeriveParamsClass;
++    jclass jTls12MasterKeyDeriveParamsClass, jSsl3KeyMatParamsClass;
++    jclass jTls12KeyMatParamsClass;
++    jclass jTlsPrfParamsClass, jTlsMacParamsClass, jAesCtrParamsClass;
++    jclass jRsaPkcsOaepParamsClass;
+     jclass jPbeParamsClass, jPkcs5Pbkd2ParamsClass, jRsaPkcsPssParamsClass;
+     jclass jEcdh1DeriveParamsClass, jEcdh2DeriveParamsClass;
+     jclass jX942Dh1DeriveParamsClass, jX942Dh2DeriveParamsClass;
+@@ -1061,6 +1204,62 @@
+         return;
+     }
+ 
++    jTls12KeyMatParamsClass = (*env)->FindClass(env, CLASS_TLS12_KEY_MAT_PARAMS);
++    if (jTls12KeyMatParamsClass == NULL) { return; }
++    if ((*env)->IsInstanceOf(env, jParam, jTls12KeyMatParamsClass)) {
++        /*
++         * CK_TLS12_KEY_MAT_PARAMS
++         */
++        CK_TLS12_KEY_MAT_PARAMS_PTR ckpParam;
++
++        ckpParam = (CK_TLS12_KEY_MAT_PARAMS_PTR) malloc(sizeof(CK_TLS12_KEY_MAT_PARAMS));
++        if (ckpParam == NULL) {
++            throwOutOfMemoryError(env, 0);
++            return;
++        }
++
++        /* convert jParameter to CKParameter */
++        *ckpParam = jTls12KeyMatParamToCKTls12KeyMatParam(env, jParam);
++        if ((*env)->ExceptionCheck(env)) {
++            free(ckpParam);
++            return;
++        }
++
++        /* get length and pointer of parameter */
++        *ckpLength = sizeof(CK_TLS12_KEY_MAT_PARAMS);
++        *ckpParamPtr = ckpParam;
++        return;
++    }
++
++    jTls12MasterKeyDeriveParamsClass =
++            (*env)->FindClass(env, CLASS_TLS12_MASTER_KEY_DERIVE_PARAMS);
++    if (jTls12MasterKeyDeriveParamsClass == NULL) { return; }
++    if ((*env)->IsInstanceOf(env, jParam, jTls12MasterKeyDeriveParamsClass)) {
++        /*
++         * CK_TLS12_MASTER_KEY_DERIVE_PARAMS
++         */
++        CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR ckpParam;
++
++        ckpParam = (CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR)malloc(
++                sizeof(CK_TLS12_MASTER_KEY_DERIVE_PARAMS));
++        if (ckpParam == NULL) {
++            throwOutOfMemoryError(env, 0);
++            return;
++        }
++
++        /* convert jParameter to CKParameter */
++        *ckpParam = jTls12MasterKeyDeriveParamToCKTls12MasterKeyDeriveParam(env, jParam);
++        if ((*env)->ExceptionCheck(env)) {
++            free(ckpParam);
++            return;
++        }
++
++        /* get length and pointer of parameter */
++        *ckpLength = sizeof(CK_TLS12_MASTER_KEY_DERIVE_PARAMS);
++        *ckpParamPtr = ckpParam;
++        return;
++    }
++
+     jTlsPrfParamsClass = (*env)->FindClass(env, CLASS_TLS_PRF_PARAMS);
+     if (jTlsPrfParamsClass == NULL) { return; }
+     if ((*env)->IsInstanceOf(env, jParam, jTlsPrfParamsClass)) {
+@@ -1088,6 +1287,30 @@
+         return;
+     }
+ 
++    jTlsMacParamsClass = (*env)->FindClass(env, CLASS_TLS_MAC_PARAMS);
++    if (jTlsMacParamsClass == NULL) { return; }
++    if ((*env)->IsInstanceOf(env, jParam, jTlsMacParamsClass)) {
++        CK_TLS_MAC_PARAMS_PTR ckpParam;
++
++        ckpParam = (CK_TLS_MAC_PARAMS_PTR) malloc(sizeof(CK_TLS_MAC_PARAMS));
++        if (ckpParam == NULL) {
++            throwOutOfMemoryError(env, 0);
++            return;
++        }
++
++        /* convert jParameter to CKParameter */
++        *ckpParam = jTlsMacParamsToCKTlsMacParam(env, jParam);
++        if ((*env)->ExceptionCheck(env)) {
++            free(ckpParam);
++            return;
++        }
++
++        /* get length and pointer of parameter */
++        *ckpLength = sizeof(CK_TLS_MAC_PARAMS);
++        *ckpParamPtr = ckpParam;
++        return;
++    }
++
+     jAesCtrParamsClass = (*env)->FindClass(env, CLASS_AES_CTR_PARAMS);
+     if (jAesCtrParamsClass == NULL) { return; }
+     if ((*env)->IsInstanceOf(env, jParam, jAesCtrParamsClass)) {
+diff --git openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/p11_keymgmt.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -355,25 +355,38 @@
+ 
+ #ifdef P11_ENABLE_C_DERIVEKEY
+ 
+-void freeMasterKeyDeriveParams(CK_MECHANISM_PTR ckMechanism) {
++static void freeMasterKeyDeriveParams(CK_SSL3_RANDOM_DATA *RandomInfo, CK_VERSION_PTR pVersion) {
++    if (RandomInfo->pClientRandom != NULL) {
++        free(RandomInfo->pClientRandom);
++    }
++    if (RandomInfo->pServerRandom != NULL) {
++        free(RandomInfo->pServerRandom);
++    }
++    if (pVersion != NULL) {
++        free(pVersion);
++    }
++}
++
++void ssl3FreeMasterKeyDeriveParams(CK_MECHANISM_PTR ckMechanism) {
+     CK_SSL3_MASTER_KEY_DERIVE_PARAMS *params = (CK_SSL3_MASTER_KEY_DERIVE_PARAMS *) ckMechanism->pParameter;
+     if (params == NULL) {
+         return;
+     }
++    freeMasterKeyDeriveParams(&(params->RandomInfo), params->pVersion);
++}
+ 
+-    if (params->RandomInfo.pClientRandom != NULL) {
+-        free(params->RandomInfo.pClientRandom);
++void tls12FreeMasterKeyDeriveParams(CK_MECHANISM_PTR ckMechanism) {
++    CK_TLS12_MASTER_KEY_DERIVE_PARAMS *params =
++            (CK_TLS12_MASTER_KEY_DERIVE_PARAMS *)ckMechanism->pParameter;
++    if (params == NULL) {
++        return;
+     }
+-    if (params->RandomInfo.pServerRandom != NULL) {
+-        free(params->RandomInfo.pServerRandom);
+-    }
+-    if (params->pVersion != NULL) {
+-        free(params->pVersion);
+-    }
++    freeMasterKeyDeriveParams(&(params->RandomInfo), params->pVersion);
+ }
+ 
+ void freeEcdh1DeriveParams(CK_MECHANISM_PTR ckMechanism) {
+-    CK_ECDH1_DERIVE_PARAMS *params = (CK_ECDH1_DERIVE_PARAMS *) ckMechanism->pParameter;
++    CK_ECDH1_DERIVE_PARAMS *params =
++            (CK_ECDH1_DERIVE_PARAMS *)ckMechanism->pParameter;
+     if (params == NULL) {
+         return;
+     }
+@@ -498,6 +511,7 @@
+     switch (ckMechanism.mechanism) {
+     case CKM_SSL3_KEY_AND_MAC_DERIVE:
+     case CKM_TLS_KEY_AND_MAC_DERIVE:
++    case CKM_TLS12_KEY_AND_MAC_DERIVE:
+     case CKM_TLS_PRF:
+         // these mechanism do not return a key handle via phKey
+         // set to NULL in case pedantic implementations check for it
+@@ -519,17 +533,28 @@
+     case CKM_SSL3_MASTER_KEY_DERIVE:
+     case CKM_TLS_MASTER_KEY_DERIVE:
+         /* we must copy back the client version */
+-        copyBackClientVersion(env, &ckMechanism, jMechanism);
+-        freeMasterKeyDeriveParams(&ckMechanism);
++        ssl3CopyBackClientVersion(env, &ckMechanism, jMechanism);
++        ssl3FreeMasterKeyDeriveParams(&ckMechanism);
++        break;
++    case CKM_TLS12_MASTER_KEY_DERIVE:
++        tls12CopyBackClientVersion(env, &ckMechanism, jMechanism);
++        tls12FreeMasterKeyDeriveParams(&ckMechanism);
+         break;
+     case CKM_SSL3_MASTER_KEY_DERIVE_DH:
+     case CKM_TLS_MASTER_KEY_DERIVE_DH:
+-        freeMasterKeyDeriveParams(&ckMechanism);
++        ssl3FreeMasterKeyDeriveParams(&ckMechanism);
++        break;
++    case CKM_TLS12_MASTER_KEY_DERIVE_DH:
++        tls12FreeMasterKeyDeriveParams(&ckMechanism);
+         break;
+     case CKM_SSL3_KEY_AND_MAC_DERIVE:
+     case CKM_TLS_KEY_AND_MAC_DERIVE:
+         /* we must copy back the unwrapped key info to the jMechanism object */
+-        copyBackSSLKeyMatParams(env, &ckMechanism, jMechanism);
++        ssl3CopyBackKeyMatParams(env, &ckMechanism, jMechanism);
++        break;
++    case CKM_TLS12_KEY_AND_MAC_DERIVE:
++        /* we must copy back the unwrapped key info to the jMechanism object */
++        tls12CopyBackKeyMatParams(env, &ckMechanism, jMechanism);
+         break;
+     case CKM_TLS_PRF:
+         copyBackTLSPrfParams(env, &ckMechanism, jMechanism);
+@@ -550,53 +575,42 @@
+     return jKeyHandle ;
+ }
+ 
+-/*
+- * Copy back the client version information from the native
+- * structure to the Java object. This is only used for the
+- * CKM_SSL3_MASTER_KEY_DERIVE mechanism when used for deriving a key.
+- *
+- */
+-void copyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism)
++static void copyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism,
++        CK_VERSION *ckVersion, const char *class_master_key_derive_params)
+ {
+-  jclass jMechanismClass, jSSL3MasterKeyDeriveParamsClass, jVersionClass;
+-  CK_SSL3_MASTER_KEY_DERIVE_PARAMS *ckSSL3MasterKeyDeriveParams;
+-  CK_VERSION *ckVersion;
+-  jfieldID fieldID;
+-  CK_MECHANISM_TYPE ckMechanismType;
+-  jlong jMechanismType;
+-  jobject jSSL3MasterKeyDeriveParams;
+-  jobject jVersion;
++    jclass jMasterKeyDeriveParamsClass, jMechanismClass, jVersionClass;
++    jobject jMasterKeyDeriveParams;
++    jfieldID fieldID;
++    CK_MECHANISM_TYPE ckMechanismType;
++    jlong jMechanismType;
++    jobject jVersion;
+ 
+-  /* get mechanism */
+-  jMechanismClass = (*env)->FindClass(env, CLASS_MECHANISM);
+-  if (jMechanismClass == NULL) { return; }
+-  fieldID = (*env)->GetFieldID(env, jMechanismClass, "mechanism", "J");
+-  if (fieldID == NULL) { return; }
+-  jMechanismType = (*env)->GetLongField(env, jMechanism, fieldID);
+-  ckMechanismType = jLongToCKULong(jMechanismType);
+-  if (ckMechanismType != ckMechanism->mechanism) {
+-    /* we do not have maching types, this should not occur */
+-    return;
+-  }
++    /* get mechanism */
++    jMechanismClass = (*env)->FindClass(env, CLASS_MECHANISM);
++    if (jMechanismClass == NULL) { return; }
++    fieldID = (*env)->GetFieldID(env, jMechanismClass, "mechanism", "J");
++    if (fieldID == NULL) { return; }
++    jMechanismType = (*env)->GetLongField(env, jMechanism, fieldID);
++    ckMechanismType = jLongToCKULong(jMechanismType);
++    if (ckMechanismType != ckMechanism->mechanism) {
++        /* we do not have maching types, this should not occur */
++        return;
++    }
+ 
+-  /* get the native CK_SSL3_MASTER_KEY_DERIVE_PARAMS */
+-  ckSSL3MasterKeyDeriveParams = (CK_SSL3_MASTER_KEY_DERIVE_PARAMS *) ckMechanism->pParameter;
+-  if (ckSSL3MasterKeyDeriveParams != NULL_PTR) {
+-    /* get the native CK_VERSION */
+-    ckVersion = ckSSL3MasterKeyDeriveParams->pVersion;
+     if (ckVersion != NULL_PTR) {
+       /* get the Java CK_SSL3_MASTER_KEY_DERIVE_PARAMS (pParameter) */
+       fieldID = (*env)->GetFieldID(env, jMechanismClass, "pParameter", "Ljava/lang/Object;");
+       if (fieldID == NULL) { return; }
+ 
+-      jSSL3MasterKeyDeriveParams = (*env)->GetObjectField(env, jMechanism, fieldID);
++      jMasterKeyDeriveParams = (*env)->GetObjectField(env, jMechanism, fieldID);
+ 
+       /* get the Java CK_VERSION */
+-      jSSL3MasterKeyDeriveParamsClass = (*env)->FindClass(env, CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS);
+-      if (jSSL3MasterKeyDeriveParamsClass == NULL) { return; }
+-      fieldID = (*env)->GetFieldID(env, jSSL3MasterKeyDeriveParamsClass, "pVersion", "L"CLASS_VERSION";");
++      jMasterKeyDeriveParamsClass = (*env)->FindClass(env, class_master_key_derive_params);
++      if (jMasterKeyDeriveParamsClass == NULL) { return; }
++      fieldID = (*env)->GetFieldID(env, jMasterKeyDeriveParamsClass,
++              "pVersion", "L"CLASS_VERSION";");
+       if (fieldID == NULL) { return; }
+-      jVersion = (*env)->GetObjectField(env, jSSL3MasterKeyDeriveParams, fieldID);
++      jVersion = (*env)->GetObjectField(env, jMasterKeyDeriveParams, fieldID);
+ 
+       /* now copy back the version from the native structure to the Java structure */
+ 
+@@ -612,92 +626,126 @@
+       if (fieldID == NULL) { return; }
+       (*env)->SetByteField(env, jVersion, fieldID, ckByteToJByte(ckVersion->minor));
+     }
+-  }
+ }
+ 
++/*
++ * Copy back the client version information from the native
++ * structure to the Java object. This is only used for
++ * CKM_SSL3_MASTER_KEY_DERIVE and CKM_TLS_MASTER_KEY_DERIVE
++ * mechanisms when used for deriving a key.
++ *
++ */
++void ssl3CopyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism,
++        jobject jMechanism)
++{
++    CK_SSL3_MASTER_KEY_DERIVE_PARAMS *ckSSL3MasterKeyDeriveParams;
++    ckSSL3MasterKeyDeriveParams =
++            (CK_SSL3_MASTER_KEY_DERIVE_PARAMS *)ckMechanism->pParameter;
++    if (ckSSL3MasterKeyDeriveParams != NULL_PTR) {
++        copyBackClientVersion(env, ckMechanism, jMechanism,
++                ckSSL3MasterKeyDeriveParams->pVersion,
++                CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS);
++    }
++}
+ 
+ /*
+- * Copy back the derived keys and initialization vectors from the native
+- * structure to the Java object. This is only used for the
+- * CKM_SSL3_KEY_AND_MAC_DERIVE mechanism when used for deriving a key.
++ * Copy back the client version information from the native
++ * structure to the Java object. This is only used for
++ * CKM_TLS12_MASTER_KEY_DERIVE mechanism when used for deriving a key.
+  *
+  */
+-void copyBackSSLKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism)
++void tls12CopyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism,
++        jobject jMechanism)
+ {
+-  jclass jMechanismClass, jSSL3KeyMatParamsClass, jSSL3KeyMatOutClass;
+-  CK_SSL3_KEY_MAT_PARAMS *ckSSL3KeyMatParam;
+-  CK_SSL3_KEY_MAT_OUT *ckSSL3KeyMatOut;
+-  jfieldID fieldID;
+-  CK_MECHANISM_TYPE ckMechanismType;
+-  jlong jMechanismType;
+-  CK_BYTE_PTR iv;
+-  jobject jSSL3KeyMatParam;
+-  jobject jSSL3KeyMatOut;
+-  jobject jIV;
+-  jint jLength;
+-  jbyte* jBytes;
+-  int i;
++    CK_TLS12_MASTER_KEY_DERIVE_PARAMS *ckTLS12MasterKeyDeriveParams;
++    ckTLS12MasterKeyDeriveParams =
++            (CK_TLS12_MASTER_KEY_DERIVE_PARAMS *)ckMechanism->pParameter;
++    if (ckTLS12MasterKeyDeriveParams != NULL_PTR) {
++        copyBackClientVersion(env, ckMechanism, jMechanism,
++                ckTLS12MasterKeyDeriveParams->pVersion,
++                CLASS_TLS12_MASTER_KEY_DERIVE_PARAMS);
++    }
++}
+ 
+-  /* get mechanism */
+-  jMechanismClass= (*env)->FindClass(env, CLASS_MECHANISM);
+-  if (jMechanismClass == NULL) { return; }
+-  fieldID = (*env)->GetFieldID(env, jMechanismClass, "mechanism", "J");
+-  if (fieldID == NULL) { return; }
+-  jMechanismType = (*env)->GetLongField(env, jMechanism, fieldID);
+-  ckMechanismType = jLongToCKULong(jMechanismType);
+-  if (ckMechanismType != ckMechanism->mechanism) {
+-    /* we do not have maching types, this should not occur */
+-    return;
+-  }
++static void copyBackKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism,
++        jobject jMechanism, CK_SSL3_RANDOM_DATA *RandomInfo,
++        CK_SSL3_KEY_MAT_OUT_PTR ckSSL3KeyMatOut, const char *class_key_mat_params)
++{
++    jclass jMechanismClass, jKeyMatParamsClass, jSSL3KeyMatOutClass;
++    jfieldID fieldID;
++    CK_MECHANISM_TYPE ckMechanismType;
++    jlong jMechanismType;
++    CK_BYTE_PTR iv;
++    jobject jKeyMatParam;
++    jobject jSSL3KeyMatOut;
++    jobject jIV;
++    jint jLength;
++    jbyte* jBytes;
++    int i;
+ 
+-  /* get the native CK_SSL3_KEY_MAT_PARAMS */
+-  ckSSL3KeyMatParam = (CK_SSL3_KEY_MAT_PARAMS *) ckMechanism->pParameter;
+-  if (ckSSL3KeyMatParam != NULL_PTR) {
+-    // free malloc'd data
+-    if (ckSSL3KeyMatParam->RandomInfo.pClientRandom != NULL) {
+-        free(ckSSL3KeyMatParam->RandomInfo.pClientRandom);
+-    }
+-    if (ckSSL3KeyMatParam->RandomInfo.pServerRandom != NULL) {
+-        free(ckSSL3KeyMatParam->RandomInfo.pServerRandom);
++    /* get mechanism */
++    jMechanismClass= (*env)->FindClass(env, CLASS_MECHANISM);
++    if (jMechanismClass == NULL) { return; }
++    fieldID = (*env)->GetFieldID(env, jMechanismClass, "mechanism", "J");
++    if (fieldID == NULL) { return; }
++    jMechanismType = (*env)->GetLongField(env, jMechanism, fieldID);
++    ckMechanismType = jLongToCKULong(jMechanismType);
++    if (ckMechanismType != ckMechanism->mechanism) {
++        /* we do not have maching types, this should not occur */
++        return;
+     }
+ 
+-    /* get the native CK_SSL3_KEY_MAT_OUT */
+-    ckSSL3KeyMatOut = ckSSL3KeyMatParam->pReturnedKeyMaterial;
++    // free malloc'd data
++    if (RandomInfo->pClientRandom != NULL) {
++        free(RandomInfo->pClientRandom);
++    }
++    if (RandomInfo->pServerRandom != NULL) {
++        free(RandomInfo->pServerRandom);
++    }
++
+     if (ckSSL3KeyMatOut != NULL_PTR) {
+-      /* get the Java CK_SSL3_KEY_MAT_PARAMS (pParameter) */
+-      fieldID = (*env)->GetFieldID(env, jMechanismClass, "pParameter", "Ljava/lang/Object;");
++      /* get the Java params object (pParameter) */
++      fieldID = (*env)->GetFieldID(env, jMechanismClass, "pParameter",
++              "Ljava/lang/Object;");
+       if (fieldID == NULL) { return; }
+-      jSSL3KeyMatParam = (*env)->GetObjectField(env, jMechanism, fieldID);
++      jKeyMatParam = (*env)->GetObjectField(env, jMechanism, fieldID);
+ 
+       /* get the Java CK_SSL3_KEY_MAT_OUT */
+-      jSSL3KeyMatParamsClass = (*env)->FindClass(env, CLASS_SSL3_KEY_MAT_PARAMS);
+-      if (jSSL3KeyMatParamsClass == NULL) { return; }
+-      fieldID = (*env)->GetFieldID(env, jSSL3KeyMatParamsClass, "pReturnedKeyMaterial", "L"CLASS_SSL3_KEY_MAT_OUT";");
++      jKeyMatParamsClass = (*env)->FindClass(env, class_key_mat_params);
++      if (jKeyMatParamsClass == NULL) { return; }
++      fieldID = (*env)->GetFieldID(env, jKeyMatParamsClass,
++              "pReturnedKeyMaterial", "L"CLASS_SSL3_KEY_MAT_OUT";");
+       if (fieldID == NULL) { return; }
+-      jSSL3KeyMatOut = (*env)->GetObjectField(env, jSSL3KeyMatParam, fieldID);
++      jSSL3KeyMatOut = (*env)->GetObjectField(env, jKeyMatParam, fieldID);
+ 
+       /* now copy back all the key handles and the initialization vectors */
+       /* copy back client MAC secret handle */
+       jSSL3KeyMatOutClass = (*env)->FindClass(env, CLASS_SSL3_KEY_MAT_OUT);
+       if (jSSL3KeyMatOutClass == NULL) { return; }
+-      fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass, "hClientMacSecret", "J");
++      fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass,
++              "hClientMacSecret", "J");
+       if (fieldID == NULL) { return; }
+-      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID, ckULongToJLong(ckSSL3KeyMatOut->hClientMacSecret));
++      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID,
++              ckULongToJLong(ckSSL3KeyMatOut->hClientMacSecret));
+ 
+       /* copy back server MAC secret handle */
+-      fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass, "hServerMacSecret", "J");
++      fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass,
++              "hServerMacSecret", "J");
+       if (fieldID == NULL) { return; }
+-      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID, ckULongToJLong(ckSSL3KeyMatOut->hServerMacSecret));
++      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID,
++              ckULongToJLong(ckSSL3KeyMatOut->hServerMacSecret));
+ 
+       /* copy back client secret key handle */
+       fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass, "hClientKey", "J");
+       if (fieldID == NULL) { return; }
+-      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID, ckULongToJLong(ckSSL3KeyMatOut->hClientKey));
++      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID,
++              ckULongToJLong(ckSSL3KeyMatOut->hClientKey));
+ 
+       /* copy back server secret key handle */
+       fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass, "hServerKey", "J");
+       if (fieldID == NULL) { return; }
+-      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID, ckULongToJLong(ckSSL3KeyMatOut->hServerKey));
++      (*env)->SetLongField(env, jSSL3KeyMatOut, fieldID,
++              ckULongToJLong(ckSSL3KeyMatOut->hServerKey));
+ 
+       /* copy back the client IV */
+       fieldID = (*env)->GetFieldID(env, jSSL3KeyMatOutClass, "pIVClient", "[B");
+@@ -740,7 +788,45 @@
+       free(ckSSL3KeyMatOut->pIVServer);
+       free(ckSSL3KeyMatOut);
+     }
+-  }
++}
++
++/*
++ * Copy back the derived keys and initialization vectors from the native
++ * structure to the Java object. This is only used for
++ * CKM_SSL3_KEY_AND_MAC_DERIVE and CKM_TLS_KEY_AND_MAC_DERIVE mechanisms
++ * when used for deriving a key.
++ *
++ */
++void ssl3CopyBackKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism,
++        jobject jMechanism)
++{
++    CK_SSL3_KEY_MAT_PARAMS *ckSSL3KeyMatParam;
++    ckSSL3KeyMatParam = (CK_SSL3_KEY_MAT_PARAMS *)ckMechanism->pParameter;
++    if (ckSSL3KeyMatParam != NULL_PTR) {
++        copyBackKeyMatParams(env, ckMechanism, jMechanism,
++                &(ckSSL3KeyMatParam->RandomInfo),
++                ckSSL3KeyMatParam->pReturnedKeyMaterial,
++                CLASS_SSL3_KEY_MAT_PARAMS);
++    }
++}
++
++/*
++ * Copy back the derived keys and initialization vectors from the native
++ * structure to the Java object. This is only used for
++ * CKM_TLS12_KEY_AND_MAC_DERIVE mechanism when used for deriving a key.
++ *
++ */
++void tls12CopyBackKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism,
++        jobject jMechanism)
++{
++    CK_TLS12_KEY_MAT_PARAMS *ckTLS12KeyMatParam;
++    ckTLS12KeyMatParam = (CK_TLS12_KEY_MAT_PARAMS *) ckMechanism->pParameter;
++    if (ckTLS12KeyMatParam != NULL_PTR) {
++        copyBackKeyMatParams(env, ckMechanism, jMechanism,
++                &(ckTLS12KeyMatParam->RandomInfo),
++                ckTLS12KeyMatParam->pReturnedKeyMaterial,
++                CLASS_TLS12_KEY_MAT_PARAMS);
++    }
+ }
+ 
+ #endif
+diff --git openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11t.h openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11t.h
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11t.h
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11t.h
+@@ -807,6 +807,12 @@
+ #define CKM_WTLS_SERVER_KEY_AND_MAC_DERIVE  0x000003D4
+ #define CKM_WTLS_CLIENT_KEY_AND_MAC_DERIVE  0x000003D5
+ 
++/* new for v2.40 */
++#define CKM_TLS12_MASTER_KEY_DERIVE         0x000003E0
++#define CKM_TLS12_KEY_AND_MAC_DERIVE        0x000003E1
++#define CKM_TLS12_MASTER_KEY_DERIVE_DH      0x000003E2
++#define CKM_TLS_MAC                         0x000003E4
++
+ #define CKM_KEY_WRAP_LYNKS             0x00000400
+ #define CKM_KEY_WRAP_SET_OAEP          0x00000401
+ 
+@@ -1682,4 +1688,34 @@
+ 
+ typedef CK_PKCS5_PBKD2_PARAMS CK_PTR CK_PKCS5_PBKD2_PARAMS_PTR;
+ 
++/* new for v2.40 */
++
++typedef struct CK_TLS12_MASTER_KEY_DERIVE_PARAMS {
++  CK_SSL3_RANDOM_DATA       RandomInfo;
++  CK_VERSION_PTR            pVersion;
++  CK_MECHANISM_TYPE         prfHashMechanism;
++} CK_TLS12_MASTER_KEY_DERIVE_PARAMS;
++
++typedef CK_TLS12_MASTER_KEY_DERIVE_PARAMS CK_PTR CK_TLS12_MASTER_KEY_DERIVE_PARAMS_PTR;
++
++typedef struct CK_TLS12_KEY_MAT_PARAMS {
++  CK_ULONG ulMacSizeInBits;
++  CK_ULONG ulKeySizeInBits;
++  CK_ULONG ulIVSizeInBits;
++  CK_BBOOL bIsExport;
++  CK_SSL3_RANDOM_DATA RandomInfo;
++  CK_SSL3_KEY_MAT_OUT_PTR pReturnedKeyMaterial;
++  CK_MECHANISM_TYPE prfHashMechanism;
++} CK_TLS12_KEY_MAT_PARAMS;
++
++typedef CK_TLS12_KEY_MAT_PARAMS CK_PTR CK_TLS12_KEY_MAT_PARAMS_PTR;
++
++typedef struct CK_TLS_MAC_PARAMS {
++  CK_MECHANISM_TYPE prfMechanism;
++  CK_ULONG ulMacLength;
++  CK_ULONG ulServerOrClient;
++} CK_TLS_MAC_PARAMS;
++
++typedef CK_TLS_MAC_PARAMS CK_PTR CK_TLS_MAC_PARAMS_PTR;
++
+ #endif
+diff --git openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h
+--- openjdk.orig/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h
++++ openjdk/jdk/src/share/native/sun/security/pkcs11/wrapper/pkcs11wrapper.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2012, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+  */
+ 
+ /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
+@@ -268,10 +268,13 @@
+ #define CLASS_SSL3_RANDOM_DATA "sun/security/pkcs11/wrapper/CK_SSL3_RANDOM_DATA"
+ // CLASS_SSL3_RANDOM_DATA is used by CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS
+ #define CLASS_SSL3_KEY_MAT_OUT "sun/security/pkcs11/wrapper/CK_SSL3_KEY_MAT_OUT"
+-// CLASS_SSL3_KEY_MAT_OUT is used by CLASS_SSL3_KEY_MAT_PARAMS
++// CLASS_SSL3_KEY_MAT_OUT is used by CLASS_SSL3_KEY_MAT_PARAMS and CK_TLS12_KEY_MAT_PARAMS
+ #define CLASS_SSL3_MASTER_KEY_DERIVE_PARAMS "sun/security/pkcs11/wrapper/CK_SSL3_MASTER_KEY_DERIVE_PARAMS"
++#define CLASS_TLS12_MASTER_KEY_DERIVE_PARAMS "sun/security/pkcs11/wrapper/CK_TLS12_MASTER_KEY_DERIVE_PARAMS"
+ #define CLASS_SSL3_KEY_MAT_PARAMS "sun/security/pkcs11/wrapper/CK_SSL3_KEY_MAT_PARAMS"
++#define CLASS_TLS12_KEY_MAT_PARAMS "sun/security/pkcs11/wrapper/CK_TLS12_KEY_MAT_PARAMS"
+ #define CLASS_TLS_PRF_PARAMS "sun/security/pkcs11/wrapper/CK_TLS_PRF_PARAMS"
++#define CLASS_TLS_MAC_PARAMS "sun/security/pkcs11/wrapper/CK_TLS_MAC_PARAMS"
+ #define CLASS_AES_CTR_PARAMS "sun/security/pkcs11/wrapper/CK_AES_CTR_PARAMS"
+ 
+ /* function to convert a PKCS#11 return value other than CK_OK into a Java Exception
+@@ -361,9 +364,11 @@
+ CK_KEY_WRAP_SET_OAEP_PARAMS jKeyWrapSetOaepParamToCKKeyWrapSetOaepParam(JNIEnv *env, jobject jParam);
+ void copyBackSetUnwrappedKey(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
+ CK_SSL3_MASTER_KEY_DERIVE_PARAMS jSsl3MasterKeyDeriveParamToCKSsl3MasterKeyDeriveParam(JNIEnv *env, jobject jParam);
+-void copyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
++void ssl3CopyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
++void tls12CopyBackClientVersion(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
+ CK_SSL3_KEY_MAT_PARAMS jSsl3KeyMatParamToCKSsl3KeyMatParam(JNIEnv *env, jobject jParam);
+-void copyBackSSLKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
++void ssl3CopyBackKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
++void tls12CopyBackKeyMatParams(JNIEnv *env, CK_MECHANISM *ckMechanism, jobject jMechanism);
+ CK_KEY_DERIVATION_STRING_DATA jKeyDerivationStringDataToCKKeyDerivationStringData(JNIEnv *env, jobject jParam);
+ CK_RSA_PKCS_PSS_PARAMS jRsaPkcsPssParamToCKRsaPkcsPssParam(JNIEnv *env, jobject jParam);
+ CK_ECDH1_DERIVE_PARAMS jEcdh1DeriveParamToCKEcdh1DeriveParam(JNIEnv *env, jobject jParam);
+diff --git openjdk.orig/jdk/test/sun/security/pkcs11/fips/TestTLS12.java openjdk/jdk/test/sun/security/pkcs11/fips/TestTLS12.java
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/test/sun/security/pkcs11/fips/TestTLS12.java
+@@ -0,0 +1,449 @@
++/*
++ * Copyright (c) 2018, Red Hat, Inc. and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/*
++ * @test
++ * @bug 8029661
++ * @summary Test TLS 1.2
++ * @library ..
++ * @run main/othervm/timeout=120 TestTLS12
++ */
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.InputStream;
++import java.nio.ByteBuffer;
++
++import java.security.interfaces.RSAPrivateKey;
++import java.security.interfaces.RSAPublicKey;
++import java.security.KeyStore;
++import java.security.NoSuchAlgorithmException;
++import java.security.Provider;
++import java.security.SecureRandom;
++import java.security.Security;
++
++import java.util.Arrays;
++
++import javax.crypto.Cipher;
++import javax.crypto.KeyGenerator;
++import javax.crypto.SecretKey;
++import javax.crypto.spec.SecretKeySpec;
++
++import javax.net.ssl.KeyManagerFactory;
++import javax.net.ssl.SSLContext;
++import javax.net.ssl.SSLEngine;
++import javax.net.ssl.SSLEngineResult;
++import javax.net.ssl.SSLEngineResult.HandshakeStatus;
++import javax.net.ssl.SSLParameters;
++import javax.net.ssl.SSLSession;
++import javax.net.ssl.TrustManagerFactory;
++
++import sun.security.internal.spec.TlsMasterSecretParameterSpec;
++import sun.security.internal.spec.TlsPrfParameterSpec;
++import sun.security.internal.spec.TlsRsaPremasterSecretParameterSpec;
++
++public final class TestTLS12 extends SecmodTest {
++
++    private static final boolean enableDebug = true;
++
++    private static Provider sunPKCS11NSSProvider;
++    private static Provider sunJCEProvider;
++    private static com.sun.net.ssl.internal.ssl.Provider jsseProvider;
++    private static KeyStore ks;
++    private static KeyStore ts;
++    private static char[] passphrase = "JAHshj131@@".toCharArray();
++    private static RSAPrivateKey privateKey;
++    private static RSAPublicKey publicKey;
++
++    public static void main(String[] args) throws Exception {
++        try {
++            initialize();
++        } catch (Exception e) {
++            System.out.println("Test skipped: failure during" +
++                    " initialization");
++            return;
++        }
++
++        if (shouldRun()) {
++            // Test against JCE
++            testTlsAuthenticationCodeGeneration();
++
++            // Self-integrity test (complete TLS 1.2 communication)
++            new testTLS12SunPKCS11Communication().run();
++
++            System.out.println("Test PASS - OK");
++        } else {
++            System.out.println("Test skipped: TLS 1.2 mechanisms" +
++                    " not supported by current SunPKCS11 back-end");
++        }
++    }
++
++    private static boolean shouldRun() {
++        if (sunPKCS11NSSProvider == null) {
++            return false;
++        }
++        try {
++            KeyGenerator.getInstance("SunTls12MasterSecret",
++                    sunPKCS11NSSProvider);
++            KeyGenerator.getInstance(
++                    "SunTls12RsaPremasterSecret", sunPKCS11NSSProvider);
++            KeyGenerator.getInstance("SunTls12Prf", sunPKCS11NSSProvider);
++        } catch (NoSuchAlgorithmException e) {
++            return false;
++        }
++        return true;
++    }
++
++    private static void testTlsAuthenticationCodeGeneration()
++            throws Exception {
++        // Generate RSA Pre-Master Secret in SunPKCS11 provider
++        SecretKey rsaPreMasterSecret = null;
++        @SuppressWarnings("deprecation")
++        TlsRsaPremasterSecretParameterSpec rsaPreMasterSecretSpec =
++                new TlsRsaPremasterSecretParameterSpec(0x0303, 0x0303);
++        {
++            KeyGenerator rsaPreMasterSecretKG = KeyGenerator.getInstance(
++                    "SunTls12RsaPremasterSecret", sunPKCS11NSSProvider);
++            rsaPreMasterSecretKG.init(rsaPreMasterSecretSpec, null);
++            rsaPreMasterSecret = rsaPreMasterSecretKG.generateKey();
++        }
++
++        // Get RSA Pre-Master Secret in plain (from SunPKCS11 provider)
++        byte[] rsaPlainPreMasterSecret = null;
++        {
++            Cipher rsaPreMasterSecretWrapperCipher =
++                    Cipher.getInstance("RSA/ECB/PKCS1Padding",
++                            sunPKCS11NSSProvider);
++            rsaPreMasterSecretWrapperCipher.init(Cipher.WRAP_MODE, publicKey,
++                    new SecureRandom());
++            byte[] rsaEncryptedPreMasterSecret =
++                    rsaPreMasterSecretWrapperCipher.wrap(rsaPreMasterSecret);
++            Cipher rsaPreMasterSecretUnwrapperCipher =
++                    Cipher.getInstance("RSA/ECB/PKCS1Padding", sunJCEProvider);
++            rsaPreMasterSecretUnwrapperCipher.init(Cipher.UNWRAP_MODE,
++                    privateKey, rsaPreMasterSecretSpec);
++            rsaPlainPreMasterSecret = rsaPreMasterSecretUnwrapperCipher.unwrap(
++                    rsaEncryptedPreMasterSecret, "TlsRsaPremasterSecret",
++                    Cipher.SECRET_KEY).getEncoded();
++
++            if (enableDebug) {
++                System.out.println("rsaPlainPreMasterSecret:");
++                for (byte b : rsaPlainPreMasterSecret) {
++                    System.out.printf("%02X, ", b);
++                }
++                System.out.println("");
++            }
++        }
++
++        // Generate Master Secret
++        SecretKey sunPKCS11MasterSecret = null;
++        SecretKey jceMasterSecret = null;
++        {
++            KeyGenerator sunPKCS11MasterSecretGenerator =
++                    KeyGenerator.getInstance("SunTls12MasterSecret",
++                            sunPKCS11NSSProvider);
++            KeyGenerator jceMasterSecretGenerator = KeyGenerator.getInstance(
++                    "SunTls12MasterSecret", sunJCEProvider);
++            @SuppressWarnings("deprecation")
++            TlsMasterSecretParameterSpec sunPKCS11MasterSecretSpec =
++                    new TlsMasterSecretParameterSpec(rsaPreMasterSecret, 3, 3,
++                            new byte[32], new byte[32], "SHA-256", 32, 64);
++            @SuppressWarnings("deprecation")
++            TlsMasterSecretParameterSpec jceMasterSecretSpec =
++                    new TlsMasterSecretParameterSpec(
++                            new SecretKeySpec(rsaPlainPreMasterSecret,
++                                    "Generic"), 3, 3, new byte[32],
++                            new byte[32], "SHA-256", 32, 64);
++            sunPKCS11MasterSecretGenerator.init(sunPKCS11MasterSecretSpec,
++                    null);
++            jceMasterSecretGenerator.init(jceMasterSecretSpec, null);
++            sunPKCS11MasterSecret =
++                    sunPKCS11MasterSecretGenerator.generateKey();
++            jceMasterSecret = jceMasterSecretGenerator.generateKey();
++            if (enableDebug) {
++                System.out.println("Master Secret (SunJCE):");
++                if (jceMasterSecret != null) {
++                    for (byte b : jceMasterSecret.getEncoded()) {
++                        System.out.printf("%02X, ", b);
++                    }
++                    System.out.println("");
++                }
++            }
++        }
++
++        // Generate authentication codes
++        byte[] sunPKCS11AuthenticationCode = null;
++        byte[] jceAuthenticationCode = null;
++        {
++            // Generate SunPKCS11 authentication code
++            {
++                @SuppressWarnings("deprecation")
++                TlsPrfParameterSpec sunPKCS11AuthenticationCodeSpec =
++                        new TlsPrfParameterSpec(sunPKCS11MasterSecret,
++                                "client finished", "a".getBytes(), 12,
++                                "SHA-256", 32, 64);
++                KeyGenerator sunPKCS11AuthCodeGenerator =
++                        KeyGenerator.getInstance("SunTls12Prf",
++                                sunPKCS11NSSProvider);
++                sunPKCS11AuthCodeGenerator.init(
++                        sunPKCS11AuthenticationCodeSpec);
++                sunPKCS11AuthenticationCode =
++                        sunPKCS11AuthCodeGenerator.generateKey().getEncoded();
++            }
++
++            // Generate SunJCE authentication code
++            {
++                @SuppressWarnings("deprecation")
++                TlsPrfParameterSpec jceAuthenticationCodeSpec =
++                        new TlsPrfParameterSpec(jceMasterSecret,
++                                "client finished", "a".getBytes(), 12,
++                                "SHA-256", 32, 64);
++                KeyGenerator jceAuthCodeGenerator =
++                        KeyGenerator.getInstance("SunTls12Prf",
++                                sunJCEProvider);
++                jceAuthCodeGenerator.init(jceAuthenticationCodeSpec);
++                jceAuthenticationCode =
++                        jceAuthCodeGenerator.generateKey().getEncoded();
++            }
++
++            if (enableDebug) {
++                System.out.println("SunPKCS11 Authentication Code: ");
++                for (byte b : sunPKCS11AuthenticationCode) {
++                    System.out.printf("%02X, ", b);
++                }
++                System.out.println("");
++                System.out.println("SunJCE Authentication Code: ");
++                for (byte b : jceAuthenticationCode) {
++                    System.out.printf("%02X, ", b);
++                }
++                System.out.println("");
++            }
++        }
++
++        if (sunPKCS11AuthenticationCode == null ||
++                jceAuthenticationCode == null ||
++                sunPKCS11AuthenticationCode.length == 0 ||
++                jceAuthenticationCode.length == 0 ||
++                !Arrays.equals(sunPKCS11AuthenticationCode,
++                        jceAuthenticationCode)) {
++            throw new Exception("Authentication codes from JCE" +
++                        " and SunPKCS11 differ.");
++        }
++    }
++
++    private static class testTLS12SunPKCS11Communication {
++        public static void run() throws Exception {
++            SSLEngine[][] enginesToTest = getSSLEnginesToTest();
++
++            for (SSLEngine[] engineToTest : enginesToTest) {
++
++                SSLEngine clientSSLEngine = engineToTest[0];
++                SSLEngine serverSSLEngine = engineToTest[1];
++
++                // SSLEngine code based on RedhandshakeFinished.java
++
++                boolean dataDone = false;
++
++                ByteBuffer clientOut = null;
++                ByteBuffer clientIn = null;
++                ByteBuffer serverOut = null;
++                ByteBuffer serverIn = null;
++                ByteBuffer cTOs;
++                ByteBuffer sTOc;
++
++                SSLSession session = clientSSLEngine.getSession();
++                int appBufferMax = session.getApplicationBufferSize();
++                int netBufferMax = session.getPacketBufferSize();
++
++                clientIn = ByteBuffer.allocate(appBufferMax + 50);
++                serverIn = ByteBuffer.allocate(appBufferMax + 50);
++
++                cTOs = ByteBuffer.allocateDirect(netBufferMax);
++                sTOc = ByteBuffer.allocateDirect(netBufferMax);
++
++                clientOut = ByteBuffer.wrap(
++                        "Hi Server, I'm Client".getBytes());
++                serverOut = ByteBuffer.wrap(
++                        "Hello Client, I'm Server".getBytes());
++
++                SSLEngineResult clientResult;
++                SSLEngineResult serverResult;
++
++                while (!dataDone) {
++                    clientResult = clientSSLEngine.wrap(clientOut, cTOs);
++                    runDelegatedTasks(clientResult, clientSSLEngine);
++                    serverResult = serverSSLEngine.wrap(serverOut, sTOc);
++                    runDelegatedTasks(serverResult, serverSSLEngine);
++                    cTOs.flip();
++                    sTOc.flip();
++
++                    if (enableDebug) {
++                        System.out.println("Client -> Network");
++                        printTlsNetworkPacket("", cTOs);
++                        System.out.println("");
++                        System.out.println("Server -> Network");
++                        printTlsNetworkPacket("", sTOc);
++                        System.out.println("");
++                    }
++
++                    clientResult = clientSSLEngine.unwrap(sTOc, clientIn);
++                    runDelegatedTasks(clientResult, clientSSLEngine);
++                    serverResult = serverSSLEngine.unwrap(cTOs, serverIn);
++                    runDelegatedTasks(serverResult, serverSSLEngine);
++
++                    cTOs.compact();
++                    sTOc.compact();
++
++                    if (!dataDone &&
++                            (clientOut.limit() == serverIn.position()) &&
++                            (serverOut.limit() == clientIn.position())) {
++                        checkTransfer(serverOut, clientIn);
++                        checkTransfer(clientOut, serverIn);
++                        dataDone = true;
++                    }
++                }
++            }
++        }
++
++        static void printTlsNetworkPacket(String prefix, ByteBuffer bb) {
++            ByteBuffer slice = bb.slice();
++            byte[] buffer = new byte[slice.remaining()];
++            slice.get(buffer);
++            for (int i = 0; i < buffer.length; i++) {
++                System.out.printf("%02X, ", (byte)(buffer[i] & (byte)0xFF));
++                if (i % 8 == 0 && i % 16 != 0) {
++                    System.out.print(" ");
++                }
++                if (i % 16 == 0) {
++                    System.out.println("");
++                }
++            }
++            System.out.flush();
++        }
++
++        private static void checkTransfer(ByteBuffer a, ByteBuffer b)
++                throws Exception {
++            a.flip();
++            b.flip();
++            if (!a.equals(b)) {
++                throw new Exception("Data didn't transfer cleanly");
++            }
++            a.position(a.limit());
++            b.position(b.limit());
++            a.limit(a.capacity());
++            b.limit(b.capacity());
++        }
++
++        private static void runDelegatedTasks(SSLEngineResult result,
++                SSLEngine engine) throws Exception {
++
++            if (result.getHandshakeStatus() == HandshakeStatus.NEED_TASK) {
++                Runnable runnable;
++                while ((runnable = engine.getDelegatedTask()) != null) {
++                    runnable.run();
++                }
++                HandshakeStatus hsStatus = engine.getHandshakeStatus();
++                if (hsStatus == HandshakeStatus.NEED_TASK) {
++                    throw new Exception(
++                        "handshake shouldn't need additional tasks");
++                }
++            }
++        }
++
++        private static SSLEngine[][] getSSLEnginesToTest() throws Exception {
++            SSLEngine[][] enginesToTest = new SSLEngine[2][2];
++            String[][] preferredSuites = new String[][]{ new String[] {
++                    "TLS_RSA_WITH_AES_128_CBC_SHA256"
++            },  new String[] {
++                    "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256"
++            }};
++            for (int i = 0; i < enginesToTest.length; i++) {
++                enginesToTest[i][0] = createSSLEngine(true);
++                enginesToTest[i][1] = createSSLEngine(false);
++                enginesToTest[i][0].setEnabledCipherSuites(preferredSuites[i]);
++                enginesToTest[i][1].setEnabledCipherSuites(preferredSuites[i]);
++            }
++            return enginesToTest;
++        }
++
++        static private SSLEngine createSSLEngine(boolean client)
++                throws Exception {
++            SSLEngine ssle;
++            KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX",
++                    jsseProvider);
++            kmf.init(ks, passphrase);
++
++            TrustManagerFactory tmf = TrustManagerFactory.getInstance("PKIX",
++                    jsseProvider);
++            tmf.init(ts);
++
++            SSLContext sslCtx = SSLContext.getInstance("TLSv1.2",
++                    jsseProvider);
++            sslCtx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
++            ssle = sslCtx.createSSLEngine("localhost", 443);
++            ssle.setUseClientMode(client);
++            SSLParameters sslParameters = ssle.getSSLParameters();
++            ssle.setSSLParameters(sslParameters);
++
++            return ssle;
++        }
++    }
++
++    private static void initialize() throws Exception {
++        if (initSecmod() == false) {
++            return;
++        }
++        String configName = BASE + SEP + "fips.cfg";
++        sunPKCS11NSSProvider = getSunPKCS11(configName);
++        System.out.println("SunPKCS11 provider: " + sunPKCS11NSSProvider);
++        Security.addProvider(sunPKCS11NSSProvider);
++
++        sunJCEProvider = new com.sun.crypto.provider.SunJCE();
++        Security.addProvider(sunJCEProvider);
++
++        Security.removeProvider("SunJSSE");
++        jsseProvider =new com.sun.net.ssl.internal.ssl.Provider(
++                sunPKCS11NSSProvider);
++        Security.addProvider(jsseProvider);
++        System.out.println(jsseProvider.getInfo());
++
++        ks = KeyStore.getInstance("PKCS11", sunPKCS11NSSProvider);
++        ks.load(null, "test12".toCharArray());
++        ts = ks;
++
++        KeyStore ksPlain = readTestKeyStore();
++        privateKey = (RSAPrivateKey)ksPlain.getKey("rh_rsa_sha256",
++                passphrase);
++        publicKey = (RSAPublicKey)ksPlain.getCertificate(
++                "rh_rsa_sha256").getPublicKey();
++    }
++
++    private static KeyStore readTestKeyStore() throws Exception {
++        File file = new File(System.getProperty("test.src", "."), "keystore");
++        InputStream in = new FileInputStream(file);
++        KeyStore ks = KeyStore.getInstance("JKS");
++        ks.load(in, "passphrase".toCharArray());
++        in.close();
++        return ks;
++    }
++}
+\ No newline at end of file

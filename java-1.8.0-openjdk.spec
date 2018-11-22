@@ -966,7 +966,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 10%{?dist}
+Release: 11%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1237,8 +1237,22 @@ Patch602: jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64l
 Patch603: jdk8073139-pr2236-rh1191652--use_ppc64le_as_the_arch_directory_on_that_platform_and_report_it_in_os_arch_aarch64_forest.patch
 # 8044235: src.zip should include all sources
 Patch7:   jdk8044235-src_zip_should_include_all_sources.patch
+# JDK-8172850, RH1640127: Anti-dependency on membar causes crash in register allocator due to invalid instruction scheduling
 Patch583: jdk8172850-rh1640127-01-register_allocator_crash.patch
+# JDK-8209639, RH1640127: assert failure in coalesce.cpp: attempted to spill a non-spillable item
 Patch584: jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
+
+#############################################
+#
+# Patches appearing in 8u211
+#
+# This section includes patches which are present
+# in the listed OpenJDK 8u release and should be
+# able to be removed once that release is out
+# and used by this RPM.
+#############################################
+# JDK-8029661, PR3642, RH1477159: Support TLS v1.2 algorithm in SunPKCS11 provider
+Patch585: jdk8029661-pr3642-rh1477159.patch
 
 #############################################
 #
@@ -1679,6 +1693,7 @@ sh %{SOURCE12}
 %patch625
 %patch583
 %patch584
+%patch585
 
 # RPM-only fixes
 %patch525
@@ -2328,6 +2343,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Nov 22 2018 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-11
+- Add backport of JDK-8029661 which adds TLSv1.2 support to the PKCS11 provider.
+
 * Tue Nov 13 2018 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-10
 - Revise Shenandoah PR3634 patch following upstream discussion.
 
