@@ -1155,7 +1155,7 @@ Patch577: jdk8062808-pr3548-turn_on_the_wreturn_type_warning.patch
 # s390: JDK-8203030, Type fixing for s390
 Patch102: jdk8203030-zero_s390_31_bit_size_t_type_conflicts_in_shared_code.patch
 # 8035341: Allow using a system installed libpng
-Patch202: jkd8035341-allow_using_system_installed_libpng.patch
+Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # 8210761: libjsig is being compiled without optimization
