@@ -21,7 +21,11 @@
 # Enable release builds by default on relevant arches.
 %bcond_without release
 
-%define _find_debuginfo_opts -g
+# The -g flag says to use strip -g instead of full strip on DSOs or EXEs.
+# This fixes detailed NMT and other tools which need minimal debug info.
+# See: https://bugzilla.redhat.com/show_bug.cgi?id=1520879
+%global _find_debuginfo_opts -g
+
 # note: parametrized macros are order-sensitive (unlike not-parametrized) even with normal macros
 # also necessary when passing it as parameter to other macros. If not macro, then it is considered a switch
 # see the difference between global and define:
