@@ -1256,7 +1256,7 @@ Patch584: jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
 # and used by this RPM.
 #############################################
 # JDK-8029661, PR3642, RH1477159: Support TLS v1.2 algorithm in SunPKCS11 provider
-Patch585: jdk8029661-pr3642-rh1477159.patch
+Patch585: jdk8029661-pr3642-rh1477159-add_tlsv1_2_support_to_pkcs11_provider.patch
 
 #############################################
 #
