@@ -210,7 +210,7 @@
 # links src files
 # maybe depend on jfx and generate the lists in build time? Yes, bad idea to inlcude cyclic depndenci, but this list is aweful
 %global jfx_jre_libs jfxswt.jar javafx.properties
-%global jfx_jre_native libprism_es2.so libprism_common.so libjavafx_font.so libdecora_sse.so libjavafx_font_freetype.so libprism_sw.so libjavafx_font_pango.so libglass.so libjavafx_iio.so
+%global jfx_jre_native libprism_es2.so libprism_common.so libjavafx_font.so libdecora_sse.so libjavafx_font_freetype.so libprism_sw.so libjavafx_font_pango.so libglass.so libjavafx_iio.so libglassgtk2.so
 %global jfx_sdk_libs javafx-mx.jar packager.jar ant-javafx.jar
 %global jfx_sdk_bins javafxpackager javapackager
 %global jfx_jre_exts jfxrt.jar
@@ -970,7 +970,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 11%{?dist}
+Release: 12%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2347,6 +2347,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Dec 10 2018 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.191.b12-12
+- adde fx link of libglassgtk2.so (rhbz1657485)
+
 * Thu Nov 22 2018 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b12-11
 - Add backport of JDK-8029661 which adds TLSv1.2 support to the PKCS11 provider.
 
