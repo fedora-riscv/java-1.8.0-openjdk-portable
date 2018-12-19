@@ -7,7 +7,7 @@
 8073139: PPC64: User-visible arch directory and os.arch value on ppc64le cause issues with Java tooling
 Reviewed-by: erikj, goetz, dholmes
 
-diff --git a/make/lib/SoundLibraries.gmk b/make/lib/SoundLibraries.gmk
+diff --git openjdk.orig/jdk/make/lib/SoundLibraries.gmk openjdk/jdk/make/lib/SoundLibraries.gmk
 --- openjdk/jdk/make/lib/SoundLibraries.gmk	Tue Jan 12 21:01:12 2016 +0000
 +++ openjdk/jdk/make/lib/SoundLibraries.gmk	Wed Jan 13 00:18:02 2016 +0000
 @@ -140,6 +140,10 @@
@@ -21,8 +21,8 @@ diff --git a/make/lib/SoundLibraries.gmk b/make/lib/SoundLibraries.gmk
    ifeq ($(OPENJDK_TARGET_CPU), aarch64)
  	LIBJSOUND_CFLAGS += -DX_ARCH=X_AARCH64
    endif
-diff -r 1fe56343ecc8 src/share/native/com/sun/media/sound/SoundDefs.h
---- openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Jan 12 21:01:12 2016 +0000
+diff -r 1fe56343ecc8 openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h
+--- openjdk.orig/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Tue Jan 12 21:01:12 2016 +0000
 +++ openjdk/jdk/src/share/native/com/sun/media/sound/SoundDefs.h	Wed Jan 13 00:18:02 2016 +0000
 @@ -44,6 +44,8 @@
  #define X_ARM           7
@@ -33,7 +33,7 @@ diff -r 1fe56343ecc8 src/share/native/com/sun/media/sound/SoundDefs.h
  
  // **********************************
  // Make sure you set X_PLATFORM and X_ARCH defines correctly.
-diff --git a/src/solaris/bin/ppc64le/jvm.cfg b/src/solaris/bin/ppc64le/jvm.cfg
+diff --git openjdk.orig/jdk/src/solaris/bin/ppc64le/jvm.cfg openjdk/jdk/src/solaris/bin/ppc64le/jvm.cfg
 new file mode 100644
 --- /dev/null
 +++ openjdk/jdk/src/solaris/bin/ppc64le/jvm.cfg
@@ -72,8 +72,8 @@ new file mode 100644
 +#
 +-server KNOWN
 +-client IGNORE
-diff --git a/test/sun/security/pkcs11/PKCS11Test.java b/test/sun/security/pkcs11/PKCS11Test.java
---- openjdk/jdk/test/sun/security/pkcs11/PKCS11Test.java
+diff --git openjdk.orig/test/sun/security/pkcs11/PKCS11Test.java openjdk/test/sun/security/pkcs11/PKCS11Test.java
+--- openjdk.orig/jdk/test/sun/security/pkcs11/PKCS11Test.java
 +++ openjdk/jdk/test/sun/security/pkcs11/PKCS11Test.java
 @@ -505,6 +505,8 @@
          osMap.put("Linux-amd64-64", new String[]{
@@ -84,8 +84,8 @@ diff --git a/test/sun/security/pkcs11/PKCS11Test.java b/test/sun/security/pkcs11
          osMap.put("Windows-x86-32", new String[]{
              PKCS11_BASE + "/nss/lib/windows-i586/".replace('/', SEP)});
          osMap.put("Windows-amd64-64", new String[]{
-diff --git a/test/tools/launcher/Settings.java b/test/tools/launcher/Settings.java
---- openjdk/jdk/test/tools/launcher/Settings.java
+diff --git openjdk.orig/jdk/test/tools/launcher/Settings.java openjdk/jdk/test/tools/launcher/Settings.java
+--- openjdk.orig/jdk/test/tools/launcher/Settings.java
 +++ openjdk/jdk/test/tools/launcher/Settings.java
 @@ -74,7 +74,7 @@
  
