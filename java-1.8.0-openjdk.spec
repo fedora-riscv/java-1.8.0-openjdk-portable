@@ -255,6 +255,8 @@
 # main id and dir of this jdk
 %define uniquesuffix()        %{expand:%{fullversion}.%{_arch}%{?1}}
 
+%global etcjavasubdir     %{_sysconfdir}/java/java-%{javaver}-%{origin}
+%define etcjavadir()      %{expand:%{etcjavasubdir}/%{uniquesuffix -- %{?1}}}
 # Standard JPackage directories and symbolic links.
 %define sdkdir()        %{expand:%{uniquesuffix -- %{?1}}}
 %define jrelnk()        %{expand:jre-%{javaver}-%{origin}-%{version}-%{release}.%{_arch}%{?1}}
@@ -587,15 +589,24 @@ exit 0
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/US_export_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/local_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/US_export_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/local_policy.jar
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/java.policy
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/java.security
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/blacklisted.certs
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/logging.properties
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/calendars.properties
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/policy/unlimited/US_export_policy.jar
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/policy/unlimited/local_policy.jar
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/policy/limited/US_export_policy.jar
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/policy/limited/local_policy.jar
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/java.policy
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/java.security
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/blacklisted.certs
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/logging.properties
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/calendars.properties
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/US_export_policy.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/unlimited/local_policy.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/US_export_policy.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/policy/limited/local_policy.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/java.policy
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/java.security
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/blacklisted.certs
+%{_jvmdir}/%{jredir -- %{?1}}/lib/logging.properties
+%{_jvmdir}/%{jredir -- %{?1}}/lib/calendars.properties
 %{_mandir}/man1/java-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/jjs-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/keytool-%{uniquesuffix -- %{?1}}.1*
@@ -607,13 +618,22 @@ exit 0
 %{_mandir}/man1/tnameserv-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/unpack200-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/policytool-%{uniquesuffix -- %{?1}}.1*
-%config(noreplace) %{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.cfg
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.cfg
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/nss.cfg
 %ifarch %{jit_arches}
 %ifnarch %{power64}
 %attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
 %attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
 %endif
 %endif
+%dir %{etcjavasubdir}
+%dir %{etcjavadir -- %{?1}}
+%dir %{etcjavadir -- %{?1}}/lib
+%dir %{etcjavadir -- %{?1}}/lib/security
+%{etcjavadir -- %{?1}}/lib/security/cacerts
+%dir %{etcjavadir -- %{?1}}/lib/security/policy
+%dir %{etcjavadir -- %{?1}}/lib/security/policy/limited
+%dir %{etcjavadir -- %{?1}}/lib/security/policy/unlimited
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}
@@ -971,7 +991,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 2%{?dist}
+Release: 3%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2084,6 +2104,14 @@ bash %{SOURCE20} $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix} %{javaver}
 # https://bugzilla.redhat.com/show_bug.cgi?id=1183793
 touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/security/java.security
 
+# moving config files to /etc
+mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/unlimited/
+mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/limited/
+for file in lib/security/cacerts lib/security/policy/unlimited/US_export_policy.jar lib/security/policy/unlimited/local_policy.jar lib/security/policy/limited/US_export_policy.jar lib/security/policy/limited/local_policy.jar lib/security/java.policy lib/security/java.security lib/security/blacklisted.certs lib/logging.properties lib/calendars.properties lib/security/nss.cfg ; do
+  mv      $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file   $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/$file
+  ln -sf  %{etcjavadir -- $suffix}/$file                          $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file
+done
+
 # stabilize permissions
 find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "*.so" -exec chmod 755 {} \; ; 
 find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -type d -exec chmod 755 {} \; ; 
@@ -2290,6 +2318,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Feb 11 2018 Jiri Vanek <jvanek@redhat.com>  - 1:1.8.0.201.b09-3
+- config files to etc
+
 * Wed Feb 06 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-2
 - Add backport of JDK-8145096 (PR3693) to fix undefined behaviour issues on newer GCCs
 
