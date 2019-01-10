@@ -3,8 +3,8 @@
 #
 # Example:
 # When used from local repo set REPO_ROOT pointing to file:// with your repo
-# if your local repo follows upstream forests conventions, you may be enough by setting OPENJDK_URL
-# if you wont to use local copy of patch PR2126 set path to it to PR2126 variable
+# If your local repo follows upstream forests conventions, it may be enough to set OPENJDK_URL
+# If you want to use a local copy of patch PR3667, set the path to it in the PR3667 variable
 #
 # In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
 # PROJECT_NAME=jdk8u   OR   aarch64-port 
@@ -19,9 +19,9 @@
 # level folder, name is created, based on parameter
 #
 
-if [ ! "x$PR2126" = "x" ] ; then
-  if [ ! -f "$PR2126" ] ; then
-    echo "You have specified PR2126 as $PR2126 but it does not exists. exiting"
+if [ ! "x$PR3667" = "x" ] ; then
+  if [ ! -f "$PR3667" ] ; then
+    echo "You have specified PR3667 as $PR3667 but it does not exists. exiting"
     exit 1
   fi
 fi
@@ -41,7 +41,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
-    echo "PR2126 - the path to the PR2126 patch to apply (optional; downloaded if unavailable)"
+    echo "PR3667 - the path to the PR3667 patch to apply (optional; downloaded if unavailable)"
     echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
@@ -113,22 +113,26 @@ done
 
 if [ -d jdk ]; then 
 echo "Removing EC source code we don't build"
-
-mv -v jdk/src/share/native/sun/security/ec/impl/ecc_impl.h .
-rm -vrf jdk/src/share/native/sun/security/ec/impl
-mkdir jdk/src/share/native/sun/security/ec/impl
-mv -v ecc_impl.h jdk/src/share/native/sun/security/ec/impl
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2.h
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_163.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_193.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_233.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_aff.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_mont.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_192.c
+rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
 
 echo "Syncing EC list with NSS"
-if [ "x$PR2126" = "x" ] ; then
-# get pr2126.patch (from http://icedtea.classpath.org/hg/icedtea?cmd=changeset;node=8d2c9a898f50) from most correct tag
-# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=2126)
-    wget http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr2126.patch
-    patch -Np1 < pr2126.patch
-    rm pr2126.patch
+
+if [ "x$PR3667" = "x" ] ; then
+# get pr3667.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
+# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3667)
+    wget http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3667.patch
+    patch -Np1 < pr3667.patch
+    rm pr3667.patch
 else
-    echo "Applying ${PR2126}"
-    patch -Np1 < $PR2126
+    echo "Applying ${PR3667}"
+    patch -Np1 < $PR3667
 fi;
 fi
 find . -name '*.orig' -exec rm -vf '{}' ';'
