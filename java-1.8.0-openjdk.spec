@@ -225,7 +225,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u191-b13
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u191-b14
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -2347,6 +2347,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Jan 10 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-0
+- Update to aarch64-shenandoah-jdk8u191-b14.
+- Adjust JDK-8073139/PR1758/RH1191652 to apply following 8155627 backport.
+
 * Wed Jan 09 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b13-0
 - Update to aarch64-shenandoah-jdk8u191-b13.
 - Update tarball generation script in preparation for PR3667/RH1656676 SunEC changes.
