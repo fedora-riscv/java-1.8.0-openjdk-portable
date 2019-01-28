@@ -59,6 +59,7 @@
 %global ppc64be         ppc64 ppc64p7
 %global multilib_arches %{power64} sparc64 x86_64
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+%global sa_arches       %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 
 # By default, we build a debug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -749,7 +750,7 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/ir.idl
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/jconsole.jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/orb.idl
-%ifarch x86_64  %{ix86}
+%ifarch %{sa_arches}
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/sa-jdi.jar
 %endif
 %{_jvmdir}/%{sdkdir -- %{?1}}/lib/dt.jar
@@ -2347,6 +2348,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Jan 24 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-0
+- Introduce sa_arches for architectures with sa-jdi.jar and include aarch64
+
 * Thu Jan 10 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-0
 - Update to aarch64-shenandoah-jdk8u191-b14.
 - Adjust JDK-8073139/PR1758/RH1191652 to apply following 8155627 backport.
