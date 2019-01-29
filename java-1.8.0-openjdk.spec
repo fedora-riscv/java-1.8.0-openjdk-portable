@@ -971,7 +971,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 0%{?dist}
+Release: 1%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1245,6 +1245,10 @@ Patch7:   jdk8044235-src_zip_should_include_all_sources.patch
 Patch583: jdk8172850-rh1640127-01-register_allocator_crash.patch
 # JDK-8209639, RH1640127: assert failure in coalesce.cpp: attempted to spill a non-spillable item
 Patch584: jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
+# JDK-8131048, PR3574, RH1498936: ppc implement CRC32 intrinsic
+Patch586: jdk8131048-pr3574-rh1498936-ppc_crc32.patch
+# JDK-8164920, PR3574, RH1498936: ppc: enhancement of CRC32 intrinsic
+Patch587: jdk8164920-pr3574-rh1498936-ppc_crc32_enhancement.patch
 
 #############################################
 #
@@ -1685,6 +1689,8 @@ sh %{SOURCE12}
 %patch583
 %patch584
 %patch585
+%patch586
+%patch587
 
 # RPM-only fixes
 %patch525
@@ -2334,6 +2340,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jan 14 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-1
+- Add 8131048 & 8164920 (PR3574/RH1498936) to provide a CRC32 intrinsic for PPC64.
+
 * Thu Jan 24 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-0
 - Introduce sa_arches for architectures with sa-jdi.jar and include aarch64
 
