@@ -7,10 +7,35 @@
 PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations
 Summary: Enable -mstackrealign on x86 Linux as well as x86 Mac OS X
 
+diff --git openjdk.orig///common/autoconf/flags.m4 openjdk///common/autoconf/flags.m4
+--- openjdk.orig///common/autoconf/flags.m4
++++ openjdk///common/autoconf/flags.m4
+@@ -389,6 +389,21 @@
+     AC_SUBST($2CXXSTD_CXXFLAG)
+   fi
+ 
++  #
++  # NOTE: check for -mstackrealign needs to be below potential addition of -m32
++  #
++  if test "x$OPENJDK_TARGET_CPU" = xx86 && test "x$OPENJDK_TARGET_OS" = xmacosx -o \
++                                                "x$OPENJDK_TARGET_OS" = xlinux; then
++    # On 32-bit MacOSX the OS requires C-entry points to be 16 byte aligned.
++    # While waiting for a better solution, the current workaround is to use -mstackrealign
++    # This is also required on Linux systems which use libraries compiled with SSE instructions
++    REALIGN_CFLAG="-mstackrealign"
++    FLAGS_COMPILER_CHECK_ARGUMENTS([$REALIGN_CFLAG -Werror], [],
++      AC_MSG_ERROR([The selected compiler $CXX does not support -mstackrealign! Try to put another compiler in the path.])
++    )
++    AC_SUBST([REALIGN_CFLAG])
++  fi
++
+   if test "x$CFLAGS" != "x${ADDED_CFLAGS}"; then
+     AC_MSG_WARN([Ignoring CFLAGS($CFLAGS) found in environment. Use --with-extra-cflags])
+   fi
 diff --git openjdk.orig///common/autoconf/hotspot-spec.gmk.in openjdk///common/autoconf/hotspot-spec.gmk.in
 --- openjdk.orig///common/autoconf/hotspot-spec.gmk.in
 +++ openjdk///common/autoconf/hotspot-spec.gmk.in
-@@ -110,7 +110,8 @@
+@@ -112,7 +112,8 @@
  RC:=@HOTSPOT_RC@
  
  EXTRA_CFLAGS=@LEGACY_EXTRA_CFLAGS@ $(NO_DELETE_NULL_POINTER_CHECKS_CFLAG) \
@@ -23,7 +48,7 @@ diff --git openjdk.orig///common/autoconf/hotspot-spec.gmk.in openjdk///common/a
 diff --git openjdk.orig///common/autoconf/spec.gmk.in openjdk///common/autoconf/spec.gmk.in
 --- openjdk.orig///common/autoconf/spec.gmk.in
 +++ openjdk///common/autoconf/spec.gmk.in
-@@ -333,6 +333,7 @@
+@@ -334,6 +334,7 @@
  
  NO_DELETE_NULL_POINTER_CHECKS_CFLAG=@NO_DELETE_NULL_POINTER_CHECKS_CFLAG@
  NO_LIFETIME_DSE_CFLAG=@NO_LIFETIME_DSE_CFLAG@
@@ -31,35 +56,3 @@ diff --git openjdk.orig///common/autoconf/spec.gmk.in openjdk///common/autoconf/
  CXXSTD_CXXFLAG=@CXXSTD_CXXFLAG@
  
  CXX:=@FIXPATH@ @CCACHE@ @CXX@
-diff --git openjdk.orig///common/autoconf/toolchain.m4 openjdk///common/autoconf/toolchain.m4
---- openjdk.orig///common/autoconf/toolchain.m4
-+++ openjdk///common/autoconf/toolchain.m4
-@@ -796,20 +796,16 @@
-   #
-   # NOTE: check for -mstackrealign needs to be below potential addition of -m32
-   #
--  if test "x$OPENJDK_TARGET_CPU_BITS" = x32 && test "x$OPENJDK_TARGET_OS" = xmacosx; then
-+  if test "x$OPENJDK_TARGET_CPU" = xx86 && test "x$OPENJDK_TARGET_OS" = xmacosx -o \
-+                                                "x$OPENJDK_TARGET_OS" = xlinux; then
-     # On 32-bit MacOSX the OS requires C-entry points to be 16 byte aligned.
--    # While waiting for a better solution, the current workaround is to use -mstackrealign.
--    CFLAGS="$CFLAGS -mstackrealign"
--    AC_MSG_CHECKING([if 32-bit compiler supports -mstackrealign])
--    AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
--        [
--          AC_MSG_RESULT([yes])
--        ],
--        [
--          AC_MSG_RESULT([no])
--          AC_MSG_ERROR([The selected compiler $CXX does not support -mstackrealign! Try to put another compiler in the path.])
--        ]
-+    # While waiting for a better solution, the current workaround is to use -mstackrealign
-+    # This is also required on Linux systems which use libraries compiled with SSE instructions
-+    REALIGN_CFLAG="-mstackrealign"
-+    TOOLCHAIN_COMPILER_CHECK_ARGUMENTS([$REALIGN_CFLAG -Werror], [],
-+      AC_MSG_ERROR([The selected compiler $CXX does not support -mstackrealign! Try to put another compiler in the path.])
-     )
-+    AC_SUBST([REALIGN_CFLAG])
-   fi
- 
-   C_FLAG_DEPS="-MMD -MF"

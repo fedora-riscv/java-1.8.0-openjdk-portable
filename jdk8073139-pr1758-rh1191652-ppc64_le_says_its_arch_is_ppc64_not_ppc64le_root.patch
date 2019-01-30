@@ -8,6 +8,19 @@
 Reviewed-by: erikj, goetz, dholmes
 Contributed-by: Andrew Hughes <gnu.andrew@redhat.com>, Alexander Smundak <asmundak@google.com>
 
+diff --git openjdk.orig///common/autoconf/flags.m4 openjdk///common/autoconf/flags.m4
+--- openjdk.orig///common/autoconf/flags.m4
++++ openjdk///common/autoconf/flags.m4
+@@ -549,6 +549,9 @@
+       CCXXFLAGS_JDK="$CCXXFLAGS_JDK -D_BIG_ENDIAN"
+     fi
+   fi
++  if test "x$OPENJDK_TARGET_CPU" = xppc64le; then
++    CCXXFLAGS_JDK="$CCXXFLAGS_JDK -DABI_ELFv2"
++  fi
+   
+   # Setup target OS define. Use OS target name but in upper case.
+   OPENJDK_TARGET_OS_UPPERCASE=`$ECHO $OPENJDK_TARGET_OS | $TR 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
 diff --git openjdk.orig///common/autoconf/jdk-options.m4 openjdk///common/autoconf/jdk-options.m4
 --- openjdk.orig///common/autoconf/jdk-options.m4
 +++ openjdk///common/autoconf/jdk-options.m4
@@ -32,16 +45,3 @@ diff --git openjdk.orig///common/autoconf/platform.m4 openjdk///common/autoconf/
        VAR_CPU_ARCH=ppc
        VAR_CPU_BITS=64
        VAR_CPU_ENDIAN=little
-diff --git openjdk.orig///common/autoconf/toolchain.m4 openjdk///common/autoconf/toolchain.m4
---- openjdk.orig///common/autoconf/toolchain.m4
-+++ openjdk///common/autoconf/toolchain.m4
-@@ -1123,6 +1123,9 @@
-   else
-     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -D_BIG_ENDIAN"
-   fi
-+  if test "x$OPENJDK_TARGET_CPU" = xppc64le; then
-+    COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DABI_ELFv2"
-+  fi
-   if test "x$OPENJDK_TARGET_OS" = xlinux; then
-     COMMON_CCXXFLAGS_JDK="$COMMON_CCXXFLAGS_JDK -DLINUX"
-   fi

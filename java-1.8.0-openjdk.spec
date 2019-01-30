@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u191-b14
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u192-b12
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -971,7 +971,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 1%{?dist}
+Release: 0%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1119,6 +1119,10 @@ Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_
 Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
 # AArch64: PR3519: Fix further functions with a missing return value (AArch64)
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
+# AArch64: JDK-8160748: [AArch64] Inconsistent types for ideal_reg
+Patch107: jdk8160748-aarch64_ideal_reg.patch
+# AArch64: JDK-8189170: [AArch64] Add option to disable stack overflow checking in primordial thread for use with JNI_CreateJavaJVM
+Patch108: jdk8189170-aarch64_primordial_thread.patch
 
 #############################################
 #
@@ -1180,47 +1184,6 @@ Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fd
 
 #############################################
 #
-# Patches appearing in 8u192
-#
-# This section includes patches which are present
-# in the listed OpenJDK 8u release and should be
-# able to be removed once that release is out
-# and used by this RPM.
-#############################################
-# S8031668, PR2842: TOOLCHAIN_FIND_COMPILER unexpectedly resolves symbolic links
-Patch506: jdk8031668-pr2842-01-toolchain_find_compiler_unexpectedly_resolves_symbolic_links.patch
-# S8148351, PR2842: Only display resolved symlink for compiler, do not change path
-Patch507: jdk8148351-pr2842-02-only_display_resolved_symlink_for_compiler_do_not_change_path.patch
-# S6260348, PR3066: GTK+ L&F JTextComponent not respecting desktop caret blink rate
-Patch526: jdk6260348-pr3066-gtk_laf_jtextcomponent_not_respecting_desktop_caret_blink_rate.patch
-# 8061305, PR3335, RH1423421: Javadoc crashes when method name ends with "Property"
-Patch538: jdk8061305-pr3335-rh1423421-javadoc_crashes_when_method_name_ends_with_property.patch
-# 8188030, PR3459, RH1484079: AWT java apps fail to start when some minimal fonts are present
-Patch560: jdk8188030-pr3459-rh1484079-awt_java_apps_fail_to_start_when_some_minimal_fonts_are_present.patch
-# 8205104, PR3539, RH1548475: Pass EXTRA_LDFLAGS to HotSpot build
-Patch562: jdk8205104-pr3539-rh1548475-pass_extra_ldflags_to_hotspot_build.patch
-# 8185723, PR3553: Zero: segfaults on Power PC 32-bit
-Patch565: jdk8185723-pr3553-zero_segfaults_on_power_pc_32_bit.patch
-# 8186461, PR3557: Zero's atomic_copy64() should use SPE instructions on linux-powerpcspe
-Patch566: jdk8186461-pr3557-zeros_atomic_copy64_should_use_spe_instructions_on_linux_powerpcspe.patch
-# 8201509, PR3579: Zero: S390 31bit atomic_copy64 inline assembler is wrong
-Patch569: jdk8201509-pr3579-zero_S390_31bit_atomic_copy64_inline_assembler_is_wrong.patch
-# 8075942, PR3602: ArrayIndexOutOfBoundsException in sun.java2d.pisces.Dasher.goTo
-Patch578: jdk8075942-pr3602-rh1582032-arrayindexoutOfboundsException_in_sun_java2d_pisces_Dasher_goto.patch
-# 8203182, PR3603: Release session if initialization of SunPKCS11 Signature fails
-Patch579: jdk8203182-pr3603-rh1568033_release_session_if_initialization_of_sunpkcs11_signature_fails.patch
-# 8206406, PR3610, RH1597825: StubCodeDesc constructor publishes partially-constructed objects on StubCodeDesc::_list
-Patch580: jdk8206406-pr3610-rh1597825-tubcodedesc_constructor_publishes_partially_constructed_objects_on_stubCodeDesc_list.patch
-# Patches 204 and 205 stop the build adding .gnu_debuglink sections to unstripped files
-# 8206425: .gnu_debuglink sections added unconditionally when no debuginfo is stripped
-Patch204: jdk8206425-gnu_debuglink_sections_added_unconditionally_when_no_debuginfo_is_stripped.patch
-# 8036003: Add --with-native-debug-symbols=[none|internal|external|zipped]
-Patch205: jdk8036003-add_with_native_debug_symbols_configure_flag.patch
-# s390: JDK-8201495, PR2415: JVM -Xmx requirement is too high on s390
-Patch100: jdk8201495-zero_reduce_limits_of_max_heap_size_for_boot_JDK_on_s390.patch
-
-#############################################
-#
 # Patches appearing in 8u202
 #
 # This section includes patches which are present
@@ -1228,8 +1191,6 @@ Patch100: jdk8201495-zero_reduce_limits_of_max_heap_size_for_boot_JDK_on_s390.pa
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
-# S8150954, RH1176206, PR2866: Taking screenshots on x11 composite desktop produces wrong result
-Patch508: jdk8150954-pr2866-rh1176206-screenshot_xcomposite_jdk.patch
 # 8207057, PR3613: Enable debug information for assembly code files
 Patch206: jdk8207057-pr3613-no_debug_info_for_assembler_files_hotspot.patch
 Patch207: jdk8207057-pr3613-no_debug_info_for_assembler_files_root.patch
@@ -1611,8 +1572,6 @@ sh %{SOURCE12}
 %patch203
 
 # Debugging fixes
-%patch204
-%patch205
 %patch206
 %patch207
 %patch210
@@ -1625,12 +1584,13 @@ sh %{SOURCE12}
 %patch7
 
 # s390 build fixes
-%patch100
 %patch102
 %patch103
 
 # AArch64 fixes
 %patch106
+%patch107
+%patch108
 
 # x86 fixes
 %patch105
@@ -1643,9 +1603,6 @@ sh %{SOURCE12}
 # Upstreamable fixes
 %patch502
 %patch504
-%patch506
-%patch507
-%patch508
 %patch512
 %patch513
 %patch514
@@ -1656,20 +1613,13 @@ sh %{SOURCE12}
 %patch519
 %patch400
 %patch523
-%patch526
 %patch528
 %patch529
 %patch530
-%patch538
-%patch560
 %patch561
-%patch562
 %patch563
 %patch564
-%patch565
-%patch566
 %patch567
-%patch569
 %patch571
 %patch572
 %patch573
@@ -1677,9 +1627,6 @@ sh %{SOURCE12}
 %patch575
 %patch576
 %patch577
-%patch578
-%patch579
-%patch580
 %patch620
 %patch621
 %patch622
@@ -2340,7 +2287,41 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mon Jan 14 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-1
+* Wed Jan 30 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.192.b12-0
+- Update to aarch64-shenandoah-jdk8u192-b12.
+- Remove patches included upstream
+  - JDK-8031668/PR2842
+  - JDK-8148351/PR2842
+  - JDK-6260348/PR3066
+  - JDK-8061305/PR3335/RH1423421
+  - JDK-8188030/PR3459/RH1484079
+  - JDK-8205104/PR3539/RH1548475
+  - JDK-8185723/PR3553
+  - JDK-8186461/PR3557
+  - JDK-8201509/PR3579
+  - JDK-8075942/PR3602
+  - JDK-8203182/PR3603
+  - JDK-8206406/PR3610/RH1597825
+  - JDK-8206425
+  - JDK-8036003
+  - JDK-8201495/PR2415
+  - JDK-8150954/PR2866/RH1176206
+- Re-generate patches (mostly due to upstream build changes)
+  - JDK-8073139/PR1758/RH1191652
+  - JDK-8143245/PR3548 (due to JDK-8202600)
+  - JDK-8197429/PR3546/RH1536622 (due to JDK-8189170)
+  - JDK-8199936/PR3533
+  - JDK-8199936/PR3591
+  - JDK-8207057/PR3613
+  - JDK-8210761/RH1632174 (due to JDK-8207402)
+  - PR3559 (due to JDK-8185723/JDK-8186461/JDK-8201509)
+  - PR3593 (due to JDK-8081202)
+  - RH1566890/CVE-2018-3639 (due to JDK-8189170)
+  - RH1649664 (due to JDK-8196516)
+- Add 8160748 for AArch64 which is missing from upstream 8u version.
+- Add port of 8189170 to AArch64 which is missing from upstream 8u version.
+
+* Mon Jan 28 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-1
 - Add 8131048 & 8164920 (PR3574/RH1498936) to provide a CRC32 intrinsic for PPC64.
 
 * Thu Jan 24 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.191.b14-0

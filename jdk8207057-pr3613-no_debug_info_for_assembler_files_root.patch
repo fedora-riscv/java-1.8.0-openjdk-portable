@@ -1,34 +1,29 @@
---- openjdk/common/autoconf/toolchain.m4	2018-09-17 15:35:40.783695320 +0200
-+++ openjdk/common/autoconf/toolchain.m4	2018-09-17 15:35:40.608695635 +0200
-@@ -814,6 +814,10 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
- 
-   C_FLAG_DEPS="-MMD -MF"
-   CXX_FLAG_DEPS="-MMD -MF"
-+  # By default don't set any specific assembler debug
-+  # info flags for toolchains unless we know they work.
-+  # See JDK-8207057.
-+  ASFLAGS_DEBUG_SYMBOLS=""
- 
-   case $COMPILER_TYPE in
-     CC )
-@@ -842,6 +846,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
-             CFLAGS_DEBUG_SYMBOLS="-g1"
-             CXXFLAGS_DEBUG_SYMBOLS="-g1"
-           fi
-+          ASFLAGS_DEBUG_SYMBOLS="-g"
-           ;;
-         ossc )
-           #
-@@ -969,6 +974,7 @@ AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_OPTIMIZATION],
-   AC_SUBST(CXX_O_FLAG_NONE)
-   AC_SUBST(C_FLAG_DEPS)
-   AC_SUBST(CXX_FLAG_DEPS)
+diff --git openjdk.orig///common/autoconf/flags.m4 openjdk///common/autoconf/flags.m4
+--- openjdk.orig///common/autoconf/flags.m4
++++ openjdk///common/autoconf/flags.m4
+@@ -282,9 +282,11 @@
+     if test "x$OPENJDK_TARGET_CPU_BITS" = "x64" && test "x$DEBUG_LEVEL" = "xfastdebug"; then
+       CFLAGS_DEBUG_SYMBOLS="-g1"
+       CXXFLAGS_DEBUG_SYMBOLS="-g1"
++      ASFLAGS_DEBUG_SYMBOLS="-g1"
+     else
+       CFLAGS_DEBUG_SYMBOLS="-g"
+       CXXFLAGS_DEBUG_SYMBOLS="-g"
++      ASFLAGS_DEBUG_SYMBOLS="-g"
+     fi
+   elif test "x$TOOLCHAIN_TYPE" = xsolstudio; then
+     CFLAGS_DEBUG_SYMBOLS="-g -xs"
+@@ -295,6 +297,7 @@
+   fi
+   AC_SUBST(CFLAGS_DEBUG_SYMBOLS)
+   AC_SUBST(CXXFLAGS_DEBUG_SYMBOLS)
 +  AC_SUBST(ASFLAGS_DEBUG_SYMBOLS)
- ])
  
- AC_DEFUN_ONCE([TOOLCHAIN_SETUP_COMPILER_FLAGS_FOR_JDK],
---- openjdk/common/autoconf/spec.gmk.in	2018-09-17 15:35:43.324690758 +0200
-+++ openjdk/common/autoconf/spec.gmk.in	2018-09-17 15:35:43.169691036 +0200
+   # Optimization levels
+   if test "x$TOOLCHAIN_TYPE" = xsolstudio; then
+diff --git openjdk.orig///common/autoconf/spec.gmk.in openjdk///common/autoconf/spec.gmk.in
+--- openjdk.orig///common/autoconf/spec.gmk.in
++++ openjdk///common/autoconf/spec.gmk.in
 @@ -414,6 +414,7 @@
  # Options for generating debug symbols
  ENABLE_DEBUG_SYMBOLS:=@ENABLE_DEBUG_SYMBOLS@
@@ -37,3 +32,21 @@
  CXXFLAGS_DEBUG_SYMBOLS:=@CXXFLAGS_DEBUG_SYMBOLS@
  ZIP_DEBUGINFO_FILES:=@ZIP_DEBUGINFO_FILES@
  STRIP_POLICY:=@STRIP_POLICY@
+diff --git openjdk.orig///make/common/NativeCompilation.gmk openjdk///make/common/NativeCompilation.gmk
+--- openjdk.orig///make/common/NativeCompilation.gmk
++++ openjdk///make/common/NativeCompilation.gmk
+@@ -351,12 +351,14 @@
+         # Always add debug symbols
+         $1_EXTRA_CFLAGS+=$(CFLAGS_DEBUG_SYMBOLS)
+         $1_EXTRA_CXXFLAGS+=$(CXXFLAGS_DEBUG_SYMBOLS)
++        $1_EXTRA_ASFLAGS+=$(ASFLAGS_DEBUG_SYMBOLS)
+       else
+         # Programs don't get the debug symbols added in the old build. It's not clear if
+         # this is intentional.
+         ifeq ($$($1_PROGRAM),)
+           $1_EXTRA_CFLAGS+=$(CFLAGS_DEBUG_SYMBOLS)
+           $1_EXTRA_CXXFLAGS+=$(CXXFLAGS_DEBUG_SYMBOLS)
++          $1_EXTRA_ASFLAGS+=$(ASFLAGS_DEBUG_SYMBOLS)
+         endif
+       endif
+     endif

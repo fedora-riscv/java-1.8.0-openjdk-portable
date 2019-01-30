@@ -6,11 +6,11 @@
 # Parent  00ccc73498628a51a45301322e64ce2ad06e49be
 PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 
-diff --git openjdk.orig///common/autoconf/toolchain.m4 openjdk///common/autoconf/toolchain.m4
---- openjdk.orig///common/autoconf/toolchain.m4
-+++ openjdk///common/autoconf/toolchain.m4
-@@ -794,6 +794,8 @@
-     TOOLCHAIN_COMPILER_CHECK_ARGUMENTS([$REALIGN_CFLAG -Werror], [],
+diff --git openjdk.orig///common/autoconf/flags.m4 openjdk///common/autoconf/flags.m4
+--- openjdk.orig///common/autoconf/flags.m4
++++ openjdk///common/autoconf/flags.m4
+@@ -401,6 +401,8 @@
+     FLAGS_COMPILER_CHECK_ARGUMENTS([$REALIGN_CFLAG -Werror], [],
        AC_MSG_ERROR([The selected compiler $CXX does not support -mstackrealign! Try to put another compiler in the path.])
      )
 +    CFLAGS_JDK="${CFLAGS_JDK} ${REALIGN_CFLAG}"

@@ -1,0 +1,30 @@
+# HG changeset patch
+# User dbuck
+# Date 1547622839 0
+#      Wed Jan 16 07:13:59 2019 +0000
+# Node ID 34c6b4b813caf9b3a6fd1859596a87a24a49c423
+# Parent  bca8195a3bc70df281a73d9a40032c673971676c
+8189170: [AArch64] Add option to disable stack overflow checking in primordial thread for use with JNI_CreateJavaJVM
+Reviewed-by: dcubed
+
+diff --git openjdk.orig/hotspot/src/os_cpu/linux_aarch64/vm/os_linux_aarch64.cpp openjdk/hotspot/src/os_cpu/linux_aarch64/vm/os_linux_aarch64.cpp
+--- openjdk.orig/hotspot/src/os_cpu/linux_aarch64/vm/os_linux_aarch64.cpp
++++ openjdk/hotspot/src/os_cpu/linux_aarch64/vm/os_linux_aarch64.cpp
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1999, 2011, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -550,8 +550,8 @@
+ //    pthread_attr_getstack()
+ 
+ static void current_stack_region(address * bottom, size_t * size) {
+-  if (os::Linux::is_initial_thread()) {
+-     // initial thread needs special handling because pthread_getattr_np()
++  if (os::is_primordial_thread()) {
++     // primordial thread needs special handling because pthread_getattr_np()
+      // may return bogus value.
+      *bottom = os::Linux::initial_thread_stack_bottom();
+      *size   = os::Linux::initial_thread_stack_size();
