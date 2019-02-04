@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u192-b12
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u201-b09
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -2287,6 +2287,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Feb 05 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-0
+- Update to aarch64-shenandoah-jdk8u201-b09.
+
 * Tue Feb 05 2019 Nicolas De Amicis <deamicis@bluewin.ch> - 1:1.8.0.192.b12-1
 - Added FX link of libglassgtk3.so
 
