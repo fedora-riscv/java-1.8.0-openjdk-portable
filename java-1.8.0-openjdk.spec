@@ -971,7 +971,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 1%{?dist}
+Release: 2%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1222,6 +1222,8 @@ Patch587: jdk8164920-pr3574-rh1498936-ppc_crc32_enhancement.patch
 #############################################
 # JDK-8029661, PR3642, RH1477159: Support TLS v1.2 algorithm in SunPKCS11 provider
 Patch585: jdk8029661-pr3642-rh1477159-add_tlsv1_2_support_to_pkcs11_provider.patch
+# JDK-8145096, PR3693: Undefined behaviour in HotSpot
+Patch588: jdk8145096-pr3693-undefined_behaviour.patch
 
 #############################################
 #
@@ -1638,6 +1640,7 @@ sh %{SOURCE12}
 %patch585
 %patch586
 %patch587
+%patch588
 
 # RPM-only fixes
 %patch525
@@ -2287,7 +2290,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Tue Feb 05 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-0
+* Wed Feb 06 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-2
+- Add backport of JDK-8145096 (PR3693) to fix undefined behaviour issues on newer GCCs
+
+* Tue Feb 05 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-1
 - Update to aarch64-shenandoah-jdk8u201-b09.
 
 * Tue Feb 05 2019 Nicolas De Amicis <deamicis@bluewin.ch> - 1:1.8.0.192.b12-1
