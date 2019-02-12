@@ -2318,7 +2318,7 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Mon Feb 11 2018 Jiri Vanek <jvanek@redhat.com>  - 1:1.8.0.201.b09-3
+* Mon Feb 11 2019 Jiri Vanek <jvanek@redhat.com>  - 1:1.8.0.201.b09-3
 - config files to etc
 
 * Wed Feb 06 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-2
