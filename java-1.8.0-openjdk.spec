@@ -991,7 +991,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 3%{?dist}
+Release: 4%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1121,6 +1121,8 @@ Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_jav
 Patch540: pr3575-rh1567204-system_cacerts_database_handling_no_longer_affect_jssecacerts.patch
 # PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
 Patch300: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
+# PR3655: Allow use of system crypto policy to be disabled by the user
+Patch301: pr3655-toggle_system_crypto_policy.patch
 
 #############################################
 #
@@ -1599,6 +1601,7 @@ sh %{SOURCE12}
 %patch210
 
 %patch300
+%patch301
 
 %patch1
 %patch3
@@ -2318,6 +2321,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Feb 19 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-4
+- Add PR3655 to allow the system crypto policy to be turned off.
+
 * Mon Feb 11 2019 Jiri Vanek <jvanek@redhat.com>  - 1:1.8.0.201.b09-3
 - config files to etc
 
