@@ -991,7 +991,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 5%{?dist}
+Release: 6%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1206,6 +1206,18 @@ Patch624: jdk8210425-rh1632174-02-compile_with_o2_and_ffp_contract_off_as_for_fd
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Zero part of the fix for (arm/s390 arches)
 Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_zero.patch
+
+#############################################
+#
+# Patches appearing in 8u212
+#
+# This section includes patches which are present
+# in the listed OpenJDK 8u release and should be
+# able to be removed once that release is out
+# and used by this RPM.
+#############################################
+# 8219772: EXTRA_CFLAGS not being picked up for assembler files
+Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
 
 #############################################
 #
@@ -1667,6 +1679,7 @@ sh %{SOURCE12}
 %patch586
 %patch587
 %patch588
+%patch110
 
 # RPM-only fixes
 %patch525
@@ -1749,6 +1762,9 @@ export CFLAGS="$CFLAGS -mieee"
 # Explicitly set the C++ standard as the default has changed on GCC >= 6
 EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error -fno-delete-null-pointer-checks -fno-lifetime-dse"
 EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse"
+# Fixes annocheck warnings in assembler files due to missing build notes
+EXTRA_CPP_FLAGS="$EXTRA_CPP_FLAGS -Wa,--generate-missing-build-notes=yes"
+EXTRA_CFLAGS="$EXTRA_CFLAGS -Wa,--generate-missing-build-notes=yes"
 
 %ifarch %{power64} ppc
 # fix rpmlint warnings
@@ -2328,6 +2344,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Mar 11 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.201.b09-6
+- Add -Wa,--generate-missing-build-notes=yes C flags and patch
+  jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch. So
+  as to fix annocheck warnings for assembler source files.
+
 * Tue Feb 19 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.201.b09-5
 - Add a test verifying system crypto policies can be disabled
 
