@@ -859,7 +859,7 @@ Recommends: gtk2%{?_isa}
 Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
 # Standard JPackage base provides
-Provides: jre = %{javaver}%{?1}
+Provides: jre%{?1} = %{javaver}
 Provides: jre-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
