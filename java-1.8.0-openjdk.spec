@@ -991,7 +991,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 4%{?dist}
+Release: 5%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1051,6 +1051,9 @@ Source13: TestCryptoLevel.java
 
 # Ensure ECDSA is working
 Source14: TestECDSA.java
+
+# Verify system crypto (policy) can be disabled via a property
+Source15: TestSecurityProperties.java
 
 Source20: repackReproduciblePolycies.sh
 
@@ -1857,6 +1860,10 @@ $JAVA_HOME/bin/java TestCryptoLevel
 $JAVA_HOME/bin/javac -d . %{SOURCE14}
 $JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 
+# Verify system crypto (policy) can be disabled
+$JAVA_HOME/bin/javac -d . %{SOURCE15}
+$JAVA_HOME/bin/java -Djava.security.disableSystemPropertiesFile=true $(echo $(basename %{SOURCE15})|sed "s|\.java||")
+
 # Check debug symbols are present and can identify code
 find "$JAVA_HOME" -iname '*.so' -print0 | while read -d $'\0' lib
 do
@@ -2321,6 +2328,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Feb 19 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.201.b09-5
+- Add a test verifying system crypto policies can be disabled
+
 * Tue Feb 19 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-4
 - Add PR3655 to allow the system crypto policy to be turned off.
 
