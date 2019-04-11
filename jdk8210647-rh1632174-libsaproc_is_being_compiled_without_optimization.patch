@@ -20,4 +20,4 @@ diff --git openjdk.orig/hotspot/make/linux/makefiles/saproc.make openjdk/hotspot
 +	           $(SA_OPT_FLAGS)                                      \
  	           $(EXTRA_CFLAGS)                                      \
  	           -o $@                                                \
- 	           -lthread_db
+ 	           -lthread_db -ldl

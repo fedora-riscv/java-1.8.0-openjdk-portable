@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u201-b13
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u202-b08
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1155,8 +1155,6 @@ Patch561: jdk8197429-pr3546-rh1536622-increased_stack_guard_causes_segfaults_on_
 Patch563: jdk8171000-pr3542-rh1402819-robot_createScreenCapture_crashes_in_wayland_mode.patch
 # 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
 Patch564: jdk8197546-pr3542-rh1402819-fix_for_8171000_breaks_solaris_linux_builds.patch
-# PR3559: Use ldrexd for atomic reads on ARMv7.
-Patch567: pr3559-use_ldrexd_for_atomic_reads_on_armv7_zero.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
@@ -1204,35 +1202,6 @@ Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fd
 #############################################
 # 8219772: EXTRA_CFLAGS not being picked up for assembler files
 Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
-
-#############################################
-#
-# Patches appearing in 8u202
-#
-# This section includes patches which are present
-# in the listed OpenJDK 8u release and should be
-# able to be removed once that release is out
-# and used by this RPM.
-#############################################
-# 8207057, PR3613: Enable debug information for assembly code files
-Patch206: jdk8207057-pr3613-no_debug_info_for_assembler_files_hotspot.patch
-Patch207: jdk8207057-pr3613-no_debug_info_for_assembler_files_root.patch
-# 8165852, PR3468: (fs) Mount point not found for a file which is present in overlayfs
-Patch210: jdk8165852-pr3468-mount_point_not_found_for_a_file_which_is_present_in_overlayfs.patch
-# S8073139, RH1191652; fix name of ppc64le architecture
-Patch601: jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_root.patch
-Patch602: jdk8073139-pr1758-rh1191652-ppc64_le_says_its_arch_is_ppc64_not_ppc64le_jdk.patch
-Patch603: jdk8073139-pr2236-rh1191652--use_ppc64le_as_the_arch_directory_on_that_platform_and_report_it_in_os_arch_aarch64_forest.patch
-# 8044235: src.zip should include all sources
-Patch7:   jdk8044235-src_zip_should_include_all_sources.patch
-# JDK-8172850, RH1640127: Anti-dependency on membar causes crash in register allocator due to invalid instruction scheduling
-Patch583: jdk8172850-rh1640127-01-register_allocator_crash.patch
-# JDK-8209639, RH1640127: assert failure in coalesce.cpp: attempted to spill a non-spillable item
-Patch584: jdk8209639-rh1640127-02-coalesce_attempted_spill_non_spillable.patch
-# JDK-8131048, PR3574, RH1498936: ppc implement CRC32 intrinsic
-Patch586: jdk8131048-pr3574-rh1498936-ppc_crc32.patch
-# JDK-8164920, PR3574, RH1498936: ppc: enhancement of CRC32 intrinsic
-Patch587: jdk8164920-pr3574-rh1498936-ppc_crc32_enhancement.patch
 
 #############################################
 #
@@ -1596,18 +1565,13 @@ sh %{SOURCE12}
 %patch202
 %patch203
 
-# Debugging fixes
-%patch206
-%patch207
-%patch210
-
+# System security policy fixes
 %patch300
 %patch301
 
 %patch1
 %patch3
 %patch5
-%patch7
 
 # s390 build fixes
 %patch102
@@ -1618,11 +1582,6 @@ sh %{SOURCE12}
 
 # x86 fixes
 %patch105
-
-# ppc64le fixes
-%patch603
-%patch601
-%patch602
 
 # Upstreamable fixes
 %patch502
@@ -1643,7 +1602,6 @@ sh %{SOURCE12}
 %patch561
 %patch563
 %patch564
-%patch567
 %patch571
 %patch572
 %patch573
@@ -1657,11 +1615,7 @@ sh %{SOURCE12}
 %patch623
 %patch624
 %patch625
-%patch583
-%patch584
 %patch585
-%patch586
-%patch587
 %patch588
 %patch110
 
@@ -2331,6 +2285,21 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Apr 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.202.b08-0
+- Update to aarch64-shenandoah-jdk8u202-b08.
+- Remove patches included upstream
+  - JDK-8211387/PR3559
+  - JDK-8207057/PR3613
+  - JDK-8165852/PR3468
+  - JDK-8073139/PR1758/RH1191652
+  - JDK-8044235
+  - JDK-8172850/RH1640127
+  - JDK-8209639/RH1640127
+  - JDK-8131048/PR3574/RH1498936
+  - JDK-8164920/PR3574/RH1498936
+- Re-generate patches
+  - JDK-8210647/RH1632174
+
 * Thu Apr 04 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b13-0
 - Update to aarch64-shenandoah-jdk8u201-b13.
 - Drop JDK-8160748 & JDK-8189170 AArch64 patches now applied upstream.
