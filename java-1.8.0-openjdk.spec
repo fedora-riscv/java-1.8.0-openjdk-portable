@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u201-b09
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u201-b13
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -981,7 +981,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 8%{?dist}
+Release: 0%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1134,10 +1134,6 @@ Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_
 Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
 # AArch64: PR3519: Fix further functions with a missing return value (AArch64)
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
-# AArch64: JDK-8160748: [AArch64] Inconsistent types for ideal_reg
-Patch107: jdk8160748-aarch64_ideal_reg.patch
-# AArch64: JDK-8189170: [AArch64] Add option to disable stack overflow checking in primordial thread for use with JNI_CreateJavaJVM
-Patch108: jdk8189170-aarch64_primordial_thread.patch
 
 #############################################
 #
@@ -1619,8 +1615,6 @@ sh %{SOURCE12}
 
 # AArch64 fixes
 %patch106
-%patch107
-%patch108
 
 # x86 fixes
 %patch105
@@ -2337,6 +2331,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Apr 04 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b13-0
+- Update to aarch64-shenandoah-jdk8u201-b13.
+- Drop JDK-8160748 & JDK-8189170 AArch64 patches now applied upstream.
+
 * Fri Mar 29 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.201.b09-8
 - Sync SystemTap & desktop files with upstream IcedTea release using new script
 
