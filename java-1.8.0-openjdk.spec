@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u202-b08
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u212-b02
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -578,6 +578,8 @@ exit 0
 %dir %{_jvmdir}/%{jredir -- %{?1}}
 %dir %{_jvmdir}/%{jredir -- %{?1}}/bin
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib
+%{_jvmdir}/%{jredir -- %{?1}}/bin/clhsdb
+%{_jvmdir}/%{jredir -- %{?1}}/bin/hsdb
 %{_jvmdir}/%{jredir -- %{?1}}/bin/java
 %{_jvmdir}/%{jredir -- %{?1}}/bin/jjs
 %{_jvmdir}/%{jredir -- %{?1}}/bin/keytool
@@ -723,7 +725,9 @@ exit 0
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/include
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/lib
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/appletviewer
+%{_jvmdir}/%{sdkdir -- %{?1}}/bin/clhsdb
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/extcheck
+%{_jvmdir}/%{sdkdir -- %{?1}}/bin/hsdb
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/idlj
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/jarsigner
@@ -1116,6 +1120,8 @@ Patch540: pr3575-rh1567204-system_cacerts_database_handling_no_longer_affect_jss
 Patch300: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
 Patch301: pr3655-toggle_system_crypto_policy.patch
+# JDK-8219772: EXTRA_CFLAGS not being picked up for assembler files
+Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
 
 #############################################
 #
@@ -1134,6 +1140,8 @@ Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_
 Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
 # AArch64: PR3519: Fix further functions with a missing return value (AArch64)
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
+# S390 ambiguous log2_intptr calls
+Patch107: s390-8214206_fix.patch
 
 #############################################
 #
@@ -1149,16 +1157,12 @@ Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binary.patch
 # S8154313: Generated javadoc scattered all over the place
 Patch400: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
-# 8197429, PR3546, RH153662{2,3}: 32 bit java app started via JNI crashes with larger stack sizes
-Patch561: jdk8197429-pr3546-rh1536622-increased_stack_guard_causes_segfaults_on_x86_32.patch
 # 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
 Patch563: jdk8171000-pr3542-rh1402819-robot_createScreenCapture_crashes_in_wayland_mode.patch
 # 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
 Patch564: jdk8197546-pr3542-rh1402819-fix_for_8171000_breaks_solaris_linux_builds.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
-# 8184309, PR3596: Build warnings from GCC 7.1 on Fedora 26
-Patch572: jdk8184309-pr3596-build_warnings_from_gcc_7_1_on_fedora_26.patch
 # 8141570, PR3548: Fix Zero interpreter build for --disable-precompiled-headers
 Patch573: jdk8141570-pr3548-fix_zero_interpreter_build_for_disable_precompiled_headers.patch
 # 8143245, PR3548: Zero build requires disabled warnings
@@ -1177,8 +1181,6 @@ Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # 8210761: libjsig is being compiled without optimization
 Patch620: jdk8210761-rh1632174-libjsig_is_being_compiled_without_optimization.patch
-# 8210647: libsaproc is being compiled without optimization
-Patch621: jdk8210647-rh1632174-libsaproc_is_being_compiled_without_optimization.patch
 # 8210416: [linux] Poor StrictMath performance due to non-optimized compilation
 Patch622: jdk8210416-rh1632174-compile_fdlibm_with_o2_ffp_contract_off_on_gcc_clang_arches.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
@@ -1193,29 +1195,13 @@ Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fd
 
 #############################################
 #
-# Patches appearing in 8u212
+# Patches appearing in 8u222
 #
 # This section includes patches which are present
 # in the listed OpenJDK 8u release and should be
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
-# 8219772: EXTRA_CFLAGS not being picked up for assembler files
-Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
-
-#############################################
-#
-# Patches appearing in 8u211
-#
-# This section includes patches which are present
-# in the listed OpenJDK 8u release and should be
-# able to be removed once that release is out
-# and used by this RPM.
-#############################################
-# JDK-8029661, PR3642, RH1477159: Support TLS v1.2 algorithm in SunPKCS11 provider
-Patch585: jdk8029661-pr3642-rh1477159-add_tlsv1_2_support_to_pkcs11_provider.patch
-# JDK-8145096, PR3693: Undefined behaviour in HotSpot
-Patch588: jdk8145096-pr3693-undefined_behaviour.patch
 
 #############################################
 #
@@ -1576,6 +1562,7 @@ sh %{SOURCE12}
 # s390 build fixes
 %patch102
 %patch103
+%patch107
 
 # AArch64 fixes
 %patch106
@@ -1599,24 +1586,19 @@ sh %{SOURCE12}
 %patch528
 %patch529
 %patch530
-%patch561
 %patch563
 %patch564
 %patch571
-%patch572
 %patch573
 %patch574
 %patch575
 %patch576
 %patch577
 %patch620
-%patch621
 %patch622
 %patch623
 %patch624
 %patch625
-%patch585
-%patch588
 %patch110
 
 # RPM-only fixes
@@ -2285,6 +2267,21 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Apr 09 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b02-0
+- Update to aarch64-shenandoah-jdk8u212-b02.
+- Remove patches included upstream
+  - JDK-8197429/PR3546/RH153662{2,3}
+  - JDK-8184309/PR3596
+  - JDK-8210647/RH1632174
+  - JDK-8029661/PR3642/RH1477159
+  - JDK-8145096/PR3693
+- Re-generate patches
+  - JDK-8203030
+- Add casts to resolve s390 ambiguity in calls to log2_intptr
+- Move JDK-8219772 to correct section as not yet upstreamed
+- Add new clhsdb and hsdb binaries.
+- Resolves: rhbz#1680640
+
 * Sun Apr 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.202.b08-0
 - Update to aarch64-shenandoah-jdk8u202-b08.
 - Remove patches included upstream
