@@ -986,7 +986,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 2%{?dist}
+Release: 3%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1194,6 +1194,10 @@ Patch624: jdk8210425-rh1632174-02-compile_with_o2_and_ffp_contract_off_as_for_fd
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Zero part of the fix for (arm/s390 arches)
 Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_zero.patch
+# JDK-8223219: Backport of JDK-8199552 to OpenJDK 8 leads to duplicate -fstack-protector flags,
+#              overriding --with-extra-cflags
+Patch626: jdk8223219-fstack-protector-root.patch
+Patch627: jdk8223219-fstack-protector-hotspot.patch
 
 #############################################
 #
@@ -1602,6 +1606,8 @@ sh %{SOURCE12}
 %patch623
 %patch624
 %patch625
+%patch626
+%patch627
 %patch110
 
 # RPM-only fixes
@@ -2270,6 +2276,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed May 22 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-3
+- Add JDK-8223219 to avoid -fstack-protector overriding -fstack-protector-strong
+
 * Wed May 15 2019 James Cassell <cyberpear@fedoraproject.org> - 1:1.8.0.212.b04-2
 - mark net.properties as a config file
 
