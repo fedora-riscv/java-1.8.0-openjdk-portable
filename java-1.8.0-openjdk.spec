@@ -985,7 +985,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 0%{?dist}
+Release: 1%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1095,7 +1095,8 @@ Patch523: pr2974-rh1337583-add_systemlineendings_option_to_keytool_and_use_line_
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch
 # RH1566890: CVE-2018-3639
-Patch529: rh1566890_speculative_store_bypass_so_added_more_per_task_speculation_control_CVE_2018_3639.patch
+Patch529: rh1566890-CVE_2018_3639-speculative_store_bypass.patch
+Patch531: rh1566890-CVE_2018_3639-speculative_store_bypass_toggle.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_prims_jvm_cpp.patch
 # Support for building the SunEC provider with the system NSS installation
@@ -1585,6 +1586,7 @@ sh %{SOURCE12}
 %patch523
 %patch528
 %patch529
+%patch531
 %patch530
 %patch563
 %patch564
@@ -2267,6 +2269,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon May 13 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.212.b04-1
+- Update patch for RH1566890.
+  - Renamed rh1566890_speculative_store_bypass_so_added_more_per_task_speculation_control_CVE_2018_3639 to
+    rh1566890-CVE_2018_3639-speculative_store_bypass.patch
+  - Added dependent patch,
+    rh1566890-CVE_2018_3639-speculative_store_bypass_toggle.patch
+
 * Thu Apr 11 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-0
 - Update to aarch64-shenandoah-jdk8u212-b04.
 
