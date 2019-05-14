@@ -689,6 +689,7 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/jvm.hprof.txt
 %{_jvmdir}/%{jredir -- %{?1}}/lib/meta-index
 %{_jvmdir}/%{jredir -- %{?1}}/lib/net.properties
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/net.properties
 %{_jvmdir}/%{jredir -- %{?1}}/lib/psfont.properties.ja
 %{_jvmdir}/%{jredir -- %{?1}}/lib/psfontj2d.properties
 %{_jvmdir}/%{jredir -- %{?1}}/lib/resources.jar
@@ -985,7 +986,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 1%{?dist}
+Release: 2%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2058,7 +2059,7 @@ touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/securi
 # moving config files to /etc
 mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/unlimited/
 mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/limited/
-for file in lib/security/cacerts lib/security/policy/unlimited/US_export_policy.jar lib/security/policy/unlimited/local_policy.jar lib/security/policy/limited/US_export_policy.jar lib/security/policy/limited/local_policy.jar lib/security/java.policy lib/security/java.security lib/security/blacklisted.certs lib/logging.properties lib/calendars.properties lib/security/nss.cfg ; do
+for file in lib/security/cacerts lib/security/policy/unlimited/US_export_policy.jar lib/security/policy/unlimited/local_policy.jar lib/security/policy/limited/US_export_policy.jar lib/security/policy/limited/local_policy.jar lib/security/java.policy lib/security/java.security lib/security/blacklisted.certs lib/logging.properties lib/calendars.properties lib/security/nss.cfg lib/net.properties ; do
   mv      $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file   $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/$file
   ln -sf  %{etcjavadir -- $suffix}/$file                          $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file
 done
@@ -2269,6 +2270,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed May 15 2019 James Cassell <cyberpear@fedoraproject.org> - 1:1.8.0.212.b04-2
+- mark net.properties as a config file
+
 * Mon May 13 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.212.b04-1
 - Update patch for RH1566890.
   - Renamed rh1566890_speculative_store_bypass_so_added_more_per_task_speculation_control_CVE_2018_3639 to
