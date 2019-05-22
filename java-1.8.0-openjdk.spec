@@ -986,7 +986,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 3%{?dist}
+Release: 4%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1691,9 +1691,8 @@ export CFLAGS="$CFLAGS -mieee"
 
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
-# Explicitly set the C++ standard as the default has changed on GCC >= 6
-EXTRA_CFLAGS="%ourcppflags -std=gnu++98 -Wno-error -fno-delete-null-pointer-checks -fno-lifetime-dse"
-EXTRA_CPP_FLAGS="%ourcppflags -std=gnu++98 -fno-delete-null-pointer-checks -fno-lifetime-dse"
+EXTRA_CFLAGS="%ourcppflags -Wno-error"
+EXTRA_CPP_FLAGS="%ourcppflags"
 # Fixes annocheck warnings in assembler files due to missing build notes
 EXTRA_CPP_FLAGS="$EXTRA_CPP_FLAGS -Wa,--generate-missing-build-notes=yes"
 EXTRA_CFLAGS="$EXTRA_CFLAGS -Wa,--generate-missing-build-notes=yes"
@@ -1742,13 +1741,8 @@ bash ../../configure \
     --with-libpng=system \
     --with-lcms=system \
     --with-stdc++lib=dynamic \
-%ifarch %{ix86}
-    --with-extra-cxxflags="-mstackrealign $EXTRA_CPP_FLAGS" \
-    --with-extra-cflags="-mstackrealign $EXTRA_CFLAGS" \
-%else
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
-%endif
     --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
@@ -2276,6 +2270,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed May 22 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-4
+- Remove additions to EXTRA_CFLAGS and EXTRA_CPP_FLAGS which are now made by upstream.
+- Remove -mstackrealign addition which is handled by PR3533 & PR3591 patches.
+
 * Wed May 22 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-3
 - Add JDK-8223219 to avoid -fstack-protector overriding -fstack-protector-strong
 
