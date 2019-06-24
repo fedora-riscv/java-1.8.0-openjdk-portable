@@ -226,7 +226,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u212-b04
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -234,12 +234,14 @@
 # Define IcedTea version used for SystemTap tapsets and desktop files
 %global icedteaver      3.11.0
 
+# e.g. aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30 -> aarch64-shenandoah-jdk8u212-b04
+%global version_tag     %(VERSION=%{revision}; echo ${VERSION%%-shenandoah*})
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
-%global whole_update    %(VERSION=%{revision}; echo ${VERSION%%-*})
+%global whole_update    %(VERSION=%{version_tag}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
-%global buildver        %(VERSION=%{revision}; echo ${VERSION##*-})
+%global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
 # priority must be 7 digits in total. The expression is workarounding tip
 %global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
 
@@ -986,7 +988,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 4%{?dist}
+Release: 5%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1228,8 +1230,6 @@ Patch201: jdk8043805-allow_using_system_installed_libjpeg.patch
 # and should be upstreamed to the appropriate
 # trees.
 #############################################
-# PR3634: Shenandoah still broken on s390 with aarch64-shenandoah-jdk8u181-b16
-Patch582: pr3634-fix_shenandoah_for_size_t_on_s390.patch
 
 #############################################
 #
@@ -1621,7 +1621,6 @@ sh %{SOURCE12}
 %endif
 
 # Shenandoah patches
-%patch582
 
 %patch1000
 
@@ -2270,6 +2269,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jun 14 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-5
+- Update to aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30.
+- Update version logic to handle -shenandoah* tag suffix.
+- Drop PR3634 as applied upstream.
+- Adjust 8214206 fix for S390 as BinaryMagnitudeSeq moved to shenandoahNumberSeq.cpp
+- Update 8214206 to use log2_long rather than casting to intptr_t, which may be smaller than size_t.
+
 * Wed May 22 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-4
 - Remove additions to EXTRA_CFLAGS and EXTRA_CPP_FLAGS which are now made by upstream.
 - Remove -mstackrealign addition which is handled by PR3533 & PR3591 patches.

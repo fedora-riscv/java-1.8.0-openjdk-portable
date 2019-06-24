@@ -7,10 +7,22 @@ diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/g1BiasedArray.
      address base = create_new_base_array(num_target_elems, target_elem_size_in_bytes);
 -    initialize_base(base, num_target_elems, bias, target_elem_size_in_bytes, log2_intptr(mapping_granularity_in_bytes));
 +    initialize_base(base, num_target_elems, bias, target_elem_size_in_bytes,
-+                    log2_intptr((uintptr_t) mapping_granularity_in_bytes));
++                    log2_long(mapping_granularity_in_bytes));
    }
  
    size_t bias() const { return _bias; }
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
+@@ -135,7 +135,7 @@
+ void BinaryMagnitudeSeq::add(size_t val) {
+   Atomic::add(val, &_sum);
+ 
+-  int mag = log2_intptr(val) + 1;
++  int mag = log2_long(val) + 1;
+ 
+   // Defensively saturate for product bits:
+   if (mag < 0) {
 diff --git openjdk.orig/hotspot/src/share/vm/runtime/os.cpp openjdk/hotspot/src/share/vm/runtime/os.cpp
 --- openjdk.orig/hotspot/src/share/vm/runtime/os.cpp
 +++ openjdk/hotspot/src/share/vm/runtime/os.cpp
@@ -19,19 +31,7 @@ diff --git openjdk.orig/hotspot/src/share/vm/runtime/os.cpp openjdk/hotspot/src/
  
  void os::set_memory_serialize_page(address page) {
 -  int count = log2_intptr(sizeof(class JavaThread)) - log2_int(64);
-+  int count = log2_intptr((uintptr_t) sizeof(class JavaThread)) - log2_int(64);
++  int count = log2_long(sizeof(class JavaThread)) - log2_int(64);
    _mem_serialize_page = (volatile int32_t *)page;
    // We initialize the serialization page shift count here
    // We assume a cache line size of 64 bytes
-diff --git openjdk.orig/hotspot/src/share/vm/utilities/numberSeq.cpp openjdk/hotspot/src/share/vm/utilities/numberSeq.cpp
---- openjdk.orig/hotspot/src/share/vm/utilities/numberSeq.cpp
-+++ openjdk/hotspot/src/share/vm/utilities/numberSeq.cpp
-@@ -369,7 +369,7 @@
- void BinaryMagnitudeSeq::add(size_t val) {
-   Atomic::add(val, &_sum);
- 
--  int mag = log2_intptr(val) + 1;
-+  int mag = log2_intptr((uintptr_t) val) + 1;
- 
-   // Defensively saturate for product bits:
-   if (mag < 0) {
