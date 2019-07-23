@@ -76,13 +76,6 @@
 %global include_debug_build 0
 %endif
 
-# Shenandoah HotSpot used everywhere, but built only on x86_64 and AArch64
-%ifarch x86_64 %{aarch64}
-%global use_shenandoah_hotspot 1
-%else
-%global use_shenandoah_hotspot 0
-%endif
-
 %if %{include_debug_build}
 %global build_loop2 %{debug_suffix}
 %else
@@ -188,8 +181,6 @@
 %global archinstall %{_arch}
 %endif
 
-
-
 %ifarch %{jit_arches}
 %global with_systemtap 1
 %else
@@ -242,6 +233,23 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
+%global rpmrelease      6
+# Define milestone (EA for pre-releases, GA ("fcs") for releases)
+# Release will be (where N is usually a number starting at 1):
+# - 0.N%%{?extraver}%%{?dist} for EA releases,
+# - N%%{?extraver}{?dist} for GA releases
+%global is_ga           1
+%if %{is_ga}
+%global milestone          fcs
+%global milestone_version  %{nil}
+%global extraver %{nil}
+%global eaprefix %{nil}
+%else
+%global milestone          ea
+%global milestone_version  "-ea"
+%global extraver .%{milestone}
+%global eaprefix 0.
+%endif
 # priority must be 7 digits in total. The expression is workarounding tip
 %global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
 
@@ -988,7 +996,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: 5%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1528,6 +1536,10 @@ if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 ] ; then
   echo "You have disabled both include_debug_build and include_normal_build. That is a no go."
   exit 13
 fi
+
+echo "Update version: %{updatever}"
+echo "Build number: %{buildver}"
+echo "Milestone: %{milestone}"
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
 # https://bugzilla.redhat.com/show_bug.cgi?id=1189084
 prioritylength=`expr length %{priority}`
@@ -1727,7 +1739,7 @@ bash ../../configure \
     --with-jvm-variants=zero \
 %endif
     --with-native-debug-symbols=internal \
-    --with-milestone="fcs" \
+    --with-milestone=%{milestone} \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
@@ -1958,7 +1970,7 @@ popd
 # Install Javadoc documentation
 install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
 cp -a %{buildoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
-built_doc_archive=`echo "jdk-%{javaver}_%{updatever}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
+built_doc_archive=`echo "jdk-%{javaver}_%{updatever}%{milestone_version}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
 cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
 
 # Install icons and menu entries
@@ -2269,6 +2281,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jul 03 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.212.b04-6
+- Include 'ea' designator in Release when appropriate.
+
+* Wed Jul 03 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-6
+- Handle milestone as variables so we can alter it easily and set the docs zip filename appropriately.
+- Drop unused use_shenandoah_hotspot variable.
+
 * Fri Jun 14 2019 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.212.b04-5
 - Update to aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30.
 - Update version logic to handle -shenandoah* tag suffix.
