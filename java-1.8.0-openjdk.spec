@@ -233,7 +233,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -871,7 +871,9 @@ Requires: libXcomposite%{?_isa}
 Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 # for java-X-openjdk package's desktop binding
+%if 0%{?fedora} || 0%{?rhel} >= 8
 Recommends: gtk2%{?_isa}
+%endif
 
 Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
@@ -909,7 +911,9 @@ Requires(post):   %{_sbindir}/alternatives
 # Postun requires alternatives to uninstall tool alternatives
 Requires(postun): %{_sbindir}/alternatives
 # for optional support of kernel stream control, card reader and printing bindings
+%if 0%{?fedora} || 0%{?rhel} >= 8
 Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}
+%endif
 
 # Standard JPackage base provides
 Provides: jre-headless%{?1} = %{epoch}:%{javaver}
@@ -2272,6 +2276,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jul 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b01-0.2.ea
+- Make use of Recommends and Suggests dependent on Fedora or RHEL 8+ environment.
+
 * Sun Jul 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b01-0.1.ea
 - Update to aarch64-shenandoah-jdk8u222-b01.
 - Refactor PR2888 after inclusion of 8129988 upstream. Now includes PR3575.
