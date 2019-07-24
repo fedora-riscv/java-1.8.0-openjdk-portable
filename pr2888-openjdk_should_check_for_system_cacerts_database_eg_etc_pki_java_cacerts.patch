@@ -5,42 +5,45 @@
 # Node ID 3334efeacd8327a14b7d2f392f4546e3c29c594b
 # Parent  6b81fd2227d14226f2121f2d51b464536925686e
 PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
+PR3575: System cacerts database handling should not affect jssecacerts
 
-diff --git a/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java b/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java
---- openjdk/jdk/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java
-+++ openjdk/jdk/src/share/classes/sun/security/ssl/TrustManagerFactoryImpl.java
-@@ -174,15 +174,20 @@
-                     storeFile = new File(storeFileName);
-                     fis = getFileInputStream(storeFile);
-                 } else {
--                    String javaHome = props.get("javaHome");
--                    storeFile = new File(javaHome + sep + "lib" + sep
--                                                    + "security" + sep +
--                                                    "jssecacerts");
-+                    /* Check system cacerts DB first; /etc/pki/java/cacerts */
-+                    storeFile = new File(sep + "etc" + sep + "pki" + sep
-+                                         + "java" + sep + "cacerts");
-                     if ((fis = getFileInputStream(storeFile)) == null) {
-+                        String javaHome = props.get("javaHome");
-                         storeFile = new File(javaHome + sep + "lib" + sep
--                                                    + "security" + sep +
--                                                    "cacerts");
--                        fis = getFileInputStream(storeFile);
-+                                             + "security" + sep +
-+                                             "jssecacerts");
-+                        if ((fis = getFileInputStream(storeFile)) == null) {
-+                            storeFile = new File(javaHome + sep + "lib" + sep
-+                                                 + "security" + sep +
-+                                                 "cacerts");
-+                            fis = getFileInputStream(storeFile);
-+                        }
-                     }
-                 }
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java openjdk/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
++++ openjdk/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
+@@ -72,7 +72,7 @@
+      * The preference of the default trusted KeyStore is:
+      *    javax.net.ssl.trustStore
+      *    jssecacerts
+-     *    cacerts
++     *    cacerts (system and local)
+      */
+     private static final class TrustStoreDescriptor {
+         private static final String fileSep = File.separator;
+@@ -83,6 +83,10 @@
+                 defaultStorePath + fileSep + "cacerts";
+         private static final String jsseDefaultStore =
+                 defaultStorePath + fileSep + "jssecacerts";
++        /* Check system cacerts DB: /etc/pki/java/cacerts */
++        private static final String systemStore =
++                fileSep + "etc" + fileSep + "pki" +
++                fileSep + "java" + fileSep + "cacerts";
  
-diff --git a/src/share/classes/sun/security/tools/KeyStoreUtil.java b/src/share/classes/sun/security/tools/KeyStoreUtil.java
---- openjdk/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
+         // the trust store name
+         private final String storeName;
+@@ -146,7 +150,8 @@
+                     long temporaryTime = 0L;
+                     if (!"NONE".equals(storePropName)) {
+                         String[] fileNames =
+-                                new String[] {storePropName, defaultStore};
++                                new String[] {storePropName,
++                                              systemStore, defaultStore};
+                         for (String fileName : fileNames) {
+                             File f = new File(fileName);
+                             if (f.isFile() && f.canRead()) {
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java openjdk/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
 +++ openjdk/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
-@@ -87,9 +87,14 @@
+@@ -108,9 +108,14 @@
          throws Exception
      {
          String sep = File.separator;

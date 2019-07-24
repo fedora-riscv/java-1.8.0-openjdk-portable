@@ -217,7 +217,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -226,19 +226,19 @@
 %global icedteaver      3.11.0
 
 # e.g. aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30 -> aarch64-shenandoah-jdk8u212-b04
-%global version_tag     %(VERSION=%{revision}; echo ${VERSION%%-shenandoah*})
+%global version_tag     %(VERSION=%{revision}; echo ${VERSION%%-shenandoah-merge*})
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
 %global whole_update    %(VERSION=%{version_tag}; echo ${VERSION%%-*})
 # eg  jdk8u60 -> 60 or aarch64-jdk8u60 -> 60
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      6
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1125,9 +1125,8 @@ Patch517: pr2899-dont_use_withseed_versions_of_nss_functions_as_they_dont_fully_
 Patch518: pr2934-sunec_provider_throwing_keyexception_withine.separator_current_nss_thus_initialise_the_random_number_generator_and_feed_the_seed_to_it.patch
 Patch519: pr3479-rh1486025-sunec_provider_can_have_multiple_instances_leading_to_premature_nss_shutdown.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
-Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
-Patch540: pr3575-rh1567204-system_cacerts_database_handling_no_longer_affect_jssecacerts.patch
+Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
 # PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
 Patch300: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
@@ -1169,10 +1168,6 @@ Patch107: s390-8214206_fix.patch
 Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binary.patch
 # S8154313: Generated javadoc scattered all over the place
 Patch400: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
-# 8171000, PR3542, RH1402819: Robot.createScreenCapture() crashes in wayland mode
-Patch563: jdk8171000-pr3542-rh1402819-robot_createScreenCapture_crashes_in_wayland_mode.patch
-# 8197546, PR3542, RH1402819: Fix for 8171000 breaks Solaris + Linux builds
-Patch564: jdk8197546-pr3542-rh1402819-fix_for_8171000_breaks_solaris_linux_builds.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8141570, PR3548: Fix Zero interpreter build for --disable-precompiled-headers
@@ -1605,8 +1600,6 @@ sh %{SOURCE12}
 %patch529
 %patch531
 %patch530
-%patch563
-%patch564
 %patch571
 %patch573
 %patch574
@@ -1625,7 +1618,7 @@ sh %{SOURCE12}
 # RPM-only fixes
 %patch525
 %patch539
-%patch540
+%patch1000
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -1633,8 +1626,6 @@ sh %{SOURCE12}
 %endif
 
 # Shenandoah patches
-
-%patch1000
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -2281,6 +2272,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jul 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b01-0.1.ea
+- Update to aarch64-shenandoah-jdk8u222-b01.
+- Refactor PR2888 after inclusion of 8129988 upstream. Now includes PR3575.
+- Drop 8171000 & 8197546 as applied upstream.
+
 * Wed Jul 03 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.212.b04-6
 - Include 'ea' designator in Release when appropriate.
 
