@@ -217,7 +217,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b02
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -233,7 +233,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1180,8 +1180,6 @@ Patch573: jdk8141570-pr3548-fix_zero_interpreter_build_for_disable_precompiled_h
 Patch574: jdk8143245-pr3548-zero_build_requires_disabled_warnings.patch
 # 8197981, PR3548: Missing return statement in __sync_val_compare_and_swap_8
 Patch575: jdk8197981-pr3548-missing_return_statement_in_sync_val_compare_and_swap_8.patch
-# 8064786, PR3599: Fix debug build after 8062808: Turn on the -Wreturn-type warning
-Patch576: jdk8064786-pr3599-fix_debug_build_after_8062808_Turn_on_the_wreturn_type_warning.patch
 # 8062808, PR3548: Turn on the -Wreturn-type warning
 Patch577: jdk8062808-pr3548-turn_on_the_wreturn_type_warning.patch
 # s390: JDK-8203030, Type fixing for s390
@@ -1192,8 +1190,6 @@ Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # 8210761: libjsig is being compiled without optimization
 Patch620: jdk8210761-rh1632174-libjsig_is_being_compiled_without_optimization.patch
-# 8210416: [linux] Poor StrictMath performance due to non-optimized compilation
-Patch622: jdk8210416-rh1632174-compile_fdlibm_with_o2_ffp_contract_off_on_gcc_clang_arches.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Upstream 8u part.
 Patch623: jdk8210425-rh1632174-01-compile_with_o2_and_ffp_contract_off_as_for_fdlibm.patch
@@ -1608,10 +1604,8 @@ sh %{SOURCE12}
 %patch573
 %patch574
 %patch575
-%patch576
 %patch577
 %patch620
-%patch622
 %patch623
 %patch624
 %patch625
@@ -2276,6 +2270,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 08 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b02-0.0.ea
+- Update to aarch64-shenandoah-jdk8u222-b02.
+- Drop 8064786/PR3599 & 8210416/RH1632174 as applied upstream (8064786 silently in 8176100).
+
 * Sun Jul 07 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b01-0.2.ea
 - Make use of Recommends and Suggests dependent on Fedora or RHEL 8+ environment.
 
