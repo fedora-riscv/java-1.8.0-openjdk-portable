@@ -217,7 +217,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b02
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b03
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1191,14 +1191,8 @@ Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # 8210761: libjsig is being compiled without optimization
 Patch620: jdk8210761-rh1632174-libjsig_is_being_compiled_without_optimization.patch
 # 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
-#          Upstream 8u part.
-Patch623: jdk8210425-rh1632174-01-compile_with_o2_and_ffp_contract_off_as_for_fdlibm.patch
-# 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
 #          Aarch64-port 8u local part
 Patch624: jdk8210425-rh1632174-02-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_aarch64.patch
-# 8210425: [x86] sharedRuntimeTrig/sharedRuntimeTrans compiled without optimization
-#          Zero part of the fix for (arm/s390 arches)
-Patch625: jdk8210425-rh1632174-03-compile_with_o2_and_ffp_contract_off_as_for_fdlibm_zero.patch
 # JDK-8223219: Backport of JDK-8199552 to OpenJDK 8 leads to duplicate -fstack-protector flags,
 #              overriding --with-extra-cflags
 Patch626: jdk8223219-fstack-protector-root.patch
@@ -1606,9 +1600,7 @@ sh %{SOURCE12}
 %patch575
 %patch577
 %patch620
-%patch623
 %patch624
-%patch625
 %patch626
 %patch627
 %patch110
@@ -2270,6 +2262,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 08 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b03-0.0.ea
+- Update to aarch64-shenandoah-jdk8u222-b03.
+- Drop 8210425 patches applied upstream. Still need to add AArch64 version in aarch64/shenandoah-jdk8u.
+- Re-generate JDK-8141570 & JDK-8143245 patches due to 8210425 zeroshark.make changes.
+
 * Mon Jul 08 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b02-0.0.ea
 - Update to aarch64-shenandoah-jdk8u222-b02.
 - Drop 8064786/PR3599 & 8210416/RH1632174 as applied upstream (8064786 silently in 8176100).

@@ -8,6 +8,7 @@
 Reviewed-by: dholmes, coleenp
 
 diff --git openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hotspot/make/linux/makefiles/zeroshark.make
+diff --git openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hotspot/make/linux/makefiles/zeroshark.make
 --- openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make
 +++ openjdk/hotspot/make/linux/makefiles/zeroshark.make
 @@ -1,5 +1,5 @@
@@ -27,8 +28,8 @@ diff --git openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hots
 -  -Wno-format-nonliteral -Wno-format-security \
 -  -Wno-maybe-uninitialized
  
- # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
- OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
+ # If FDLIBM_CFLAGS is non-empty it holds CFLAGS needed to be passed to
+ # the compiler so as to be able to produce optimized objects
 diff --git openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
 --- openjdk.orig/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
 +++ openjdk/hotspot/src/cpu/zero/vm/cppInterpreter_zero.cpp
@@ -60,7 +61,7 @@ diff --git openjdk.orig/hotspot/src/cpu/zero/vm/interpreterRT_zero.cpp openjdk/h
    switch (type) {
    case T_VOID:
      ftype = &ffi_type_void;
-diff --git a/src/os_cpu/linux_zero/vm/os_linux_zero.cpp b/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
+diff --git openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
 --- openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
 +++ openjdk/hotspot/src/os_cpu/linux_zero/vm/os_linux_zero.cpp
 @@ -1,6 +1,6 @@

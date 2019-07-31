@@ -34,9 +34,9 @@ diff --git openjdk.orig/hotspot/make/linux/makefiles/zeroshark.make openjdk/hots
 +  -Wno-format-nonliteral -Wno-format-security \
 +  -Wno-maybe-uninitialized
  
- # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
- OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)
-@@ -42,5 +49,3 @@
+ # If FDLIBM_CFLAGS is non-empty it holds CFLAGS needed to be passed to
+ # the compiler so as to be able to produce optimized objects
+@@ -48,5 +55,3 @@
  ifeq ($(ARCH_DATA_MODEL), 64)
    CFLAGS += -D_LP64=1
  endif
