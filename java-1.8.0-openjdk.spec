@@ -95,11 +95,12 @@
 %endif
 
 %if %{bootstrap_build}
-%global targets bootcycle-images docs
+%global release_targets bootcycle-images zip-docs
 %else
-%global targets all
+%global release_targets images zip-docs
 %endif
-
+# No docs nor bootcycle for debug builds
+%global debug_targets images
 
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
@@ -233,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1396,6 +1397,7 @@ The java-%{origin}-src-slowdebug sub-package contains the complete %{origin_nice
 %package javadoc
 Summary: %{origin_nice} %{majorver} API documentation
 Requires: javapackages-filesystem
+Obsoletes: javadoc-slowdebug < 1:1.8.0.222.b10-1
 BuildArch: noarch
 
 %{java_javadoc_rpo %{nil}}
@@ -1406,40 +1408,16 @@ The %{origin_nice} %{majorver} API documentation.
 
 %if %{include_normal_build}
 %package javadoc-zip
-Summary: %{origin_nice} %{majorver} API documentation compressed in single archive
+Summary: %{origin_nice} %{majorver} API documentation compressed in a single archive
 Requires: javapackages-filesystem
+Obsoletes: javadoc-zip-slowdebug < 1:1.8.0.222.b10-1
 BuildArch: noarch
 
 %{java_javadoc_rpo %{nil}}
 
 %description javadoc-zip
-The %{origin_nice} %{majorver} API documentation compressed in single archive.
+The %{origin_nice} %{majorver} API documentation compressed in a single archive.
 %endif
-
-%if %{include_debug_build}
-%package javadoc-slowdebug
-Summary: %{origin_nice} %{majorver} API documentation %{for_debug}
-Requires: javapackages-filesystem
-BuildArch: noarch
-
-%{java_javadoc_rpo -- %{debug_suffix_unquoted}}
-
-%description javadoc-slowdebug
-The %{origin_nice} %{majorver} API documentation %{for_debug}.
-%endif
-
-%if %{include_debug_build}
-%package javadoc-zip-slowdebug
-Summary: %{origin_nice} %{majorver} API documentation compressed in single archive %{for_debug}
-Requires: javapackages-filesystem
-BuildArch: noarch
-
-%{java_javadoc_rpo -- %{debug_suffix_unquoted}}
-
-%description javadoc-zip-slowdebug
-The %{origin_nice} %{majorver} API documentation compressed in single archive %{for_debug}.
-%endif
-
 
 %if %{include_normal_build}
 %package accessibility
@@ -1737,13 +1715,17 @@ bash ../../configure \
 cat spec.gmk
 cat hotspot-spec.gmk
 
+# Debug builds don't need same targets as release for
+# build speed-up
+maketargets="%{release_targets}"
+if echo $debugbuild | grep -q "debug" ; then
+  maketargets="%{debug_targets}"
+fi
 make \
     JAVAC_FLAGS=-g \
     LOG=trace \
     SCTP_WERROR= \
-    %{targets} || ( pwd; find $top_dir_abs_path -name "hs_err_pid*.log" | xargs cat && false )
-
-make zip-docs
+    $maketargets || ( pwd; find $top_dir_abs_path -name "hs_err_pid*.log" | xargs cat && false )
 
 # the build (erroneously) removes read permissions from some jars
 # this is a regression in OpenJDK 7 (our compiler):
@@ -1943,12 +1925,13 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
 
 popd
 
-
-# Install Javadoc documentation
-install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
-cp -a %{buildoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
-built_doc_archive=`echo "jdk-%{javaver}_%{updatever}%{milestone_version}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
-cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
+if ! echo $suffix | grep -q "debug" ; then
+  # Install Javadoc documentation
+  install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
+  cp -a %{buildoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
+  built_doc_archive=`echo "jdk-%{javaver}_%{updatever}%{milestone_version}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
+  cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
+fi
 
 # Install icons and menu entries
 for s in 16 24 32 48 ; do
@@ -2167,17 +2150,6 @@ require "copy_jdk_configs.lua"
 %posttrans  devel-slowdebug
 %{posttrans_devel -- %{debug_suffix_unquoted}}
 
-%post javadoc-slowdebug
-%{post_javadoc -- %{debug_suffix_unquoted}}
-
-%postun javadoc-slowdebug
-%{postun_javadoc -- %{debug_suffix_unquoted}}
-
-%post javadoc-zip-slowdebug
-%{post_javadoc_zip -- %{debug_suffix_unquoted}}
-
-%postun javadoc-zip-slowdebug
-%{postun_javadoc_zip -- %{debug_suffix_unquoted}}
 %endif
 
 %if %{include_normal_build}
@@ -2241,12 +2213,6 @@ require "copy_jdk_configs.lua"
 %files src-slowdebug
 %{files_src -- %{debug_suffix_unquoted}}
 
-%files javadoc-slowdebug
-%{files_javadoc -- %{debug_suffix_unquoted}}
-
-%files javadoc-zip-slowdebug
-%{files_javadoc_zip -- %{debug_suffix_unquoted}}
-
 %files accessibility-slowdebug
 %{files_accessibility -- %{debug_suffix_unquoted}}
 
@@ -2258,6 +2224,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jul 31 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-1
+- Obsolete javadoc-debug and javadoc-debug-zip packages via javadoc and javadoc-zip respectively.
+
+* Wed Jul 31 2019 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.222.b10-1
+- Don't produce javadoc/javadoc-zip sub packages for the debug variant build.
+- Don't perform a bootcycle build for the debug variant build.
+
 * Thu Jul 11 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-0
 - Update to aarch64-shenandoah-jdk8u222-b10.
 - Adjust PR3083/RH134640 to apply after JDK-8182999
