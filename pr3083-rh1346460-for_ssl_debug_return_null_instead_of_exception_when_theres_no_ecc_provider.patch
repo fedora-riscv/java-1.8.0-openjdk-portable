@@ -7,9 +7,21 @@
 PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Summary: Return null rather than throwing an exception when there's no ECC provider.
 
-diff -r bc6eab2038c6 -r a4541d1d8609 src/share/classes/sun/security/util/Debug.java
---- openjdk/jdk/src/share/classes/sun/security/util/Debug.java	Mon Jul 04 17:08:12 2016 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/util/Debug.java	Mon Jul 04 18:21:29 2016 +0100
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/ec/ECKeyPairGenerator.java openjdk/jdk/src/share/classes/sun/security/ec/ECKeyPairGenerator.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/ec/ECKeyPairGenerator.java
++++ openjdk/jdk/src/share/classes/sun/security/ec/ECKeyPairGenerator.java
+@@ -121,7 +121,7 @@
+     private static void ensureCurveIsSupported(ECParameterSpec ecSpec)
+         throws InvalidAlgorithmParameterException {
+ 
+-        AlgorithmParameters ecParams = ECUtil.getECParameters(null);
++        AlgorithmParameters ecParams = ECUtil.getECParameters(null, true);
+         byte[] encodedParams;
+         try {
+             ecParams.init(ecSpec);
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java openjdk/jdk/src/share/classes/sun/security/util/Debug.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/Debug.java
++++ openjdk/jdk/src/share/classes/sun/security/util/Debug.java
 @@ -73,6 +73,7 @@
          System.err.println("certpath      PKIX CertPathBuilder and");
          System.err.println("              CertPathValidator debugging");
@@ -18,9 +30,9 @@ diff -r bc6eab2038c6 -r a4541d1d8609 src/share/classes/sun/security/util/Debug.j
          System.err.println("gssloginconfig");
          System.err.println("              GSS LoginConfigImpl debugging");
          System.err.println("configfile    JAAS ConfigFile loading");
-diff -r bc6eab2038c6 -r a4541d1d8609 src/share/classes/sun/security/util/ECUtil.java
---- openjdk/jdk/src/share/classes/sun/security/util/ECUtil.java	Mon Jul 04 17:08:12 2016 +0100
-+++ openjdk/jdk/src/share/classes/sun/security/util/ECUtil.java	Mon Jul 04 18:21:29 2016 +0100
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/util/ECUtil.java openjdk/jdk/src/share/classes/sun/security/util/ECUtil.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/util/ECUtil.java
++++ openjdk/jdk/src/share/classes/sun/security/util/ECUtil.java
 @@ -41,6 +41,9 @@
  
  public class ECUtil {
@@ -34,11 +46,11 @@ diff -r bc6eab2038c6 -r a4541d1d8609 src/share/classes/sun/security/util/ECUtil.
 @@ -90,6 +93,10 @@
      }
  
-     private static AlgorithmParameters getECParameters(Provider p) {
+     public static AlgorithmParameters getECParameters(Provider p) {
 +        return getECParameters(p, false);
 +    }
 +
-+    private static AlgorithmParameters getECParameters(Provider p, boolean throwException) {
++    public static AlgorithmParameters getECParameters(Provider p, boolean throwException) {
          try {
              if (p != null) {
                  return AlgorithmParameters.getInstance("EC", p);
