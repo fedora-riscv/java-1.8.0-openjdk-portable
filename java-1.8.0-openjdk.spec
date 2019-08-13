@@ -234,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1248,19 +1248,20 @@ BuildRequires: cups-devel
 BuildRequires: desktop-file-utils
 # elfutils only are OK for build without AOT
 BuildRequires: elfutils-devel
-BuildRequires: fontconfig
+BuildRequires: fontconfig-devel
 BuildRequires: freetype-devel
 BuildRequires: giflib-devel
 BuildRequires: gcc-c++
 BuildRequires: gdb
-BuildRequires: gtk2-devel
 BuildRequires: lcms2-devel
 BuildRequires: libjpeg-devel
 BuildRequires: libpng-devel
 BuildRequires: libxslt
 BuildRequires: libX11-devel
+BuildRequires: libXext-devel
 BuildRequires: libXi-devel
 BuildRequires: libXinerama-devel
+BuildRequires: libXrender-devel
 BuildRequires: libXt-devel
 BuildRequires: libXtst-devel
 # Requirements for setting up the nss.cfg
@@ -2224,6 +2225,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Aug 08 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-2
+- Drop unnecessary build requirement on gtk2-devel, as OpenJDK searches for Gtk+ at runtime.
+- Add missing build requirements for libXext-devel and libXrender-devel, previously masked by Gtk2+ dependency.
+- fontconfig build requirement should be fontconfig-devel, previously masked by Gtk2+ dependency
+
 * Wed Jul 31 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-1
 - Obsolete javadoc-debug and javadoc-debug-zip packages via javadoc and javadoc-zip respectively.
 
