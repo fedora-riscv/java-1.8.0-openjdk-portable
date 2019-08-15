@@ -234,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -897,9 +897,6 @@ Requires: javapackages-filesystem
 Requires: tzdata-java >= 2015d
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
-# there is a need to depend on the exact version of NSS
-Requires: nss%{?_isa} %{NSS_BUILDTIME_VERSION}
-Requires: nss-softokn%{?_isa} %{NSSSOFTOKN_BUILDTIME_VERSION}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum enforce it,
 # not rpm transaction and so no configs are persisted when pure rpm -u is run. It may be
 # considered as regression
@@ -1115,20 +1112,6 @@ Patch529: rh1566890-CVE_2018_3639-speculative_store_bypass.patch
 Patch531: rh1566890-CVE_2018_3639-speculative_store_bypass_toggle.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_prims_jvm_cpp.patch
-# Support for building the SunEC provider with the system NSS installation
-# PR1983: Support using the system installation of NSS with the SunEC provider
-# PR2127: SunEC provider crashes when built using system NSS
-# PR2815: Race condition in SunEC provider with system NSS
-# PR2899: Don't use WithSeed versions of NSS functions as they don't fully process the seed
-# PR2934: SunEC provider throwing KeyException with current NSS
-# PR3479, RH1486025: ECC and NSS JVM crash
-Patch513: pr1983-rh1565658-support_using_the_system_installation_of_nss_with_the_sunec_provider_jdk8.patch
-Patch514: pr1983-rh1565658-support_using_the_system_installation_of_nss_with_the_sunec_provider_root8.patch
-Patch515: pr2127-sunec_provider_crashes_when_built_using_system_nss_thus_use_of_nss_memory_management_functions.patch
-Patch516: pr2815-race_condition_in_sunec_provider_with_system_nss_fix.patch
-Patch517: pr2899-dont_use_withseed_versions_of_nss_functions_as_they_dont_fully_process_the_seed.patch
-Patch518: pr2934-sunec_provider_throwing_keyexception_withine.separator_current_nss_thus_initialise_the_random_number_generator_and_feed_the_seed_to_it.patch
-Patch519: pr3479-rh1486025-sunec_provider_can_have_multiple_instances_leading_to_premature_nss_shutdown.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
 Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
@@ -1285,8 +1268,6 @@ BuildRequires: libffi-devel
 BuildRequires: tzdata-java >= 2015d
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
-# Build requirements for SunEC system NSS support
-BuildRequires: nss-softokn-freebl-devel >= 3.16.1
 
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
@@ -1557,13 +1538,6 @@ sh %{SOURCE12}
 %patch502
 %patch504
 %patch512
-%patch513
-%patch514
-%patch515
-%patch516
-%patch517
-%patch518
-%patch519
 %patch400
 %patch523
 %patch528
@@ -1688,8 +1662,6 @@ top_dir_abs_path=$(pwd)/%{top_level_dir_name}
 mkdir -p %{buildoutputdir -- $suffix}
 pushd %{buildoutputdir -- $suffix}
 
-NSS_LIBS="%{NSS_LIBS} -lfreebl" \
-NSS_CFLAGS="%{NSS_CFLAGS}" \
 bash ../../configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
@@ -1701,7 +1673,6 @@ bash ../../configure \
     --with-boot-jdk=/usr/lib/jvm/java-openjdk \
     --with-debug-level=$debugbuild \
     --enable-unlimited-crypto \
-    --enable-system-nss \
     --with-zlib=system \
     --with-libjpeg=system \
     --with-giflib=system \
@@ -2225,6 +2196,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Aug 15 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-3
+- Switch to in-tree SunEC code, dropping NSS runtime dependencies and patches to link against it.
+
 * Thu Aug 08 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-2
 - Drop unnecessary build requirement on gtk2-devel, as OpenJDK searches for Gtk+ at runtime.
 - Add missing build requirements for libXext-devel and libXrender-devel, previously masked by Gtk2+ dependency.
