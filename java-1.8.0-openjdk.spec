@@ -218,7 +218,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u222-b10
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u232-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -234,12 +234,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -410,7 +410,9 @@ alternatives \\
   --install %{_bindir}/javac javac %{sdkbindir -- %{?1}}/javac $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir -- %{?1}} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir -- %{?1}}/appletviewer \\
+  --slave %{_bindir}/clhsdb clhsdb %{sdkbindir -- %{?1}}/clhsdb \\
   --slave %{_bindir}/extcheck extcheck %{sdkbindir -- %{?1}}/extcheck \\
+  --slave %{_bindir}/hsdb hsdb %{sdkbindir -- %{?1}}/hsdb \\
   --slave %{_bindir}/idlj idlj %{sdkbindir -- %{?1}}/idlj \\
   --slave %{_bindir}/jar jar %{sdkbindir -- %{?1}}/jar \\
   --slave %{_bindir}/jarsigner jarsigner %{sdkbindir -- %{?1}}/jarsigner \\
@@ -589,8 +591,6 @@ exit 0
 %dir %{_jvmdir}/%{jredir -- %{?1}}
 %dir %{_jvmdir}/%{jredir -- %{?1}}/bin
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib
-%{_jvmdir}/%{jredir -- %{?1}}/bin/clhsdb
-%{_jvmdir}/%{jredir -- %{?1}}/bin/hsdb
 %{_jvmdir}/%{jredir -- %{?1}}/bin/java
 %{_jvmdir}/%{jredir -- %{?1}}/bin/jjs
 %{_jvmdir}/%{jredir -- %{?1}}/bin/keytool
@@ -1172,12 +1172,6 @@ Patch102: jdk8203030-zero_s390_31_bit_size_t_type_conflicts_in_shared_code.patch
 Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
-# 8210761: libjsig is being compiled without optimization
-Patch620: jdk8210761-rh1632174-libjsig_is_being_compiled_without_optimization.patch
-# JDK-8223219: Backport of JDK-8199552 to OpenJDK 8 leads to duplicate -fstack-protector flags,
-#              overriding --with-extra-cflags
-Patch626: jdk8223219-fstack-protector-root.patch
-Patch627: jdk8223219-fstack-protector-hotspot.patch
 
 #############################################
 #
@@ -1549,9 +1543,6 @@ sh %{SOURCE12}
 %patch574
 %patch575
 %patch577
-%patch620
-%patch626
-%patch627
 %patch110
 
 # RPM-only fixes
@@ -2196,6 +2187,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Sep 27 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b01-0.0.ea
+- Update to aarch64-shenandoah-jdk8u232-b01.
+- Switch to EA mode.
+- Drop JDK-8210761/RH1632174 as now upstream.
+- Drop JDK-8223219 as now upstream.
+- JDK-8226870 removed clhsdb and hdsdb from the JRE bin directory, so we should do likewise.
+- Add alternatives support for these two new SDK binaries.
+
 * Thu Aug 15 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.222.b10-3
 - Switch to in-tree SunEC code, dropping NSS runtime dependencies and patches to link against it.
 
