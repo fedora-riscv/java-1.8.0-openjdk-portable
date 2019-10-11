@@ -218,7 +218,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u232-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u232-b05
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1158,8 +1158,6 @@ Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binar
 Patch400: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
-# 8141570, PR3548: Fix Zero interpreter build for --disable-precompiled-headers
-Patch573: jdk8141570-pr3548-fix_zero_interpreter_build_for_disable_precompiled_headers.patch
 # 8143245, PR3548: Zero build requires disabled warnings
 Patch574: jdk8143245-pr3548-zero_build_requires_disabled_warnings.patch
 # 8197981, PR3548: Missing return statement in __sync_val_compare_and_swap_8
@@ -1539,7 +1537,6 @@ sh %{SOURCE12}
 %patch531
 %patch530
 %patch571
-%patch573
 %patch574
 %patch575
 %patch577
@@ -2187,6 +2184,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Oct 10 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b05-0.1.ea
+- Update to aarch64-shenandoah-jdk8u232-b05.
+- Drop upstreamed patch JDK-8141570/PR3548.
+- Adjust context of JDK-8143245/PR3548 to apply against upstream JDK-8141570.
+
 * Fri Sep 27 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b01-0.0.ea
 - Update to aarch64-shenandoah-jdk8u232-b01.
 - Switch to EA mode.
