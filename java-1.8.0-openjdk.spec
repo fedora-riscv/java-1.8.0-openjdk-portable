@@ -218,7 +218,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u232-b05
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u232-b05-shenandoah-merge-2019-09-09
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -234,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2184,7 +2184,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Thu Oct 10 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b05-0.1.ea
+* Fri Oct 11 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b05-0.1.ea
+- Update to aarch64-shenandoah-jdk8u232-b05-shenandoah-merge-2019-09-09.
+
+* Thu Oct 10 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.232.b05-0.0.ea
 - Update to aarch64-shenandoah-jdk8u232-b05.
 - Drop upstreamed patch JDK-8141570/PR3548.
 - Adjust context of JDK-8143245/PR3548 to apply against upstream JDK-8141570.
