@@ -218,7 +218,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u242-b04
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u242-b05
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1112,9 +1112,9 @@ Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_pr
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
 Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
 # PR3183, RH1340845: Support Fedora/RHEL8 system crypto policy
-Patch300: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
+Patch400: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
-Patch301: pr3655-toggle_system_crypto_policy.patch
+Patch401: pr3655-toggle_system_crypto_policy.patch
 # JDK-8219772: EXTRA_CFLAGS not being picked up for assembler files
 Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
 
@@ -1151,7 +1151,7 @@ Patch107: s390-8214206_fix.patch
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binary.patch
 # S8154313: Generated javadoc scattered all over the place
-Patch400: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
+Patch578: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8143245, PR3548: Zero build requires disabled warnings
@@ -1196,6 +1196,8 @@ Patch201: jdk8043805-allow_using_system_installed_libjpeg.patch
 # and should be upstreamed to the appropriate
 # trees.
 #############################################
+# JDK-8236829: JDK-8232102 backport breaks s390
+Patch301: jdk8236829-s390_shenandoah.patch
 
 #############################################
 #
@@ -1504,8 +1506,8 @@ sh %{SOURCE12}
 %patch203
 
 # System security policy fixes
-%patch300
-%patch301
+%patch400
+%patch401
 
 %patch1
 %patch3
@@ -1526,7 +1528,7 @@ sh %{SOURCE12}
 %patch502
 %patch504
 %patch512
-%patch400
+%patch578
 %patch523
 %patch528
 %patch529
@@ -1548,6 +1550,7 @@ sh %{SOURCE12}
 %endif
 
 # Shenandoah patches
+%patch301
 
 # Extract systemtap tapsets
 %if %{with_systemtap}
@@ -2179,6 +2182,13 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jan 05 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b05-0.1.ea
+- Update to aarch64-shenandoah-jdk8u242-b05.
+- Attempt to fix Shenandoah formatting failures on S390, introduced by JDK-8232102.
+- Revise b05 snapshot to include JDK-8236178.
+- Add additional Shenandoah formatting fixes revealed by successful -Wno-error=format run
+- Fix patch numbering to avoid conflicts with other versions of this spec file.
+
 * Wed Dec 04 2019 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b04-0.0.ea
 - Update to aarch64-shenandoah-jdk8u242-b04.
 
