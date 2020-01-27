@@ -1140,6 +1140,8 @@ Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 # S390 ambiguous log2_intptr calls
 Patch107: s390-8214206_fix.patch
+# JDK-8237885: GCC 10 fix redeclaration
+Patch120: jdk8236829-aarch64_macroasm_call_vm.patch
 
 #############################################
 #
@@ -1521,6 +1523,7 @@ sh %{SOURCE12}
 
 # AArch64 fixes
 %patch106
+%patch120 -p2
 
 # x86 fixes
 %patch105
@@ -1618,8 +1621,8 @@ export CFLAGS="$CFLAGS -mieee"
 
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
-EXTRA_CFLAGS="%ourcppflags -Wno-error"
-EXTRA_CPP_FLAGS="%ourcppflags"
+EXTRA_CFLAGS="%ourcppflags -Wno-error -fcommon"
+EXTRA_CPP_FLAGS="%ourcppflags -fcommon"
 # Fixes annocheck warnings in assembler files due to missing build notes
 EXTRA_CPP_FLAGS="$EXTRA_CPP_FLAGS -Wa,--generate-missing-build-notes=yes"
 EXTRA_CFLAGS="$EXTRA_CFLAGS -Wa,--generate-missing-build-notes=yes"
