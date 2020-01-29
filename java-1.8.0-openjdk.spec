@@ -998,7 +998,7 @@ Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{releas
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}.1
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2182,6 +2182,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.242.b06-0.0.ea.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
 * Tue Jan 07 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b06-0.0.ea
 - Update to aarch64-shenandoah-jdk8u242-b06 (EA)
 
