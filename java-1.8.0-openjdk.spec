@@ -879,13 +879,13 @@ Recommends: gtk2%{?_isa}
 Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
 # Standard JPackage base provides
-Provides: jre%{?1} = %{javaver}
+Provides: jre%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{origin}%{?1} = %{epoch}:%{version}-%{release}
-Provides: java%{?1} = %{epoch}:%{javaver}
+Provides: java%{?1} = %{epoch}:%{version}-%{release}
 }
 
 %define java_headless_rpo() %{expand:
@@ -914,14 +914,14 @@ Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}
 %endif
 
 # Standard JPackage base provides
-Provides: jre-headless%{?1} = %{epoch}:%{javaver}
+Provides: jre-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-headless%{?1} = %{epoch}:%{javaver}
+Provides: java-headless%{?1} = %{epoch}:%{version}-%{release}
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=1312019
 Provides: /usr/bin/jjs
@@ -938,14 +938,14 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage devel provides
-Provides: java-sdk-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}
-Provides: java-sdk-%{javaver}%{?1} = %{epoch}:%{version}
-Provides: java-sdk-%{origin}%{?1} = %{epoch}:%{version}
-Provides: java-sdk%{?1} = %{epoch}:%{javaver}
-Provides: java-%{javaver}-devel%{?1} = %{epoch}:%{version}
-Provides: java-%{javaver}-%{origin}-devel%{?1} = %{epoch}:%{version}
-Provides: java-devel-%{origin}%{?1} = %{epoch}:%{version}
-Provides: java-devel%{?1} = %{epoch}:%{javaver}
+Provides: java-sdk-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-sdk-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-sdk-%{origin}%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-sdk%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-devel%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-devel%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{origin}-devel%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-devel%{?1} = %{epoch}:%{version}-%{release}
 
 }
 
@@ -987,9 +987,9 @@ Requires: java-atk-wrapper%{?_isa}
 Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
-Provides: java-accessibility = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-accessibility = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-%{origin}-accessibility = %{epoch}:%{version}-%{release}
+Provides: java-accessibility%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-accessibility%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{release}
 
 }
 
