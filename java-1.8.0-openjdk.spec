@@ -955,6 +955,7 @@ Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
 Provides: java-demo%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-demo%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
 
@@ -978,6 +979,7 @@ Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
 # Standard JPackage sources provides
 Provides: java-src%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-src%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 }
@@ -988,6 +990,7 @@ Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
 Provides: java-accessibility%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-accessibility%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{release}
 
