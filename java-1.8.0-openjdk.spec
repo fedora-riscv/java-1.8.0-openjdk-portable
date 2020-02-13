@@ -1619,10 +1619,11 @@ export ARCH_DATA_MODEL=64
 export CFLAGS="$CFLAGS -mieee"
 %endif
 
+GCC_10_OPT_DISABLE="-fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-slp-vectorize -fno-tree-slsr -fno-tree-sra -fno-tree-switch-conversion -fno-tree-tail-merge -fno-tree-ter -fno-tree-vrp -fno-unit-at-a-time -fno-unswitch-loops -fno-vect-cost-model -fno-version-loops-for-strides -fno-tree-coalesce-vars -fno-tree-copy-prop -fno-tree-dce -fno-tree-dominator-opts -fno-tree-dse -fno-tree-forwprop -fno-tree-fre -fno-tree-loop-distribute-patterns -fno-tree-loop-distribution -fno-tree-loop-vectorize -fno-tree-partial-pre -fno-tree-phiprop -fno-tree-pre"
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
-EXTRA_CFLAGS="%ourcppflags -Wno-error -fcommon"
-EXTRA_CPP_FLAGS="%ourcppflags -fcommon"
+EXTRA_CFLAGS="%ourcppflags -Wno-error -fcommon $GCC_10_OPT_DISABLE"
+EXTRA_CPP_FLAGS="%ourcppflags -fcommon $GCC_10_OPT_DISABLE"
 # Fixes annocheck warnings in assembler files due to missing build notes
 EXTRA_CPP_FLAGS="$EXTRA_CPP_FLAGS -Wa,--generate-missing-build-notes=yes"
 EXTRA_CFLAGS="$EXTRA_CFLAGS -Wa,--generate-missing-build-notes=yes"
