@@ -1143,8 +1143,9 @@ Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 # S390 ambiguous log2_intptr calls
 Patch107: s390-8214206_fix.patch
-# JDK-8237885: GCC 10 fix redeclaration
-Patch120: jdk8236829-aarch64_macroasm_call_vm.patch
+# JDK-8224851: AArch64: fix warnings and errors with Clang and GCC 8.3
+# GCC 10 fix for redeclaration
+Patch120: jdk8224851-aarch64_macroasm_call_vm.patch
 
 #############################################
 #
