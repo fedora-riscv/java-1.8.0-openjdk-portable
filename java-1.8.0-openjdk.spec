@@ -1120,6 +1120,9 @@ Patch400: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 Patch401: pr3655-toggle_system_crypto_policy.patch
 # JDK-8219772: EXTRA_CFLAGS not being picked up for assembler files
 Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
+# JDK-8218811: replace open by os::open in hotspot coding
+# This fixes a GCC 10 build issue
+Patch111: jdk8218811-perfMemory_linux.patch
 
 #############################################
 #
@@ -1543,6 +1546,7 @@ sh %{SOURCE12}
 %patch575
 %patch577
 %patch110
+%patch111
 
 # RPM-only fixes
 %patch539
