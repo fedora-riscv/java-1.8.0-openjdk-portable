@@ -234,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2191,7 +2191,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Wed Jan 29 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b07-0
+* Wed Mar 04 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.242.b07-0.1.ea
+- Add work-arounds for GCC 10 build issues. See RHBZ#1795268.
+
+* Wed Jan 29 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b07-0.0.ea
 - Update to aarch64-shenandoah-jdk8u242-b07.
 - Remove Shenandoah S390 patch which is now included upstream as JDK-8236829.
 
