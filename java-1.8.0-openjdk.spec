@@ -1145,7 +1145,7 @@ Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 Patch107: s390-8214206_fix.patch
 # JDK-8224851: AArch64: fix warnings and errors with Clang and GCC 8.3
 # GCC 10 fix for redeclaration
-Patch120: jdk8224851-aarch64_macroasm_call_vm.patch
+Patch120: jdk8224851-aarch64_fix_warnings_and_errors_GCC_8_3.patch
 
 #############################################
 #
@@ -1527,7 +1527,7 @@ sh %{SOURCE12}
 
 # AArch64 fixes
 %patch106
-%patch120 -p2
+%patch120
 
 # x86 fixes
 %patch105
