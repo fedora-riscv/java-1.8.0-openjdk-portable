@@ -224,7 +224,7 @@
 %global repo            %{shenandoah_repo}
 %global revision        %{shenandoah_revision}
 # Define IcedTea version used for SystemTap tapsets and desktop files
-%global icedteaver      3.11.0
+%global icedteaver      3.15.0
 
 # e.g. aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30 -> aarch64-shenandoah-jdk8u212-b04
 %global version_tag     %(VERSION=%{revision}; echo ${VERSION%%-shenandoah-merge*})
@@ -234,7 +234,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1595,10 +1595,10 @@ for file in %{SOURCE9} %{SOURCE10} ; do
     EXT="${FILE##*.}"
     NAME="${FILE%.*}"
     OUTPUT_FILE=$NAME$suffix.$EXT
-    sed    -e  "s:_BINDIR_:%{sdkbindir -- $suffix}:g" $file > $OUTPUT_FILE
+    sed    -e  "s:_SDKBINDIR_:%{sdkbindir -- $suffix}:g" $file > $OUTPUT_FILE
     sed -i -e  "s:_JREBINDIR_:%{jrebindir -- $suffix}:g" $OUTPUT_FILE
-    sed -i -e  "s:@target_cpu@:%{version}-%{release}.%{_arch}$suffix:g" $OUTPUT_FILE
-    sed -i -e  "s:@OPENJDK_VER@:%{javaver}:g" $OUTPUT_FILE
+    sed -i -e  "s:@target_cpu@:%{_arch}:g" $OUTPUT_FILE
+    sed -i -e  "s:@OPENJDK_VER@:%{version}-%{release}.%{_arch}$suffix:g" $OUTPUT_FILE
     sed -i -e  "s:@JAVA_VER@:%{javaver}:g" $OUTPUT_FILE
     sed -i -e  "s:@JAVA_VENDOR@:%{origin}:g" $OUTPUT_FILE
 done
@@ -2191,6 +2191,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Mar 13 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-1
+- Sync SystemTap & desktop files with upstream IcedTea release 3.15.0, removing previous workarounds
+
 * Wed Mar 11 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-0
 - Update to aarch64-shenandoah-jdk8u242-b08.
 - Switch to GA mode for final release.

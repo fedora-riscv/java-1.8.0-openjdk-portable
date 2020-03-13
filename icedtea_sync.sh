@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-ICEDTEA_VERSION=3.11.0
+ICEDTEA_VERSION=3.15.0
 ICEDTEA_URL=https://icedtea.classpath.org/download/source
 ICEDTEA_SIGNING_KEY=CFDA0F9B35964222
 
@@ -88,11 +88,6 @@ ${TAR} xJf icedtea-${ICEDTEA_VERSION}.tar.xz \
 echo "Replacing desktop files...";
 mv -v icedtea-${ICEDTEA_VERSION}/jconsole.desktop.in .
 mv -v icedtea-${ICEDTEA_VERSION}/policytool.desktop.in .
-
-echo "Adding temporary fix to policytool.desktop (PR3718)";
-sed -i 's#Development#Settings#' policytool.desktop.in
-echo "Adding temporary fix to policytool.desktop (PR3719)";
-sed -i 's#_BINDIR_#_JREBINDIR_#' policytool.desktop.in
 
 echo "Creating new tapset tarball...";
 mv -v icedtea-${ICEDTEA_VERSION} openjdk
