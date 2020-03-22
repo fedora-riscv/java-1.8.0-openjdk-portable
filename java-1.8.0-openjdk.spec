@@ -94,11 +94,8 @@
 %global bootstrap_build 1
 %endif
 
-%if %{bootstrap_build}
-%global release_targets bootcycle-images zip-docs
-%else
+%global bootstrap_targets images
 %global release_targets images zip-docs
-%endif
 # No docs nor bootcycle for debug builds
 %global debug_targets images
 
@@ -262,7 +259,7 @@
 # images stub
 %global jdkimage       j2sdk-image
 # output dir stub
-%define buildoutputdir() %{expand:%{top_level_dir_name}/build/jdk8.build%{?1}}
+%define buildoutputdir() %{expand:build/jdk8.build%{?1}}
 # we can copy the javadoc to not arched dir, or make it not noarch
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
 # main id and dir of this jdk
@@ -1646,21 +1643,20 @@ export EXTRA_CFLAGS
  bash ./autogen.sh
 )
 
-for suffix in %{build_loop} ; do
-if [ "x$suffix" = "x" ] ; then
-  debugbuild=release
-else
-  # change --something to something
-  debugbuild=`echo $suffix  | sed "s/-//g"`
-fi
+function buildjdk() {
+    local outputdir=${1}
+    local buildjdk=${2}
+    local maketargets=${3}
+    local debuglevel=${4}
 
-# Variable used in hs_err hook on build failures
-top_dir_abs_path=$(pwd)/%{top_level_dir_name}
+    local top_srcdir_abs_path=$(pwd)/%{top_level_dir_name}
+    # Variable used in hs_err hook on build failures
+    local top_builddir_abs_path=$(pwd)/${outputdir}
 
-mkdir -p %{buildoutputdir -- $suffix}
-pushd %{buildoutputdir -- $suffix}
+    mkdir -p ${outputdir}
+    pushd ${outputdir}
 
-bash ../../configure \
+    bash ${top_srcdir_abs_path}/configure \
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
 %endif
@@ -1668,8 +1664,8 @@ bash ../../configure \
     --with-milestone=%{milestone} \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
-    --with-boot-jdk=/usr/lib/jvm/java-openjdk \
-    --with-debug-level=$debugbuild \
+    --with-boot-jdk=${buildjdk} \
+    --with-debug-level=${debuglevel} \
     --enable-unlimited-crypto \
     --with-zlib=system \
     --with-libjpeg=system \
@@ -1682,8 +1678,44 @@ bash ../../configure \
     --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
-cat spec.gmk
-cat hotspot-spec.gmk
+    cat spec.gmk
+    cat hotspot-spec.gmk
+
+    make \
+	JAVAC_FLAGS=-g \
+	LOG=trace \
+	SCTP_WERROR= \
+	${maketargets} || ( pwd; find ${top_srcdir_abs_path} ${top_builddir_abs_path} -name "hs_err_pid*.log" | xargs cat && false )
+
+    # the build (erroneously) removes read permissions from some jars
+    # this is a regression in OpenJDK 7 (our compiler):
+    # http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
+    find images/%{jdkimage} -iname '*.jar' -exec chmod ugo+r {} \;
+    chmod ugo+r images/%{jdkimage}/lib/ct.sym
+
+    # remove redundant *diz and *debuginfo files
+    find images/%{jdkimage} -iname '*.diz' -exec rm -v {} \;
+    find images/%{jdkimage} -iname '*.debuginfo' -exec rm -v {} \;
+
+    # Build screws up permissions on binaries
+    # https://bugs.openjdk.java.net/browse/JDK-8173610
+    find images/%{jdkimage} -iname '*.so' -exec chmod +x {} \;
+    find images/%{jdkimage}/bin/ -exec chmod +x {} \;
+
+    popd >& /dev/null
+}
+
+for suffix in %{build_loop} ; do
+if [ "x$suffix" = "x" ] ; then
+  debugbuild=release
+else
+  # change --something to something
+  debugbuild=`echo $suffix  | sed "s/-//g"`
+fi
+
+systemjdk=/usr/lib/jvm/java-openjdk
+builddir=%{buildoutputdir -- $suffix}
+bootbuilddir=boot${builddir}
 
 # Debug builds don't need same targets as release for
 # build speed-up
@@ -1691,28 +1723,14 @@ maketargets="%{release_targets}"
 if echo $debugbuild | grep -q "debug" ; then
   maketargets="%{debug_targets}"
 fi
-make \
-    JAVAC_FLAGS=-g \
-    LOG=trace \
-    SCTP_WERROR= \
-    $maketargets || ( pwd; find $top_dir_abs_path -name "hs_err_pid*.log" | xargs cat && false )
 
-# the build (erroneously) removes read permissions from some jars
-# this is a regression in OpenJDK 7 (our compiler):
-# http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=1437
-find images/%{jdkimage} -iname '*.jar' -exec chmod ugo+r {} \;
-chmod ugo+r images/%{jdkimage}/lib/ct.sym
-
-# remove redundant *diz and *debuginfo files
-find images/%{jdkimage} -iname '*.diz' -exec rm {} \;
-find images/%{jdkimage} -iname '*.debuginfo' -exec rm {} \;
-
-# Build screws up permissions on binaries
-# https://bugs.openjdk.java.net/browse/JDK-8173610
-find images/%{jdkimage} -iname '*.so' -exec chmod +x {} \;
-find images/%{jdkimage}/bin/ -exec chmod +x {} \;
-
-popd >& /dev/null
+if %{bootstrap_build}
+buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
+buildjdk ${builddir} $(pwd)/${bootbuilddir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
+rm -rf ${bootbuilddir}
+%else
+buildjdk ${builddir} ${systemjdk} "${maketargets}" ${debugbuild}
+%endif
 
 # Install nss.cfg right away as we will be using the JRE above
 export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
@@ -2194,6 +2212,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Mar 22 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-2
+- Restructure the build so a minimal initial build is then used for the final build (with docs)
+- This reduces pressure on the system JDK and ensures the JDK being built can do a full build
+- Resolves: rhbz#1813550
+
 * Fri Mar 20 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-2
 - Backport JDK-8241296 to fix segfaults when active_handles is NULL
 - Resolves: rhbz#1813550
