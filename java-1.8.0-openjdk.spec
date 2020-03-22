@@ -1724,7 +1724,7 @@ if echo $debugbuild | grep -q "debug" ; then
   maketargets="%{debug_targets}"
 fi
 
-if %{bootstrap_build}
+%if %{bootstrap_build}
 buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
 buildjdk ${builddir} $(pwd)/${bootbuilddir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
 rm -rf ${bootbuilddir}
@@ -2212,6 +2212,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Mar 22 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-2
+- Replace Bash 'if' with rpm '%if'
+- Resolves: rhbz#1813550
+
 * Sun Mar 22 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-2
 - Restructure the build so a minimal initial build is then used for the final build (with docs)
 - This reduces pressure on the system JDK and ensures the JDK being built can do a full build
