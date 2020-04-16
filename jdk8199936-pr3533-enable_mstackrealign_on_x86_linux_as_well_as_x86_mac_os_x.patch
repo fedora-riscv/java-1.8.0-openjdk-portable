@@ -10,7 +10,7 @@ Summary: Enable -mstackrealign on x86 Linux as well as x86 Mac OS X
 diff --git openjdk.orig///common/autoconf/flags.m4 openjdk///common/autoconf/flags.m4
 --- openjdk.orig///common/autoconf/flags.m4
 +++ openjdk///common/autoconf/flags.m4
-@@ -389,6 +389,21 @@
+@@ -402,6 +402,21 @@
      AC_SUBST($2CXXSTD_CXXFLAG)
    fi
  
@@ -44,11 +44,11 @@ diff --git openjdk.orig///common/autoconf/hotspot-spec.gmk.in openjdk///common/a
 +				   $(REALIGN_CFLAG)
  EXTRA_CXXFLAGS=@LEGACY_EXTRA_CXXFLAGS@
  EXTRA_LDFLAGS=@LEGACY_EXTRA_LDFLAGS@
- 
+ EXTRA_ASFLAGS=@LEGACY_EXTRA_ASFLAGS@
 diff --git openjdk.orig///common/autoconf/spec.gmk.in openjdk///common/autoconf/spec.gmk.in
 --- openjdk.orig///common/autoconf/spec.gmk.in
 +++ openjdk///common/autoconf/spec.gmk.in
-@@ -334,6 +334,7 @@
+@@ -366,6 +366,7 @@
  
  NO_DELETE_NULL_POINTER_CHECKS_CFLAG=@NO_DELETE_NULL_POINTER_CHECKS_CFLAG@
  NO_LIFETIME_DSE_CFLAG=@NO_LIFETIME_DSE_CFLAG@

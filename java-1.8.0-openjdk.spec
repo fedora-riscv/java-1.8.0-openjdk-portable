@@ -229,7 +229,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u242-b08
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u252-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -245,12 +245,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1129,13 +1129,12 @@ Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_jav
 Patch400: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
 Patch401: pr3655-toggle_system_crypto_policy.patch
-# JDK-8219772: EXTRA_CFLAGS not being picked up for assembler files
-Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
 # JDK-8218811: replace open by os::open in hotspot coding
 # This fixes a GCC 10 build issue
 Patch111: jdk8218811-perfMemory_linux.patch
 # JDK-8241296: Segfault in JNIHandleBlock::oops_do()
 Patch112: jdk8241296-jnihandleblock_segfault.patch
+# JDK-8244461: [JDK 8u] Build fails with glibc 2.32
 Patch113: jdk8244461-remove_unused_sysctl.h.patch
 
 #############################################
@@ -1568,7 +1567,6 @@ sh %{SOURCE12}
 %patch574
 %patch575
 %patch577
-%patch110
 %patch111
 %patch112
 %patch113
@@ -1653,15 +1651,14 @@ GCC_10_OPT_DISABLE="-fno-tree-pta -fno-tree-scev-cprop -fno-tree-sink -fno-tree-
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
 EXTRA_CFLAGS="%ourcppflags -Wno-error -fcommon $GCC_10_OPT_DISABLE"
 EXTRA_CPP_FLAGS="%ourcppflags -fcommon $GCC_10_OPT_DISABLE"
-# Fixes annocheck warnings in assembler files due to missing build notes
-EXTRA_CPP_FLAGS="$EXTRA_CPP_FLAGS -Wa,--generate-missing-build-notes=yes"
-EXTRA_CFLAGS="$EXTRA_CFLAGS -Wa,--generate-missing-build-notes=yes"
 
 %ifarch %{power64} ppc
 # fix rpmlint warnings
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-strict-aliasing"
 %endif
-export EXTRA_CFLAGS
+
+EXTRA_ASFLAGS="${EXTRA_CFLAGS} -Wa,--generate-missing-build-notes=yes"
+export EXTRA_CFLAGS EXTRA_ASFLAGS
 
 (cd %{top_level_dir_name}/common/autoconf
  bash ./autogen.sh
@@ -1699,6 +1696,7 @@ function buildjdk() {
     --with-stdc++lib=dynamic \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
+    --with-extra-asflags="$EXTRA_ASFLAGS" \
     --with-extra-ldflags="%{ourldflags}" \
     --with-num-cores="$NUM_PROC"
 
@@ -2236,6 +2234,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu May 07 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b01-0.0.ea
+- Update to aarch64-shenandoah-jdk8u252-b01.
+- Switch to EA mode.
+- Adjust JDK-8199936/PR3533 patch following JDK-8227397 configure change
+- Make use of --with-extra-asflags introduced in jdk8u252-b01.
+
 * Tue May 05 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.242.b08-4
 - Add patch for JDK-8244461 so as to fix sys/sysctl.h removal
   in upcoming glibc 2.32
