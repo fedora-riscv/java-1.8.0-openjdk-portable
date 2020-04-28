@@ -53,6 +53,25 @@
 %global build_loop1 %{nil}
 %endif
 
+# We have hardcoded list of files, which  is appearing in alternatives, and in files
+# in alternatives those are slaves and master, very often triplicated by man pages
+# in files all masters and slaves are ghosted
+# the ghosts are here to allow installation via query like `dnf install /usr/bin/java`
+# you can list those files, with appropriate sections: cat *.spec | grep -e --install -e --slave -e post_ 
+# TODO - fix those hardcoded lists via single list
+# those files ,must *NOT* be ghosted for *slowdebug* packages
+# FIXME - if you are moving jshell or jlink or simialr, always modify all three sections
+# you can check via headless and devels:
+#    rpm -ql --noghost java-11-openjdk-headless-11.0.1.13-8.fc29.x86_64.rpm  | grep bin
+# == rpm -ql           java-11-openjdk-headless-slowdebug-11.0.1.13-8.fc29.x86_64.rpm  | grep bin
+# != rpm -ql           java-11-openjdk-headless-11.0.1.13-8.fc29.x86_64.rpm  | grep bin
+# similarly for other %%{_jvmdir}/{jre,java} and %%{_javadocdir}/{java,java-zip}
+%define is_release_build() %( if [ "%{?1}" == "%{debug_suffix_unquoted}" ]; then echo "0" ; else echo "1"; fi )
+
+# while JDK is a techpreview(is_system_jdk=0), some provides are turned off. Once jdk stops to be an techpreview, move it to 1
+# as sytem JDK, we mean any JDK which can run whole system java stack without issues (like bytecode issues, module issues, dependencies...)
+%global is_system_jdk 1
+
 %global aarch64         aarch64 arm64 armv8
 # we need to distinguish between big and little endian PPC64
 %global ppc64le         ppc64le
@@ -128,17 +147,6 @@
 # this is workaround for processing of requires during srpm creation
 %global NSSSOFTOKN_BUILDTIME_VERSION %(if [ "x%{NSSSOFTOKN_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSSSOFTOKN_BUILDTIME_NUMBER}" ;fi)
 %global NSS_BUILDTIME_VERSION %(if [ "x%{NSS_BUILDTIME_NUMBER}" == "x" ] ; then echo "" ;else echo ">= %{NSS_BUILDTIME_NUMBER}" ;fi)
-
-
-# Fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349.
-# See also https://bugzilla.redhat.com/show_bug.cgi?id=1590796
-# as to why some libraries *cannot* be excluded. In particular,
-# these are:
-# libjsig.so, libjava.so, libjawt.so, libjvm.so and libverify.so
-%global _privatelibs libatk-wrapper[.]so.*|libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
-
-%global __provides_exclude ^(%{_privatelibs})$
-%global __requires_exclude ^(%{_privatelibs})$
 
 # In some cases, the arch used by the JDK does
 # not match _arch.
@@ -252,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -269,8 +277,13 @@
 %global extraver .%{milestone}
 %global eaprefix 0.
 %endif
-# priority must be 7 digits in total. The expression is workarounding tip
-%global priority        %(TIP=1800%{updatever};  echo ${TIP/tip/999})
+# priority must be 7 digits in total; up to openjdk 1.8
+%if %is_system_jdk
+%global priority        1800%{updatever}
+%else
+# for techpreview, using 1, so slowdebugs can have 0
+%global priority        0000001
+%endif
 
 %global javaver         1.%{majorver}.0
 
@@ -302,6 +315,24 @@
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
 # main id and dir of this jdk
 %define uniquesuffix()        %{expand:%{fullversion}.%{_arch}%{?1}}
+
+# fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
+#         https://bugzilla.redhat.com/show_bug.cgi?id=1590796#c14
+#         https://bugzilla.redhat.com/show_bug.cgi?id=1655938
+%global _privatelibs libatk-wrapper[.]so.*|libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
+%global _publiclibs libjawt[.]so.*|libjava[.]so.*|libjvm[.]so.*|libverify[.]so.*|libjsig[.]so.*
+%if %is_system_jdk
+%global __provides_exclude ^(%{_privatelibs})$
+%global __requires_exclude ^(%{_privatelibs})$
+# Never generate lib-style provides/requires for slowdebug packages
+%global __provides_exclude_from ^.*/%{uniquesuffix -- %{debug_suffix_unquoted}}/.*$
+%global __requires_exclude_from ^.*/%{uniquesuffix -- %{debug_suffix_unquoted}}/.*$
+%else
+# Don't generate provides/requires for JDK provided shared libraries at all.
+%global __provides_exclude ^(%{_privatelibs}|%{_publiclibs})$
+%global __requires_exclude ^(%{_privatelibs}|%{_publiclibs})$
+%endif
+
 
 %global etcjavasubdir     %{_sysconfdir}/java/java-%{javaver}-%{origin}
 %define etcjavadir()      %{expand:%{etcjavasubdir}/%{uniquesuffix -- %{?1}}}
@@ -610,6 +641,11 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/jre/lib/%{archinstall}/libawt_xawt.so
 %{_jvmdir}/%{sdkdir -- %{?1}}/jre/lib/%{archinstall}/libjawt.so
 %{_jvmdir}/%{sdkdir -- %{?1}}/jre/bin/policytool
+%if %is_system_jdk
+%if %{is_release_build -- %{?1}}
+%ghost %{_bindir}/policytool
+%endif
+%endif
 }
 
 
@@ -771,6 +807,22 @@ exit 0
 %ifarch %{jfr_arches}
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/jfr
 %endif
+%if %is_system_jdk
+%if %{is_release_build -- %{?1}}
+%ghost %{_bindir}/java
+%ghost %{_jvmdir}/jre
+# https://bugzilla.redhat.com/show_bug.cgi?id=1312019
+%ghost %{_bindir}/jjs
+%ghost %{_bindir}/keytool
+%ghost %{_bindir}/orbd
+%ghost %{_bindir}/pack200
+%ghost %{_bindir}/rmid
+%ghost %{_bindir}/rmiregistry
+%ghost %{_bindir}/servertool
+%ghost %{_bindir}/tnameserv
+%ghost %{_bindir}/unpack200
+%endif
+%endif
 }
 
 %define files_devel() %{expand:
@@ -876,6 +928,58 @@ exit 0
 %dir %{tapsetdir}
 %{tapsetdir}/*%{_arch}%{?1}.stp
 %endif
+%if %is_system_jdk
+%if %{is_release_build -- %{?1}}
+%ghost %{_jvmdir}/java
+%ghost %{_bindir}/appletviewer
+%ghost %{_bindir}/clhsdb
+%ghost %{_bindir}/extcheck
+%ghost %{_bindir}/hsdb
+%ghost %{_bindir}/idlj
+%ghost %{_bindir}/jar
+%ghost %{_bindir}/jarsigner
+%ghost %{_bindir}/java
+%ghost %{_bindir}/java-rmi.cgi
+%ghost %{_bindir}/javac
+%ghost %{_bindir}/javadoc
+%ghost %{_bindir}/javah
+%ghost %{_bindir}/javap
+%ghost %{_bindir}/jcmd
+%ghost %{_bindir}/jconsole
+%ghost %{_bindir}/jdb
+%ghost %{_bindir}/jdeps
+%ghost %{_bindir}/jhat
+%ghost %{_bindir}/jinfo
+%ghost %{_bindir}/jjs
+%ghost %{_bindir}/jmap
+%ghost %{_bindir}/jps
+%ghost %{_bindir}/jrunscript
+%ghost %{_bindir}/jsadebugd
+%ghost %{_bindir}/jstack
+%ghost %{_bindir}/jstat
+%ghost %{_bindir}/jstatd
+%ghost %{_bindir}/keytool
+%ghost %{_bindir}/native2ascii
+%ghost %{_bindir}/orbd
+%ghost %{_bindir}/pack200
+%ghost %{_bindir}/policytool
+%ghost %{_bindir}/rmic
+%ghost %{_bindir}/rmid
+%ghost %{_bindir}/rmiregistry
+%ghost %{_bindir}/schemagen
+%ghost %{_bindir}/serialver
+%ghost %{_bindir}/servertool
+%ghost %{_bindir}/tnameserv
+%ghost %{_bindir}/unpack200
+%ghost %{_bindir}/wsgen
+%ghost %{_bindir}/wsimport
+%ghost %{_bindir}/xjc
+%endif
+%endif
+}
+
+%define files_jmods() %{expand:
+%{_jvmdir}/%{sdkdir -- %{?1}}/jmods
 }
 
 %define files_demo() %{expand:
@@ -893,12 +997,22 @@ exit 0
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}
 %license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
+%if %is_system_jdk
+%if %{is_release_build -- %{?1}}
+%ghost %{_javadocdir}/java
+%endif
+%endif
 }
 
 %define files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip
 %license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
+%if %is_system_jdk
+%if %{is_release_build -- %{?1}}
+%ghost %{_javadocdir}/java-zip
+%endif
+%endif
 }
 
 %define files_accessibility() %{expand:
@@ -925,13 +1039,15 @@ Recommends: gtk2%{?_isa}
 Provides: java-%{javaver}-%{origin} = %{epoch}:%{version}-%{release}
 
 # Standard JPackage base provides
-Provides: jre%{?1} = %{epoch}:%{version}-%{release}
-Provides: jre-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
+%if %is_system_jdk
 Provides: java-%{origin}%{?1} = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java%{?1} = %{epoch}:%{version}-%{release}
+Provides: jre%{?1} = %{epoch}:%{version}-%{release}
+%endif
 }
 
 %define java_headless_rpo() %{expand:
@@ -960,18 +1076,16 @@ Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}
 %endif
 
 # Standard JPackage base provides
-Provides: jre-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
-Provides: jre-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: jre-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-headless%{?1} = %{epoch}:%{version}-%{release}
+%if %is_system_jdk
 Provides: java-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
+Provides: jre-%{origin}-headless%{?1} = %{epoch}:%{version}-%{release}
+Provides: jre-headless%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-headless%{?1} = %{epoch}:%{version}-%{release}
-
-# https://bugzilla.redhat.com/show_bug.cgi?id=1312019
-Provides: /usr/bin/jjs
-
+%endif
 }
 
 %define java_devel_rpo() %{expand:
@@ -986,25 +1100,25 @@ Requires(postun): %{_sbindir}/alternatives
 # Standard JPackage devel provides
 Provides: java-sdk-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-sdk-%{javaver}%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-sdk-%{origin}%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-sdk%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-devel%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-devel%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{origin}-devel%{?1} = %{epoch}:%{version}-%{release}
+%if %is_system_jdk
+Provides: java-devel-%{origin}%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-sdk-%{origin}%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-devel%{?1} = %{epoch}:%{version}-%{release}
-
+Provides: java-sdk%{?1} = %{epoch}:%{version}-%{release}
+%endif
 }
-
 
 %define java_demo_rpo() %{expand:
 Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
-Provides: java-demo%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-demo%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
-
+%if %is_system_jdk
+Provides: java-demo%{?1} = %{epoch}:%{version}-%{release}
+%endif
 }
 
 %define java_javadoc_rpo() %{expand:
@@ -1015,19 +1129,22 @@ Requires(post):   %{_sbindir}/alternatives
 Requires(postun): %{_sbindir}/alternatives
 
 # Standard JPackage javadoc provides
-Provides: java-javadoc%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-javadoc%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-javadoc%{?1} = %{epoch}:%{version}-%{release}
+%if %is_system_jdk
+Provides: java-javadoc%{?1} = %{epoch}:%{version}-%{release}
+%endif
 }
 
 %define java_src_rpo() %{expand:
 Requires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 
 # Standard JPackage sources provides
-Provides: java-src%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-src%{?1} = %{epoch}:%{version}-%{release}
 Provides: java-%{javaver}-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
+%if %is_system_jdk
+Provides: java-src%{?1} = %{epoch}:%{version}-%{release}
+%endif
 }
 
 %define java_accessibility_rpo() %{expand:
@@ -1659,7 +1776,6 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
 
 %build
-
 # How many CPU's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
@@ -2274,6 +2390,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Jul 09 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.262.b05-0.1.ea
+- prepared to become non system jdk soon, by backporting is_system_jdk patch from jdk11
+- Added is_system_jdk variable, but left it on 1, used that variable where neessary
+
 * Tue Jul 07 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b05-0.0.ea
 - Update to aarch64-shenandoah-jdk8u262-b05.
 
