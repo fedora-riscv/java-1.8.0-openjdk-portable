@@ -245,7 +245,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1136,6 +1136,7 @@ Patch110: jdk8219772-extra_c_cxx_flags_not_picked_for_assembler_source.patch
 Patch111: jdk8218811-perfMemory_linux.patch
 # JDK-8241296: Segfault in JNIHandleBlock::oops_do()
 Patch112: jdk8241296-jnihandleblock_segfault.patch
+Patch113: jdk8244461-remove_unused_sysctl.h.patch
 
 #############################################
 #
@@ -1570,6 +1571,7 @@ sh %{SOURCE12}
 %patch110
 %patch111
 %patch112
+%patch113
 
 # RPM-only fixes
 %patch539
@@ -2234,6 +2236,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue May 05 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.242.b08-4
+- Add patch for JDK-8244461 so as to fix sys/sysctl.h removal
+  in upcoming glibc 2.32
+
 * Tue Mar 24 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.242.b08-3
 - Introduce stapinstall variable to set SystemTap arch directory correctly (e.g. arm64 on aarch64)
 - Include support for noarch for when koji creates source RPMs
