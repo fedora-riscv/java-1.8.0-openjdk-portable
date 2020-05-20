@@ -204,7 +204,7 @@
 
 %ifarch %{ix86} x86_64
 %global with_openjfx_binding 1
-%global openjfx_path %{_jvmdir}/openjfx
+%global openjfx_path %{_jvmdir}/openjfx8
 # links src directories
 %global jfx_jre_libs_dir %{openjfx_path}/rt/lib
 %global jfx_jre_native_dir %{jfx_jre_libs_dir}/%{archinstall}
@@ -245,7 +245,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1445,7 +1445,7 @@ See normal java-%{version}-openjdk-accessibility description.
 %package openjfx
 Summary: OpenJDK x OpenJFX connector. This package adds symliks finishing Java FX integration to %{name}
 Requires: %{name}%{?_isa} = %{epoch}:%{version}-%{release}
-Requires: openjfx%{?_isa}
+Requires: openjfx8%{?_isa}
 Provides: javafx  = %{epoch}:%{version}-%{release}
 %description openjfx
 Set of links from OpenJDK (jre) to OpenJFX
@@ -1453,7 +1453,7 @@ Set of links from OpenJDK (jre) to OpenJFX
 %package openjfx-devel
 Summary: OpenJDK x OpenJFX connector for FX developers. This package adds symliks finishing Java FX integration to %{name}-devel
 Requires: %{name}-devel%{?_isa} = %{epoch}:%{version}-%{release}
-Requires: openjfx-devel%{?_isa}
+Requires: openjfx8-devel%{?_isa}
 Provides: javafx-devel = %{epoch}:%{version}-%{release}
 %description openjfx-devel
 Set of links from OpenJDK (sdk) to OpenJFX
@@ -1462,7 +1462,7 @@ Set of links from OpenJDK (sdk) to OpenJFX
 %package openjfx-slowdebug
 Summary: OpenJDK x OpenJFX connector %{for_debug}. his package adds symliks finishing Java FX integration to %{name}-slowdebug
 Requires: %{name}-slowdebug%{?_isa} = %{epoch}:%{version}-%{release}
-Requires: openjfx%{?_isa}
+Requires: openjfx8%{?_isa}
 Provides: javafx-slowdebug = %{epoch}:%{version}-%{release}
 %description openjfx-slowdebug
 Set of links from OpenJDK-slowdebug (jre) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
@@ -1470,7 +1470,7 @@ Set of links from OpenJDK-slowdebug (jre) to normal OpenJFX. OpenJFX do not supp
 %package openjfx-devel-slowdebug
 Summary: OpenJDK x OpenJFX connector for FX developers %{for_debug}. This package adds symliks finishing Java FX integration to %{name}-devel-slowdebug
 Requires: %{name}-devel-slowdebug%{?_isa} = %{epoch}:%{version}-%{release}
-Requires: openjfx-devel%{?_isa}
+Requires: openjfx8-devel%{?_isa}
 Provides: javafx-devel-slowdebug = %{epoch}:%{version}-%{release}
 %description openjfx-devel-slowdebug
 Set of links from OpenJDK-slowdebug (sdk) to normal OpenJFX. OpenJFX do not support debug buuilds of itself
@@ -2236,6 +2236,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed May 20 2020 Nicolas De Amicis <deamicis@bluewin.ch> - 1:1.8.0.252.b01-0.2.ea
+- Switch package openjfx from openjfx to openjfx8
+
 * Sun May 17 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b01-0.1.ea
 - Backport JDK-8233880 to fix version detection of GCC 10.
 - Remove compiler flags used to disable GCC optimisations. This is now
