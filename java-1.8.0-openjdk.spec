@@ -245,7 +245,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1047,7 +1047,7 @@ URL:      http://openjdk.java.net/
 # FILE_NAME_ROOT=%%{shenandoah_project}-%%{shenandoah_repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
+Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}-4curve.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -2236,6 +2236,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri May 22 2020 Andrew John Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b01-0.3.ea
+- Update generate_source_tarball.sh script to use the PR3756 patch and retain the secp256k1 curve.
+- Regenerate source tarball using the updated script and add the -'4curve' suffix.
+
 * Wed May 20 2020 Nicolas De Amicis <deamicis@bluewin.ch> - 1:1.8.0.252.b01-0.2.ea
 - Switch package openjfx from openjfx to openjfx8
 

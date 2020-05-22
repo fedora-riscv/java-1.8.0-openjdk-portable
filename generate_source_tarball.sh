@@ -4,7 +4,7 @@
 # Example:
 # When used from local repo set REPO_ROOT pointing to file:// with your repo
 # If your local repo follows upstream forests conventions, it may be enough to set OPENJDK_URL
-# If you want to use a local copy of patch PR3667, set the path to it in the PR3667 variable
+# If you want to use a local copy of patch PR3756, set the path to it in the PR3756 variable
 #
 # In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
 # PROJECT_NAME=jdk8u   OR   aarch64-port 
@@ -19,9 +19,9 @@
 # level folder, name is created, based on parameter
 #
 
-if [ ! "x$PR3667" = "x" ] ; then
-  if [ ! -f "$PR3667" ] ; then
-    echo "You have specified PR3667 as $PR3667 but it does not exists. exiting"
+if [ ! "x$PR3756" = "x" ] ; then
+  if [ ! -f "$PR3756" ] ; then
+    echo "You have specified PR3756 as $PR3756 but it does not exists. exiting"
     exit 1
   fi
 fi
@@ -41,7 +41,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
-    echo "PR3667 - the path to the PR3667 patch to apply (optional; downloaded if unavailable)"
+    echo "PR3756 - the path to the PR3756 patch to apply (optional; downloaded if unavailable)"
     echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
@@ -124,15 +124,15 @@ rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
 
 echo "Syncing EC list with NSS"
 
-if [ "x$PR3667" = "x" ] ; then
-# get pr3667.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
-# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3667)
-    wget http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3667.patch
-    patch -Np1 < pr3667.patch
-    rm pr3667.patch
+if [ "x$PR3756" = "x" ] ; then
+# get pr3756.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
+# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3756)
+    wget http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3756.patch
+    patch -Np1 < pr3756.patch
+    rm pr3756.patch
 else
-    echo "Applying ${PR3667}"
-    patch -Np1 < $PR3667
+    echo "Applying ${PR3756}"
+    patch -Np1 < $PR3756
 fi;
 fi
 find . -name '*.orig' -exec rm -vf '{}' ';'
@@ -140,12 +140,14 @@ find . -name '*.orig' -exec rm -vf '{}' ';'
 popd
 echo "Compressing remaining forest"
 if [ "X$COMPRESSION" = "Xxz" ] ; then
-    tar --exclude-vcs -cJf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
+    SWITCH=cJf
 else
-    tar --exclude-vcs -czf ${FILE_NAME_ROOT}.tar.${COMPRESSION} openjdk
+    SWITCH=czf
 fi
+TARBALL_NAME=${FILE_NAME_ROOT}-4curve.tar.${COMPRESSION}
+tar --exclude-vcs -$SWITCH ${TARBALL_NAME} openjdk
+mv ${TARBALL_NAME} ..
 
-mv ${FILE_NAME_ROOT}.tar.${COMPRESSION}  ..
 popd
 echo "Done. You may want to remove the uncompressed version."
 
