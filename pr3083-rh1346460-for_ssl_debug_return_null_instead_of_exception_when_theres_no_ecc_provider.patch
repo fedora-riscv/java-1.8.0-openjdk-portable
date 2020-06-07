@@ -35,7 +35,7 @@ diff --git openjdk.orig/jdk/src/share/classes/sun/security/util/ECUtil.java open
 +++ openjdk/jdk/src/share/classes/sun/security/util/ECUtil.java
 @@ -41,6 +41,9 @@
  
- public class ECUtil {
+ public final class ECUtil {
  
 +    /* Are we debugging ? */
 +    private static final Debug debug = Debug.getInstance("ecc");

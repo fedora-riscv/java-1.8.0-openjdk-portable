@@ -7,18 +7,10 @@
 PR2974: PKCS#10 certificate requests now use CRLF line endings rather than system line endings
 Summary: Add -systemlineendings option to keytool to allow system line endings to be used again.
 
-diff --git a/src/share/classes/sun/security/pkcs10/PKCS10.java b/src/share/classes/sun/security/pkcs10/PKCS10.java
---- openjdk/jdk/src/share/classes/sun/security/pkcs10/PKCS10.java
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/pkcs10/PKCS10.java openjdk/jdk/src/share/classes/sun/security/pkcs10/PKCS10.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/pkcs10/PKCS10.java
 +++ openjdk/jdk/src/share/classes/sun/security/pkcs10/PKCS10.java
-@@ -30,6 +30,7 @@
- import java.io.IOException;
- import java.math.BigInteger;
- 
-+import java.security.AccessController;
- import java.security.cert.CertificateException;
- import java.security.NoSuchAlgorithmException;
- import java.security.InvalidKeyException;
-@@ -39,6 +40,7 @@
+@@ -35,6 +35,7 @@
  
  import java.util.Base64;
  
@@ -26,7 +18,7 @@ diff --git a/src/share/classes/sun/security/pkcs10/PKCS10.java b/src/share/class
  import sun.security.util.*;
  import sun.security.x509.AlgorithmId;
  import sun.security.x509.X509Key;
-@@ -76,6 +78,14 @@
+@@ -74,6 +75,14 @@
   * @author Hemma Prafullchandra
   */
  public class PKCS10 {
@@ -41,7 +33,7 @@ diff --git a/src/share/classes/sun/security/pkcs10/PKCS10.java b/src/share/class
      /**
       * Constructs an unsigned PKCS #10 certificate request.  Before this
       * request may be used, it must be encoded and signed.  Then it
-@@ -293,13 +303,39 @@
+@@ -303,13 +312,39 @@
       */
      public void print(PrintStream out)
      throws IOException, SignatureException {
@@ -83,10 +75,10 @@ diff --git a/src/share/classes/sun/security/pkcs10/PKCS10.java b/src/share/class
          out.println("-----END NEW CERTIFICATE REQUEST-----");
      }
  
-diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/classes/sun/security/tools/keytool/Main.java
---- openjdk/jdk/src/share/classes/sun/security/tools/keytool/Main.java
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Main.java openjdk/jdk/src/share/classes/sun/security/tools/keytool/Main.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Main.java
 +++ openjdk/jdk/src/share/classes/sun/security/tools/keytool/Main.java
-@@ -124,6 +124,7 @@
+@@ -126,6 +126,7 @@
      private String infilename = null;
      private String outfilename = null;
      private String srcksfname = null;
@@ -94,7 +86,7 @@ diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/
  
      // User-specified providers are added before any command is called.
      // However, they are not removed before the end of the main() method.
-@@ -186,7 +187,7 @@
+@@ -188,7 +189,7 @@
          CERTREQ("Generates.a.certificate.request",
              ALIAS, SIGALG, FILEOUT, KEYPASS, KEYSTORE, DNAME,
              STOREPASS, STORETYPE, PROVIDERNAME, PROVIDERCLASS,
@@ -103,7 +95,7 @@ diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/
          CHANGEALIAS("Changes.an.entry.s.alias",
              ALIAS, DESTALIAS, KEYPASS, KEYSTORE, STOREPASS,
              STORETYPE, PROVIDERNAME, PROVIDERCLASS, PROVIDERARG,
-@@ -319,6 +320,7 @@
+@@ -321,6 +322,7 @@
          STARTDATE("startdate", "<startdate>", "certificate.validity.start.date.time"),
          STOREPASS("storepass", "<arg>", "keystore.password"),
          STORETYPE("storetype", "<storetype>", "keystore.type"),
@@ -111,7 +103,7 @@ diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/
          TRUSTCACERTS("trustcacerts", null, "trust.certificates.from.cacerts"),
          V("v", null, "verbose.output"),
          VALIDITY("validity", "<valDays>", "validity.number.of.days");
-@@ -559,6 +561,8 @@
+@@ -561,6 +563,8 @@
                  protectedPath = true;
              } else if (collator.compare(flags, "-srcprotected") == 0) {
                  srcprotectedPath = true;
@@ -120,7 +112,7 @@ diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/
              } else  {
                  System.err.println(rb.getString("Illegal.option.") + flags);
                  tinyHelp();
-@@ -1463,7 +1467,7 @@
+@@ -1464,7 +1468,7 @@
  
          // Sign the request and base-64 encode it
          request.encodeAndSign(subject, signature);
@@ -129,13 +121,13 @@ diff --git a/src/share/classes/sun/security/tools/keytool/Main.java b/src/share/
  
          checkWeak(rb.getString("the.generated.certificate.request"), request);
      }
-@@ -4540,4 +4544,3 @@
+@@ -4544,4 +4548,3 @@
          return new Pair<>(a,b);
      }
  }
 -
-diff --git a/src/share/classes/sun/security/tools/keytool/Resources.java b/src/share/classes/sun/security/tools/keytool/Resources.java
---- openjdk/jdk/src/share/classes/sun/security/tools/keytool/Resources.java
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Resources.java openjdk/jdk/src/share/classes/sun/security/tools/keytool/Resources.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Resources.java
 +++ openjdk/jdk/src/share/classes/sun/security/tools/keytool/Resources.java
 @@ -168,6 +168,8 @@
                  "keystore password"}, //-storepass
