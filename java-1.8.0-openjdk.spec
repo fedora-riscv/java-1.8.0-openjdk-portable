@@ -229,7 +229,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u252-b05
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u252-b06
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1156,9 +1156,6 @@ Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac
 Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 # S390 ambiguous log2_intptr calls
 Patch107: s390-8214206_fix.patch
-# JDK-8224851: AArch64: fix warnings and errors with Clang and GCC 8.3
-# GCC 10 fix for redeclaration
-Patch120: jdk8224851-aarch64_fix_warnings_and_errors_GCC_8_3.patch
 
 #############################################
 #
@@ -1550,7 +1547,6 @@ sh %{SOURCE12}
 
 # AArch64 fixes
 %patch106
-%patch120
 
 # x86 fixes
 %patch105
@@ -2236,6 +2232,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Jun 11 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b06-0.0.ea
+- Update to aarch64-shenandoah-jdk8u252-b06.
+- Drop upstreamed AArch64 fix JDK-8224851
+
 * Wed Jun 10 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b05-0.0.ea
 - Update to aarch64-shenandoah-jdk8u252-b05.
 
