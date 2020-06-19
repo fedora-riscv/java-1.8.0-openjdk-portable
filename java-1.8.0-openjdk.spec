@@ -245,7 +245,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -595,6 +595,7 @@ exit 0
 %license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/ASSEMBLY_EXCEPTION
 %license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 %license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/THIRD_PARTY_README
+%doc %{_defaultdocdir}/%{uniquejavadocdir -- %{?1}}/NEWS
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}
 %{_jvmdir}/%{jrelnk -- %{?1}}
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/security
@@ -1051,6 +1052,9 @@ Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}-4curve.
 
 # Custom README for -src subpackage
 Source2:  README.md
+
+# Release notes
+Source7: NEWS
 
 # Use 'icedtea_sync.sh' to update the following
 # They are based on code contained in the IcedTea project (3.x).
@@ -1938,6 +1942,11 @@ if ! echo $suffix | grep -q "debug" ; then
   cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
 fi
 
+# Install release notes
+commondocdir=${RPM_BUILD_ROOT}%{_defaultdocdir}/%{uniquejavadocdir -- $suffix}
+install -d -m 755 ${commondocdir}
+cp -a %{SOURCE7} ${commondocdir}
+
 # Install icons and menu entries
 for s in 16 24 32 48 ; do
   install -D -p -m 644 \
@@ -2229,6 +2238,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Jun 18 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b09-1
+- Add release notes.
+
 * Thu Jun 18 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.252.b09-0
 - Update to aarch64-shenandoah-jdk8u252-b09.
 - Switch to GA mode for final release.
