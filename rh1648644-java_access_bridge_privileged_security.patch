@@ -1,22 +1,23 @@
---- jdk8/jdk/src/share/lib/security/java.security-linux.orig
-+++ jdk8/jdk/src/share/lib/security/java.security-linux
-@@ -223,7 +223,9 @@
-                jdk.nashorn.internal.,\
-                jdk.nashorn.tools.,\
-                jdk.xml.internal.,\
--               com.sun.activation.registries.
-+               com.sun.activation.registries.,\
+diff --git openjdk.orig/jdk/src/share/lib/security/java.security-linux openjdk/jdk/src/share/lib/security/java.security-linux
+--- openjdk.orig/jdk/src/share/lib/security/java.security-linux
++++ openjdk/jdk/src/share/lib/security/java.security-linux
+@@ -226,7 +226,9 @@
+                com.sun.activation.registries.,\
+                jdk.jfr.events.,\
+                jdk.jfr.internal.,\
+-               jdk.management.jfr.internal.
++               jdk.management.jfr.internal.,\
 +               org.GNOME.Accessibility.,\
 +               org.GNOME.Bonobo.
  
  #
  # List of comma-separated packages that start with or equal this string
-@@ -273,7 +275,9 @@
-                    jdk.nashorn.internal.,\
-                    jdk.nashorn.tools.,\
-                    jdk.xml.internal.,\
--                   com.sun.activation.registries.
-+                   com.sun.activation.registries.,\
+@@ -279,7 +281,9 @@
+                    com.sun.activation.registries.,\
+                    jdk.jfr.events.,\
+                    jdk.jfr.internal.,\
+-                   jdk.management.jfr.internal.
++                   jdk.management.jfr.internal.,\
 +                   org.GNOME.Accessibility.,\
 +                   org.GNOME.Bonobo.
  

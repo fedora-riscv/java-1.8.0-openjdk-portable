@@ -145,4 +145,4 @@ diff --git openjdk.orig/hotspot/src/os_cpu/linux_zero/vm/thread_linux_zero.hpp o
 +    return false; // silence compile warning
    }
  
-   // These routines are only used on cpu architectures that
+   bool pd_get_top_frame_for_profiling(frame* fr_addr,
