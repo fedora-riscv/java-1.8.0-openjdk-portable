@@ -229,7 +229,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b02
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b03
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1138,8 +1138,6 @@ Patch401: pr3655-toggle_system_crypto_policy.patch
 # JDK-8218811: replace open by os::open in hotspot coding
 # This fixes a GCC 10 build issue
 Patch111: jdk8218811-perfMemory_linux.patch
-# JDK-8244461: [JDK 8u] Build fails with glibc 2.32
-Patch113: jdk8244461-remove_unused_sysctl.h.patch
 
 #############################################
 #
@@ -1199,8 +1197,6 @@ Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
-# JDK-8233880: Support compilers with multi-digit major version numbers
-Patch579: jdk8233880-compiler_versioning.patch
 
 #############################################
 #
@@ -1570,8 +1566,6 @@ sh %{SOURCE12}
 %patch575
 %patch577
 %patch111
-%patch113
-%patch579
 
 # RPM-only fixes
 %patch539
@@ -2240,6 +2234,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Jun 23 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b03-0.0.ea
+- Update to aarch64-shenandoah-jdk8u262-b03.
+- Remove JDK-8244461 & JDK-8233880 backports included upstream in b03.
+
 * Mon Jun 22 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b02-0.0.ea
 - Update to aarch64-shenandoah-jdk8u262-b02.
 
