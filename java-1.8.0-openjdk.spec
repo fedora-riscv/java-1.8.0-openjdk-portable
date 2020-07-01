@@ -245,7 +245,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1644,6 +1644,12 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
 
 %build
+# This package fails to build with LTO due to undefined symbols.  LTO
+# was disabled in OpenSuSE as well, but with no real explanation why
+# beyond the undefined symbols.  It really shold be investigated further.
+# Disable LTO
+%define _lto_cflags %{nil}
+
 # How many CPU's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
@@ -2255,6 +2261,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jul 01 2020 Jeff Law <law@redhat.com> - 1:1.8.0.262.b03-0.3.ea
+- Disable LTO
+
 * Mon Jun 29 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.262.b03-0.2.ea
 - Set vendor property and vendor URLs
 - Made URLs to be preconfigured by os
