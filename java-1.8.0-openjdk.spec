@@ -60,6 +60,7 @@
 %global multilib_arches %{power64} sparc64 x86_64
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 %global sa_arches       %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
+%global jfr_arches      x86_64 sparcv9 sparc64 %{aarch64} ${power64}
 
 # By default, we build a debug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -107,6 +108,12 @@
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
+
+# This package fails to build with LTO due to undefined symbols.  LTO
+# was disabled in OpenSuSE as well, but with no real explanation why
+# beyond the undefined symbols.  It really should be investigated further.
+# Disable LTO
+%define _lto_cflags %{nil}
 
 # With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
 # the initialization must be here. Later the pkg-config have buggy behavior
@@ -245,7 +252,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -709,7 +716,7 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnet.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnio.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libnpt.so
-%ifarch x86_64  %{ix86} %{aarch64}
+%ifarch %{sa_arches}
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsaproc.so
 %endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsctp.so
@@ -750,12 +757,20 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/ext/sunjce_provider.jar
 %{_jvmdir}/%{jredir -- %{?1}}/lib/ext/sunpkcs11.jar
 %{_jvmdir}/%{jredir -- %{?1}}/lib/ext/zipfs.jar
+%ifarch %{jfr_arches}
+%{_jvmdir}/%{jredir -- %{?1}}/lib/jfr.jar
+%{_jvmdir}/%{jredir -- %{?1}}/lib/jfr/default.jfc
+%{_jvmdir}/%{jredir -- %{?1}}/lib/jfr/profile.jfc
+%endif
 
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/images/cursors
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/management
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/cmm
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib/ext
+%ifarch %{jfr_arches}
+%dir %{_jvmdir}/%{jredir -- %{?1}}/lib/jfr
+%endif
 }
 
 %define files_devel() %{expand:
@@ -1644,11 +1659,6 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
 
 %build
-# This package fails to build with LTO due to undefined symbols.  LTO
-# was disabled in OpenSuSE as well, but with no real explanation why
-# beyond the undefined symbols.  It really shold be investigated further.
-# Disable LTO
-%define _lto_cflags %{nil}
 
 # How many CPU's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
@@ -1696,6 +1706,9 @@ function buildjdk() {
     pushd ${outputdir}
 
     bash ${top_srcdir_abs_path}/configure \
+%ifarch %{jfr_arches}
+    --enable-jfr \
+%endif
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
 %endif
@@ -2261,6 +2274,15 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jul 03 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b03-0.4.ea
+- Enable JFR in our builds, ahead of upstream default.
+- Only enable JFR for JIT builds, as it is not supported with Zero.
+- Turn off JFR on x86 for now due to assert(SerializePageShiftCount == count) crash.
+- Explicitly list jfr.jar, default.jfc & profile.jfc in the spec file.
+- Introduce jfr_arches for architectures which support JFR.
+- Use sa_arches for libsaproc.so inclusion.
+- Move LTO handling to same location as other compiler flags handling.
+
 * Wed Jul 01 2020 Jeff Law <law@redhat.com> - 1:1.8.0.262.b03-0.3.ea
 - Disable LTO
 
