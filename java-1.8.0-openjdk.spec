@@ -236,7 +236,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b03-shenandoah-merge-2020-05-20
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b04
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -252,7 +252,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2274,6 +2274,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jul 05 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b04-0.0.ea
+- Update to aarch64-shenandoah-jdk8u262-b04.
+
 * Fri Jul 03 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b03-0.4.ea
 - Enable JFR in our builds, ahead of upstream default.
 - Only enable JFR for JIT builds, as it is not supported with Zero.
