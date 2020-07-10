@@ -1166,7 +1166,7 @@ Provides: java-%{javaver}-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{r
 
 Name:    java-%{javaver}-%{origin}
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}.1
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -2392,6 +2392,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Jul 10 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.262.b05-0.3.ea.1
+- Rebuilt for JDK-11, see https://fedoraproject.org/wiki/Changes/Java11
+
 * Thu Jul 09 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.262.b05-0.3.ea
 - changed to be non-system jdk
 - is_system_jdk set to 0
