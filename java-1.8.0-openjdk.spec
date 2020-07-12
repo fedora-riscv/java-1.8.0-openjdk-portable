@@ -79,7 +79,7 @@
 %global multilib_arches %{power64} sparc64 x86_64
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 %global sa_arches       %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
-%global jfr_arches      x86_64 sparcv9 sparc64 %{aarch64} ${power64}
+%global jfr_arches      x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 
 # By default, we build a debug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2394,6 +2394,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b08-0.1.ea
+- Fix typo in jfr_arches which leads to ppc64 being wrongly excluded.
+
 * Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b08-0.0.ea
 - Update to aarch64-shenandoah-jdk8u262-b08.
 
