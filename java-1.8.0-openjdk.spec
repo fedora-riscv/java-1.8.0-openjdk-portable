@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b09-shenandoah-merge-2020-07-03
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b10
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -260,12 +260,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           0
+%global is_ga           1
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1342,7 +1342,8 @@ Patch102: jdk8203030-zero_s390_31_bit_size_t_type_conflicts_in_shared_code.patch
 # 8035341: Allow using a system installed libpng
 Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
-Patch203: jdk8042159-allow_using_system_installed_lcms2.patch
+Patch203: jdk8042159-allow_using_system_installed_lcms2-root.patch
+Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 
 #############################################
 #
@@ -1688,6 +1689,7 @@ sh %{SOURCE12}
 %patch201
 %patch202
 %patch203
+%patch204
 
 # System security policy fixes
 %patch400
@@ -2398,6 +2400,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b10-0.1
+- Update to aarch64-shenandoah-jdk8u262-b10.
+- Switch to GA mode for final release.
+- Update release notes for 8u262 release.
+- Split JDK-8042159 patch into per-repo patches as upstream.
+- Update JDK-8042159 JDK patch to apply after JDK-8238002 changes to Awt2dLibraries.gmk
+- Remove issues in NEWS file duplicated between 8u252 & 8u262 releases.
+
 * Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b09-0.1.ea
 - Update to aarch64-shenandoah-jdk8u262-b09-shenandoah-merge-2020-07-03
 
