@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -655,9 +655,9 @@ exit 0
 %defattr(-,root,root,-)
 %dir %{_sysconfdir}/.java/.systemPrefs
 %dir %{_sysconfdir}/.java
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/ASSEMBLY_EXCEPTION
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/THIRD_PARTY_README
+%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
+%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
+%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
 %doc %{_defaultdocdir}/%{uniquejavadocdir -- %{?1}}/NEWS
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}
 %{_jvmdir}/%{jrelnk -- %{?1}}
@@ -829,9 +829,9 @@ exit 0
 
 %define files_devel() %{expand:
 %defattr(-,root,root,-)
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/ASSEMBLY_EXCEPTION
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/LICENSE
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/THIRD_PARTY_README
+%license %{_jvmdir}/%{sdkdir -- %{?1}}/ASSEMBLY_EXCEPTION
+%license %{_jvmdir}/%{sdkdir -- %{?1}}/LICENSE
+%license %{_jvmdir}/%{sdkdir -- %{?1}}/THIRD_PARTY_README
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/bin
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/include
 %dir %{_jvmdir}/%{sdkdir -- %{?1}}/lib
@@ -2040,9 +2040,9 @@ mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/clien
 
   # Install main files.
   install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}
-  cp -a bin include lib src.zip $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}
+  cp -a bin include lib src.zip {ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}
   install -d -m 755 $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}
-  cp -a jre/bin jre/lib $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}
+  cp -a jre/bin jre/lib jre/{ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}
 
 %if %{with_systemtap}
   # Install systemtap support files
@@ -2400,6 +2400,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 27 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.265.b01-2
+- ASSEMBLY_EXCEPTION LICENSE THIRD_PARTY_README moved to fully versioned dirs
+
 * Mon Jul 27 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.265.b01-1
 - Reorder _lto_cflags define so that it gets picked up via optflags
 
