@@ -119,6 +119,12 @@
 # No docs nor bootcycle for debug builds
 %global debug_targets images
 
+# This package fails to build with LTO due to undefined symbols.  LTO
+# was disabled in OpenSuSE as well, but with no real explanation why
+# beyond the undefined symbols.  It really should be investigated further.
+# Disable LTO
+%define _lto_cflags %{nil}
+
 # Filter out flags from the optflags macro that cause problems with the OpenJDK build
 # We filter out -Wall which will otherwise cause HotSpot to produce hundreds of thousands of warnings (100+mb logs)
 # We filter out -O flags so that the optimization of HotSpot is not lowered from O3 to O2
@@ -127,12 +133,6 @@
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
 %global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
-
-# This package fails to build with LTO due to undefined symbols.  LTO
-# was disabled in OpenSuSE as well, but with no real explanation why
-# beyond the undefined symbols.  It really should be investigated further.
-# Disable LTO
-%define _lto_cflags %{nil}
 
 # With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
 # the initialization must be here. Later the pkg-config have buggy behavior
@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2400,6 +2400,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jul 27 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.265.b01-1
+- Reorder _lto_cflags define so that it gets picked up via optflags
+
 * Mon Jul 27 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.265.b01-1
 - Update to aarch64-shenandoah-jdk8u265-b01.
 - Update release notes for 8u265 release.
