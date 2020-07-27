@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u262-b10
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u265-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -2400,7 +2400,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
-* Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b10-0.1
+* Mon Jul 27 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.265.b01-1
+- Update to aarch64-shenandoah-jdk8u265-b01.
+- Update release notes for 8u265 release.
+
+* Sun Jul 12 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.262.b10-1
 - Update to aarch64-shenandoah-jdk8u262-b10.
 - Switch to GA mode for final release.
 - Update release notes for 8u262 release.

@@ -3,6 +3,16 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u265 (2020-07-27):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bitly.com/openjdk8u265
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u265.txt
+
+* Bug fixes
+  - JDK-8249677: Regression in 8u after JDK-8237117: Better ForkJoinPool behavior
+  - JDK-8250546: Expect changed behaviour reported in JDK-8249846
+
 New in release OpenJDK 8u262 (2020-07-14):
 ===========================================
 Live versions of these release notes can be found at:
