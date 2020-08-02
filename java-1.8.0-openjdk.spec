@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u265-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -260,12 +260,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1828,12 +1828,18 @@ function buildjdk() {
     # Variable used in hs_err hook on build failures
     local top_builddir_abs_path=$(pwd)/${outputdir}
 
+    echo "Checking build JDK ${buildjdk} is operational..."
+    ${buildjdk}/bin/java -version
+    echo "Building 8u%{updatever}-%{buildver}, milestone %{milestone}"
+
     mkdir -p ${outputdir}
     pushd ${outputdir}
 
     bash ${top_srcdir_abs_path}/configure \
 %ifarch %{jfr_arches}
     --enable-jfr \
+%else
+    --disable-jfr \
 %endif
 %ifnarch %{jit_arches}
     --with-jvm-variants=zero \
@@ -2400,6 +2406,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sat Aug 01 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b01-0.0.ea
+- Update to aarch64-shenandoah-jdk8u272-b01.
+- Switch to EA mode.
+- Test build JDK is usable by running 'java -version'.
+- JFR must now be explicitly disabled when unwanted (e.g. x86), following switch of upstream default.
+
 * Mon Jul 27 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.265.b01-2
 - ASSEMBLY_EXCEPTION LICENSE THIRD_PARTY_README moved to fully versioned dirs
 
