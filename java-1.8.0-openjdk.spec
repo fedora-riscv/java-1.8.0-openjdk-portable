@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1848,7 +1848,7 @@ function buildjdk() {
     --with-milestone=%{milestone} \
     --with-update-version=%{updatever} \
     --with-build-number=%{buildver} \
-    --with-vendor-name="Red Hat, Inc" \
+    --with-vendor-name="Red Hat, Inc." \
     --with-vendor-url="https://www.redhat.com/" \
     --with-vendor-bug-url="%{bugs}" \
     --with-vendor-vm-bug-url="%{bugs}" \
@@ -2406,6 +2406,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Aug 05 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.272.b01-0.1.ea
+- Fix vendor name to include '.': Red Hat, Inc => Red Hat, Inc.
+
 * Sat Aug 01 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b01-0.0.ea
 - Update to aarch64-shenandoah-jdk8u272-b01.
 - Switch to EA mode.
