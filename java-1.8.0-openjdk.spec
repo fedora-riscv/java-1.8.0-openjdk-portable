@@ -115,7 +115,7 @@
 %endif
 
 %global bootstrap_targets images
-%global release_targets images zip-docs
+%global release_targets images docs-zip
 # No docs nor bootcycle for debug builds
 %global debug_targets images
 
@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b02
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1327,8 +1327,6 @@ Patch107: s390-8214206_fix.patch
 # S8074839, PR2462: Resolve disabled warnings for libunpack and the unpack200 binary
 # This fixes printf warnings that lead to build failure with -Werror=format-security from optflags
 Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binary.patch
-# S8154313: Generated javadoc scattered all over the place
-Patch578: jdk8154313-generated_javadoc_scattered_all_over_the_place.patch
 # PR3591: Fix for bug 3533 doesn't add -mstackrealign to JDK code
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8143245, PR3548: Zero build requires disabled warnings
@@ -1714,7 +1712,6 @@ sh %{SOURCE12}
 %patch502
 %patch504
 %patch512
-%patch578
 %patch523
 %patch528
 %patch529
@@ -2406,6 +2403,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Aug 09 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b02-0.0.ea
+- Update to aarch64-shenandoah-jdk8u272-b02.
+- Remove JDK-8154313 backport now applied upstream.
+- Change target from 'zip-docs' to 'docs-zip', which is the naming used upstream.
+
 * Wed Aug 05 2020 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.272.b01-0.1.ea
 - Fix vendor name to include '.': Red Hat, Inc => Red Hat, Inc.
 
