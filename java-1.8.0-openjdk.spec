@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1800,7 +1800,7 @@ export CFLAGS="$CFLAGS -mieee"
 
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
-EXTRA_CFLAGS="%ourcppflags -Wno-error -fcommon"
+EXTRA_CFLAGS="%ourcppflags -Wno-error"
 EXTRA_CPP_FLAGS="%ourcppflags"
 
 %ifarch %{power64} ppc
@@ -2403,6 +2403,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Aug 19 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b02-0.1.ea
+- Remove "-fcommon" following GCC 10 fixes upstream (JDK-8238380, JDK-8238386, JDK-8238388)
+
 * Sun Aug 09 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b02-0.0.ea
 - Update to aarch64-shenandoah-jdk8u272-b02.
 - Remove JDK-8154313 backport now applied upstream.
