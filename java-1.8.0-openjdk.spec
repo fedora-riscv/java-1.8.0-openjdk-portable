@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b03
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b04
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -2403,6 +2403,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Aug 19 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b04-0.0.ea
+- Update to aarch64-shenandoah-jdk8u272-b04.
+- Update tarball generation script to use PR3795, following inclusion of JDK-8177334
+
 * Wed Aug 19 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b03-0.0.ea
 - Update to aarch64-shenandoah-jdk8u272-b03.
 
