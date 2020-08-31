@@ -319,3 +319,15 @@ diff --git openjdk.orig/hotspot/src/share/vm/runtime/arguments.cpp openjdk/hotsp
            if (PrintGCDetails && Verbose) {
              // Too early to use gclog_or_tty
              tty->print_cr("CMS ergo set OldSize: " SIZE_FORMAT, OldSize);
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/g1ConcurrentMarkObjArrayProcessor.cpp openjdk/hotspot/src/share/vm/gc_implementation/g1/g1ConcurrentMarkObjArrayProcessor.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/g1ConcurrentMarkObjArrayProcessor.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/g1/g1ConcurrentMarkObjArrayProcessor.cpp
+@@ -41,7 +41,7 @@
+ }
+ 
+ size_t G1CMObjArrayProcessor::process_array_slice(objArrayOop obj, HeapWord* start_from, size_t remaining) {
+-  size_t words_to_scan = MIN2(remaining, ObjArrayMarkingStride);
++  size_t words_to_scan = MIN2(remaining, (size_t) ObjArrayMarkingStride);
+ 
+   if (remaining > ObjArrayMarkingStride) {
+     push_array_slice(start_from + ObjArrayMarkingStride);
