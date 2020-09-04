@@ -4,7 +4,7 @@
 # Example:
 # When used from local repo set REPO_ROOT pointing to file:// with your repo
 # If your local repo follows upstream forests conventions, it may be enough to set OPENJDK_URL
-# If you want to use a local copy of patch PR3795, set the path to it in the PR3795 variable
+# If you want to use a local copy of patch PR3799, set the path to it in the PR3799 variable
 #
 # In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
 # PROJECT_NAME=jdk8u   OR   aarch64-port 
@@ -19,9 +19,9 @@
 # level folder, name is created, based on parameter
 #
 
-if [ ! "x$PR3795" = "x" ] ; then
-  if [ ! -f "$PR3795" ] ; then
-    echo "You have specified PR3795 as $PR3795 but it does not exists. exiting"
+if [ ! "x$PR3799" = "x" ] ; then
+  if [ ! -f "$PR3799" ] ; then
+    echo "You have specified PR3799 as $PR3799 but it does not exists. exiting"
     exit 1
   fi
 fi
@@ -41,7 +41,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
-    echo "PR3795 - the path to the PR3795 patch to apply (optional; downloaded if unavailable)"
+    echo "PR3799 - the path to the PR3799 patch to apply (optional; downloaded if unavailable)"
     echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
@@ -124,15 +124,15 @@ rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
 
 echo "Syncing EC list with NSS"
 
-if [ "x$PR3795" = "x" ] ; then
-# get pr3795.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
-# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3795)
-    wget -O pr3795.patch http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3795-4curve.patch
-    patch -Np1 < pr3795.patch
-    rm pr3795.patch
+if [ "x$PR3799" = "x" ] ; then
+# get pr3799.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
+# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3799)
+    wget -O pr3799.patch http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3799-4curve.patch
+    patch -Np1 < pr3799.patch
+    rm pr3799.patch
 else
-    echo "Applying ${PR3795}"
-    patch -Np1 < $PR3795
+    echo "Applying ${PR3799}"
+    patch -Np1 < $PR3799
 fi;
 fi
 find . -name '*.orig' -exec rm -vf '{}' ';'
