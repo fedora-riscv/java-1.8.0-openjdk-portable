@@ -132,7 +132,7 @@ diff --git openjdk.orig/hotspot/src/share/vm/memory/metaspaceShared.hpp openjdk/
 diff --git openjdk.orig/hotspot/src/share/vm/oops/constantPool.hpp openjdk/hotspot/src/share/vm/oops/constantPool.hpp
 --- openjdk.orig/hotspot/src/share/vm/oops/constantPool.hpp
 +++ openjdk/hotspot/src/share/vm/oops/constantPool.hpp
-@@ -352,7 +352,7 @@
+@@ -353,7 +353,7 @@
  
    Klass* klass_at(int which, TRAPS) {
      constantPoolHandle h_this(THREAD, this);
@@ -140,7 +140,7 @@ diff --git openjdk.orig/hotspot/src/share/vm/oops/constantPool.hpp openjdk/hotsp
 +    return klass_at_impl(h_this, which, THREAD);
    }
  
-   Symbol* klass_name_at(int which);  // Returns the name, w/o resolving.
+   Symbol* klass_name_at(int which) const;  // Returns the name, w/o resolving.
 diff --git openjdk.orig/hotspot/src/share/vm/prims/jvm.cpp openjdk/hotspot/src/share/vm/prims/jvm.cpp
 --- openjdk.orig/hotspot/src/share/vm/prims/jvm.cpp
 +++ openjdk/hotspot/src/share/vm/prims/jvm.cpp

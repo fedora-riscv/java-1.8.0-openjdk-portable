@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b09
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b10
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -265,7 +265,7 @@
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           0
+%global is_ga           1
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1060,8 +1060,8 @@ Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/
 Requires: javapackages-filesystem
 # Require zoneinfo data provided by tzdata-java subpackage.
-# 2020a required as of JDK-8243541
-Requires: tzdata-java >= 2020a
+# 2020b required as of JDK-8254177 in October CPU
+Requires: tzdata-java >= 2020b
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum enforce it,
@@ -1345,13 +1345,15 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 
 #############################################
 #
-# Patches appearing in 8u262
+# Patches appearing in 8u282
 #
 # This section includes patches which are present
 # in the listed OpenJDK 8u release and should be
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
+# JDK-8254177: (tz) Upgrade time-zone data to tzdata2020b
+Patch13: jdk8254177-tzdata2020b.patch
 
 #############################################
 #
@@ -1429,8 +1431,8 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-# 2020a required as of JDK-8243541
-BuildRequires: tzdata-java >= 2020a
+# 2020b required as of JDK-8254177 in October CPU
+BuildRequires: tzdata-java >= 2020b
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
@@ -1722,6 +1724,7 @@ sh %{SOURCE12}
 %patch575
 %patch577
 %patch111
+%patch13
 
 # RPM-only fixes
 %patch539
@@ -2403,6 +2406,15 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sat Oct 17 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b10-0
+- Update to aarch64-shenandoah-jdk8u272-b10.
+- Switch to GA mode for final release.
+- Update release notes for 8u272 release.
+- Add backport of JDK-8254177 to update to tzdata 2020b
+- Require tzdata 2020b due to resource changes in JDK-8254177
+- Adjust JDK-8062808/PR3548 following constantPool.hpp context change in JDK-8243302
+- Adjust PR3593 following g1StringDedupTable.cpp context change in JDK-8240124 & JDK-8244955
+
 * Mon Sep 28 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b09-0.0.ea
 - Update to aarch64-shenandoah-jdk8u272-b09 (EA).
 

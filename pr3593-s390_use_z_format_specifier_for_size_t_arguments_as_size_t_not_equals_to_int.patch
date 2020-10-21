@@ -32,7 +32,7 @@ diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/g1/g1StringDedupT
 -    "      [Entries: " UINTX_FORMAT ", Load: " G1_STRDEDUP_PERCENT_FORMAT_NS ", Cached: " UINTX_FORMAT ", Added: " UINTX_FORMAT ", Removed: " UINTX_FORMAT "]\n"
 +    "      [Entries: " UINTX_FORMAT ", Load: " G1_STRDEDUP_PERCENT_FORMAT_NS ", Cached: " SIZE_FORMAT ", Added: " UINTX_FORMAT ", Removed: " UINTX_FORMAT "]\n"
      "      [Resize Count: " UINTX_FORMAT ", Shrink Threshold: " UINTX_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT_NS "), Grow Threshold: " UINTX_FORMAT "(" G1_STRDEDUP_PERCENT_FORMAT_NS ")]\n"
-     "      [Rehash Count: " UINTX_FORMAT ", Rehash Threshold: " UINTX_FORMAT ", Hash Seed: 0x%x]\n"
+     "      [Rehash Count: " UINTX_FORMAT ", Rehash Threshold: " UINTX_FORMAT ", Hash Seed: " UINT64_FORMAT "]\n"
      "      [Age Threshold: " UINTX_FORMAT "]",
 diff --git openjdk.orig/hotspot/src/share/vm/memory/blockOffsetTable.cpp openjdk/hotspot/src/share/vm/memory/blockOffsetTable.cpp
 --- openjdk.orig/hotspot/src/share/vm/memory/blockOffsetTable.cpp
