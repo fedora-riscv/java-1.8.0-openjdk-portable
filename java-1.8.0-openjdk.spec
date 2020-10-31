@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1294,6 +1294,8 @@ Patch401: pr3655-toggle_system_crypto_policy.patch
 # JDK-8218811: replace open by os::open in hotspot coding
 # This fixes a GCC 10 build issue
 Patch111: jdk8218811-perfMemory_linux.patch
+# Similar for GCC 11
+Patch112: %{name}-gcc11.patch
 
 #############################################
 #
@@ -1724,6 +1726,7 @@ sh %{SOURCE12}
 %patch575
 %patch577
 %patch111
+%patch112
 %patch13
 
 # RPM-only fixes
@@ -2406,6 +2409,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sat Oct 31 2020 Jeff Law <law@redhat.com> - 1:1.8.0.272.b10-1
+- Avoid "register" for C++17
+
 * Sat Oct 17 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.272.b10-0
 - Update to aarch64-shenandoah-jdk8u272-b10.
 - Switch to GA mode for final release.
