@@ -244,7 +244,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u272-b10
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u275-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2409,6 +2409,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Nov 06 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.275.b01-0
+- Update to aarch64-shenandoah-jdk8u275-b01 (GA)
+- Update release notes for 8u275.
+
 * Sat Oct 31 2020 Jeff Law <law@redhat.com> - 1:1.8.0.272.b10-1
 - Avoid "register" for C++17
 
