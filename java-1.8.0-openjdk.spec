@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -343,6 +343,7 @@
 %define jredir()        %{expand:%{sdkdir -- %{?1}}/jre}
 %define sdkbindir()     %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/bin}
 %define jrebindir()     %{expand:%{_jvmdir}/%{jredir -- %{?1}}/bin}
+%global alt_java_name     alt-java
 
 %global rpm_state_dir %{_localstatedir}/lib/rpm-state/
 
@@ -389,6 +390,7 @@ ext=.gz
 alternatives \\
   --install %{_bindir}/java java %{jrebindir -- %{?1}}/java $PRIORITY  --family %{name}.%{_arch} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir -- %{?1}} \\
+  --slave %{_bindir}/%{alt_java_name} %{alt_java_name} %{jrebindir -- %{?1}}/%{alt_java_name} \\
   --slave %{_bindir}/jjs jjs %{jrebindir -- %{?1}}/jjs \\
   --slave %{_bindir}/keytool keytool %{jrebindir -- %{?1}}/keytool \\
   --slave %{_bindir}/orbd orbd %{jrebindir -- %{?1}}/orbd \\
@@ -401,6 +403,8 @@ alternatives \\
   --slave %{_bindir}/unpack200 unpack200 %{jrebindir -- %{?1}}/unpack200 \\
   --slave %{_mandir}/man1/java.1$ext java.1$ext \\
   %{_mandir}/man1/java-%{uniquesuffix -- %{?1}}.1$ext \\
+  --slave %{_mandir}/man1/%{alt_java_name}.1$ext %{alt_java_name}.1$ext \\
+  %{_mandir}/man1/%{alt_java_name}-%{uniquesuffix -- %{?1}}.1$ext \\
   --slave %{_mandir}/man1/jjs.1$ext jjs.1$ext \\
   %{_mandir}/man1/jjs-%{uniquesuffix -- %{?1}}.1$ext \\
   --slave %{_mandir}/man1/keytool.1$ext keytool.1$ext \\
@@ -667,6 +671,7 @@ exit 0
 %dir %{_jvmdir}/%{jredir -- %{?1}}/bin
 %dir %{_jvmdir}/%{jredir -- %{?1}}/lib
 %{_jvmdir}/%{jredir -- %{?1}}/bin/java
+%{_jvmdir}/%{jredir -- %{?1}}/bin/%{alt_java_name}
 %{_jvmdir}/%{jredir -- %{?1}}/bin/jjs
 %{_jvmdir}/%{jredir -- %{?1}}/bin/keytool
 %{_jvmdir}/%{jredir -- %{?1}}/bin/orbd
@@ -698,6 +703,7 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/logging.properties
 %{_jvmdir}/%{jredir -- %{?1}}/lib/calendars.properties
 %{_mandir}/man1/java-%{uniquesuffix -- %{?1}}.1*
+%{_mandir}/man1/%{alt_java_name}-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/jjs-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/keytool-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/orbd-%{uniquesuffix -- %{?1}}.1*
@@ -843,6 +849,7 @@ exit 0
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/jar
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/jarsigner
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/java
+%{_jvmdir}/%{sdkdir -- %{?1}}/bin/%{alt_java_name}
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/javac
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/javadoc
 %{_jvmdir}/%{sdkdir -- %{?1}}/bin/javah
@@ -1934,6 +1941,15 @@ install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
 rm $JAVA_HOME/jre/lib/tzdb.dat
 ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
 
+# Create fake alt-java as a placeholder for future alt-java
+pushd ${JAVA_HOME}
+cp -a jre/bin/java jre/bin/%{alt_java_name}
+cp -a bin/java bin/%{alt_java_name}
+# add alt-java man page
+echo "Hardened java binary recommended for launching untrusted code from the Web e.g. javaws" > man/man1/%{alt_java_name}.1
+cat man/man1/java.1 >> man/man1/%{alt_java_name}.1
+popd
+
 # build cycles
 done
 
@@ -2409,6 +2425,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Nov 23 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-1
+- Created copy of java as alt-java and adapted alternatives and man pages
+
 * Fri Nov 06 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.275.b01-0
 - Update to aarch64-shenandoah-jdk8u275-b01 (GA)
 - Update release notes for 8u275.
