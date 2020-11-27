@@ -260,7 +260,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1286,9 +1286,6 @@ Patch512: rh1649664-awt2dlibraries_compiled_with_no_strict_overflow.patch
 Patch523: pr2974-rh1337583-add_systemlineendings_option_to_keytool_and_use_line_separator_instead_of_crlf_in_pkcs10.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch
-# RH1566890: CVE-2018-3639
-Patch529: rh1566890-CVE_2018_3639-speculative_store_bypass.patch
-Patch531: rh1566890-CVE_2018_3639-speculative_store_bypass_toggle.patch
 # PR3601: Fix additional -Wreturn-type issues introduced by 8061651
 Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_prims_jvm_cpp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
@@ -1298,6 +1295,8 @@ Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_jav
 Patch400: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
 Patch401: pr3655-toggle_system_crypto_policy.patch
+# enable build of spectre/meltdown hardened alt-java
+Patch600: rh1750419-redhat_alt_java.patch
 # JDK-8218811: replace open by os::open in hotspot coding
 # This fixes a GCC 10 build issue
 Patch111: jdk8218811-perfMemory_linux.patch
@@ -1725,8 +1724,6 @@ sh %{SOURCE12}
 %patch512
 %patch523
 %patch528
-%patch529
-%patch531
 %patch530
 %patch571
 %patch574
@@ -1738,6 +1735,7 @@ sh %{SOURCE12}
 
 # RPM-only fixes
 %patch539
+%patch600
 %patch1000
 
 # RHEL-only patches
@@ -1941,11 +1939,8 @@ install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
 rm $JAVA_HOME/jre/lib/tzdb.dat
 ln -s %{_datadir}/javazi-1.8/tzdb.dat $JAVA_HOME/jre/lib/tzdb.dat
 
-# Create fake alt-java as a placeholder for future alt-java
-pushd ${JAVA_HOME}
-cp -a jre/bin/java jre/bin/%{alt_java_name}
-cp -a bin/java bin/%{alt_java_name}
 # add alt-java man page
+pushd ${JAVA_HOME}
 echo "Hardened java binary recommended for launching untrusted code from the Web e.g. javaws" > man/man1/%{alt_java_name}.1
 cat man/man1/java.1 >> man/man1/%{alt_java_name}.1
 popd
@@ -2425,6 +2420,14 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Fri Nov 27 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-2
+- added patch600, rh1750419-redhat_alt_java.patch 
+- Replaced alt-java palceholder by real pathced alt-java
+- remove patch529 rh1566890-CVE_2018_3639-speculative_store_bypass.patch
+- remove patch531 rh1566890-CVE_2018_3639-speculative_store_bypass_toggle.patch
+- both suprassed by new patch
+
+
 * Mon Nov 23 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-1
 - Created copy of java as alt-java and adapted alternatives and man pages
 
