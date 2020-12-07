@@ -1295,7 +1295,7 @@ Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_jav
 Patch400: pr3183-rh1340845-support_fedora_rhel_system_crypto_policy.patch
 # PR3655: Allow use of system crypto policy to be disabled by the user
 Patch401: pr3655-toggle_system_crypto_policy.patch
-# enable build of spectre/meltdown hardened alt-java
+# enable build of speculative store bypass hardened alt-java
 Patch600: rh1750419-redhat_alt_java.patch
 # JDK-8218811: replace open by os::open in hotspot coding
 # This fixes a GCC 10 build issue
