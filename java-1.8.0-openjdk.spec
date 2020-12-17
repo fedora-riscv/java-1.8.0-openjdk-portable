@@ -80,6 +80,8 @@
 %global jit_arches      %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
 %global sa_arches       %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 %global jfr_arches      x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+# Set of architectures for which alt-java has SSB mitigation
+%global ssbd_arches x86_64
 
 # By default, we build a debug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -260,7 +262,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1967,6 +1969,17 @@ $JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 $JAVA_HOME/bin/javac -d . %{SOURCE15}
 $JAVA_HOME/bin/java -Djava.security.disableSystemPropertiesFile=true $(echo $(basename %{SOURCE15})|sed "s|\.java||")
 
+# Check java launcher has no SSB mitigation
+if ! nm $JAVA_HOME/bin/java | grep set_speculation ; then true ; else false; fi
+
+# Check alt-java launcher has SSB mitigation on supported architectures
+%ifarch %{ssbd_arches}
+nm $JAVA_HOME/bin/%{alt_java_name} | grep set_speculation
+%else
+if ! nm $JAVA_HOME/bin/%{alt_java_name} | grep set_speculation ; then true ; else false; fi
+%endif
+
+
 # Check debug symbols are present and can identify code
 find "$JAVA_HOME" -iname '*.so' -print0 | while read -d $'\0' lib
 do
@@ -2420,6 +2433,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Dec 17 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.275.b01-3
+- introduced nm based check to verify alt-java on x86_64 is patched, and no other alt-java or java is patched
+- patch600 rh1750419-redhat_alt_java.patch amended to die, if it is used wrongly
+- introduced ssbd_arches with currently only valid arch of x86_64 to separate real alt-java architectures
+
 * Fri Nov 27 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-2
 - added patch600, rh1750419-redhat_alt_java.patch 
 - Replaced alt-java palceholder by real pathced alt-java
