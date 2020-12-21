@@ -1030,7 +1030,8 @@ exit 0
 %define files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
+#javadoc is in jdk8 noarch, so also licnese file must be treated like it
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 %if %is_system_jdk
 %if %{is_release_build -- %{?1}}
 %ghost %{_javadocdir}/java
@@ -1041,7 +1042,8 @@ exit 0
 %define files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
+#javadoc is in jdk8 noarch, so also licnese file must be treated like it
+%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 %if %is_system_jdk
 %if %{is_release_build -- %{?1}}
 %ghost %{_javadocdir}/java-zip
