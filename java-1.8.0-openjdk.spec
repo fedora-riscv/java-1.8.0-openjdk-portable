@@ -96,7 +96,7 @@
 # See https://bugzilla.redhat.com/show_bug.cgi?id=513605
 # MetaspaceShared::generate_vtable_methods is not implemented for the PPC JIT
 %global share_arches    %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
-%global jfr_arches      x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+%global jfr_arches      %{jit_arches}
 
 # Set of architectures for which alt-java has SSB mitigation
 %global ssbd_arches x86_64
@@ -289,7 +289,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      5
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2606,6 +2606,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Dec 21 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.275.b01-5
+- Enable JFR on x86, now we have JDK-8252096: Shenandoah: adjust SerialPageShiftCount for x86_32 and JFR
+
 * Sat Dec 19 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-4
 - introduced fastdebug build cycle and subpackages
 
