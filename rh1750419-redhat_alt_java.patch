@@ -1,11 +1,11 @@
-diff -r 25e94aa812b2 make/CompileLaunchers.gmk
---- openjdk/jdk/make/CompileLaunchers.gmk	Wed Feb 05 12:20:36 2020 -0300
-+++ openjdk/jdk/make/CompileLaunchers.gmk	Tue Jun 02 17:15:28 2020 +0100
-@@ -234,6 +234,21 @@
+diff --git openjdk.orig/jdk/make/CompileLaunchers.gmk openjdk/jdk/make/CompileLaunchers.gmk
+--- openjdk.orig/jdk/make/CompileLaunchers.gmk
++++ openjdk/jdk/make/CompileLaunchers.gmk
+@@ -255,6 +255,33 @@
+   endif
+ endif
  
- BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/java$(EXE_SUFFIX)
- 
-+#Wno-error=cpp is present to allow commented warning in ifdef part of main.c
++# -Wno-error=cpp is present to allow commented warning in ifdef part of main.c
 +$(eval $(call SetupLauncher,alt-java, \
 +    -DEXPAND_CLASSPATH_WILDCARDS -DREDHAT_ALT_JAVA -Wno-error=cpp,,,user32.lib comctl32.lib, \
 +    $(JDK_OUTPUTDIR)/objs/jli_static.lib, $(JAVA_RC_FLAGS), \
@@ -16,16 +16,29 @@ diff -r 25e94aa812b2 make/CompileLaunchers.gmk
 +	$(RM) $@
 +	$(CP) $(JDK_OUTPUTDIR)/objs/java_objs$(OUTPUT_SUBDIR)/alt-java$(EXE_SUFFIX) $@
 +
++$(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/alt-java$(DEBUGINFO_EXT): $(BUILD_LAUNCHER_alt-java)
++	$(MKDIR) -p $(@D)
++	$(RM) $@
++	$(CP) $(JDK_OUTPUTDIR)/objs/java_objs$(OUTPUT_SUBDIR)/alt-java$(DEBUGINFO_EXT) $@
++
 +ifeq ($(OPENJDK_TARGET_OS), linux)
 +  BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/alt-java$(EXE_SUFFIX)
++  ifeq ($(ENABLE_DEBUG_SYMBOLS), true)
++    ifneq ($(POST_STRIP_CMD), )
++      ifneq ($(STRIP_POLICY), no_strip)
++        BUILD_LAUNCHERS += $(JDK_OUTPUTDIR)/bin$(OUTPUT_SUBDIR)/alt-java$(DEBUGINFO_EXT)
++      endif
++    endif
++  endif
 +endif
 +
  ifeq ($(OPENJDK_TARGET_OS), windows)
    $(eval $(call SetupLauncher,javaw, \
        -DJAVAW -DEXPAND_CLASSPATH_WILDCARDS,,,user32.lib comctl32.lib, \
-diff -r 25e94aa812b2 src/share/bin/alt_main.h
---- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ openjdk/jdk/src/share/bin/alt_main.h	Tue Jun 02 17:15:28 2020 +0100
+diff --git openjdk.orig/jdk/src/share/bin/alt_main.h openjdk/jdk/src/share/bin/alt_main.h
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/share/bin/alt_main.h
 @@ -0,0 +1,73 @@
 +/*
 + * Copyright (c) 2019, Red Hat, Inc. All rights reserved.
@@ -100,9 +113,9 @@ diff -r 25e94aa812b2 src/share/bin/alt_main.h
 +}
 +
 +#endif // REDHAT_ALT_JAVA
-diff -r 25e94aa812b2 src/share/bin/main.c
---- openjdk/jdk/src/share/bin/main.c	Wed Feb 05 12:20:36 2020 -0300
-+++ openjdk/jdk/src/share/bin/main.c	Tue Jun 02 17:15:28 2020 +0100
+diff --git openjdk.orig/jdk/src/share/bin/main.c openjdk/jdk/src/share/bin/main.c
+--- openjdk.orig/jdk/src/share/bin/main.c
++++ openjdk/jdk/src/share/bin/main.c
 @@ -32,6 +32,14 @@
  
  #include "defines.h"

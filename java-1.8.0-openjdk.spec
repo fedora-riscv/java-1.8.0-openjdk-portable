@@ -274,7 +274,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u275-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u282-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -289,12 +289,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      6
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1312,8 +1312,6 @@ Patch512: rh1649664-awt2dlibraries_compiled_with_no_strict_overflow.patch
 Patch523: pr2974-rh1337583-add_systemlineendings_option_to_keytool_and_use_line_separator_instead_of_crlf_in_pkcs10.patch
 # PR3083, RH1346460: Regression in SSL debug output without an ECC provider
 Patch528: pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch
-# PR3601: Fix additional -Wreturn-type issues introduced by 8061651
-Patch530: pr3601-fix_additional_Wreturn_type_issues_introduced_by_8061651_for_prims_jvm_cpp.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
 Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
@@ -1365,10 +1363,6 @@ Patch502: pr2462-resolve_disabled_warnings_for_libunpack_and_the_unpack200_binar
 Patch571: jdk8199936-pr3591-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x_jdk.patch
 # 8143245, PR3548: Zero build requires disabled warnings
 Patch574: jdk8143245-pr3548-zero_build_requires_disabled_warnings.patch
-# 8197981, PR3548: Missing return statement in __sync_val_compare_and_swap_8
-Patch575: jdk8197981-pr3548-missing_return_statement_in_sync_val_compare_and_swap_8.patch
-# 8062808, PR3548: Turn on the -Wreturn-type warning
-Patch577: jdk8062808-pr3548-turn_on_the_wreturn_type_warning.patch
 # s390: JDK-8203030, Type fixing for s390
 Patch102: jdk8203030-zero_s390_31_bit_size_t_type_conflicts_in_shared_code.patch
 # 8035341: Allow using a system installed libpng
@@ -1386,8 +1380,6 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
-# JDK-8254177: (tz) Upgrade time-zone data to tzdata2020b
-Patch13: jdk8254177-tzdata2020b.patch
 
 #############################################
 #
@@ -1844,14 +1836,10 @@ sh %{SOURCE12}
 %patch512
 %patch523
 %patch528
-%patch530
 %patch571
 %patch574
-%patch575
-%patch577
 %patch111
 %patch112
-%patch13
 
 # RPM-only fixes
 %patch539
@@ -2606,6 +2594,15 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Dec 22 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b01-0.0.ea
+- Update to aarch64-shenandoah-jdk8u282-b01 (EA)
+- Update release notes for 8u282-b01.
+- Switch to EA mode.
+- Remove PR3601, covered upstream by JDK-8062808.
+- Remove upstreamed JDK-8197981/PR3548, JDK-8062808/PR3548 & JDK-8254177.
+- Extend RH1750419 alt-java fix to include external debuginfo, following JDK-8252395
+- Adapt JDK-8143245 patch, following JDK-8254166
+
 * Tue Dec 22 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-6
 - fixed missing condition for fastdebug packages being counted as debug ones
 
