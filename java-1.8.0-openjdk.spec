@@ -71,7 +71,7 @@
 # == rpm -ql           java-11-openjdk-headless-slowdebug-11.0.1.13-8.fc29.x86_64.rpm  | grep bin
 # != rpm -ql           java-11-openjdk-headless-11.0.1.13-8.fc29.x86_64.rpm  | grep bin
 # similarly for other %%{_jvmdir}/{jre,java} and %%{_javadocdir}/{java,java-zip}
-%define is_release_build() %( if [ "%{?1}" == "%{debug_suffix_unquoted}" ]; then echo "0" ; else echo "1"; fi )
+%define is_release_build() %( if [ "%{?1}" == "%{debug_suffix_unquoted}" -o "%{?1}" == "%{fastdebug_suffix_unquoted}" ]; then echo "0" ; else echo "1"; fi )
 
 # while JDK is a techpreview(is_system_jdk=0), some provides are turned off. Once jdk stops to be an techpreview, move it to 1
 # as sytem JDK, we mean any JDK which can run whole system java stack without issues (like bytecode issues, module issues, dependencies...)
@@ -289,7 +289,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      5
+%global rpmrelease      6
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2606,6 +2606,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Tue Dec 22 2020 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.275.b01-6
+- fixed missing condition for fastdebug packages being counted as debug ones
+
 * Mon Dec 21 2020 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.275.b01-5
 - Enable JFR on x86, now we have JDK-8252096: Shenandoah: adjust SerialPageShiftCount for x86_32 and JFR
 
