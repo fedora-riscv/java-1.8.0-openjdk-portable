@@ -60,11 +60,15 @@ Live versions of these release notes can be found at:
   - JDK-8253284: Zero OrderAccess barrier mappings are incorrect
   - JDK-8253550: [8u] JDK-8252395 breaks the build for make STRIP_POLICY=no_strip
   - JDK-8253752: test/sun/management/jmxremote/bootstrap/RmiBootstrapTest.java fails randomly
+  - JDK-8253837: JFR 8u fix symbol and cstring hashtable equals implementaion
   - JDK-8254081: java/security/cert/PolicyNode/GetPolicyQualifiers.java fails due to an expired certificate
   - JDK-8254144: Non-x86 Zero builds fail with return-type warning in os_linux_zero.cpp
   - JDK-8254166: Zero: return-type warning in zeroInterpreter_zero.cpp
   - JDK-8254683: [TEST_BUG] jdk/test/sun/tools/jconsole/WorkerDeadlockTest.java fails
   - JDK-8255003: Build failures on Solaris
+  - JDK-8255269: Unsigned overflow in g1Policy.cpp
+* Shenandoah
+  - Fix racy update of code roots
 
 New in release OpenJDK 8u275 (2020-11-05):
 ===========================================
