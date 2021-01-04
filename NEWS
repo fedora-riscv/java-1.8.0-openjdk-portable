@@ -11,11 +11,13 @@ Live versions of these release notes can be found at:
 
 * Other changes
   - JDK-6962725: Regtest javax/swing/JFileChooser/6738668/bug6738668.java fails under Linux
+  - JDK-8008657: JSpinner setComponentOrientation doesn't affect on text orientation
   - JDK-8025936: Windows .pdb and .map files does not have proper dependencies setup
   - JDK-8030350: Enable additional compiler warnings for GCC
   - JDK-8031423: Test java/awt/dnd/DisposeFrameOnDragCrash/DisposeFrameOnDragTest.java fails by Timeout on Windows
   - JDK-8036122: Fix warning 'format not a string literal'
   - JDK-8039279: Move awt tests to openjdk repository
+  - JDK-8041592: [TEST_BUG] Move 42 AWT hw/lw mixing tests to jdk
   - JDK-8051853: new URI("x/").resolve("..").getSchemeSpecificPart() returns null!
   - JDK-8062808: Turn on the -Wreturn-type warning
   - JDK-8132664: closed/javax/swing/DataTransfer/DefaultNoDrop/DefaultNoDrop.java locks on Windows
@@ -24,7 +26,9 @@ Live versions of these release notes can be found at:
   - JDK-8148916: Mark bug6400879.java as intermittently failing
   - JDK-8148983: Fix extra comma in changes for JDK-8148916
   - JDK-8160438: javax/swing/plaf/nimbus/8057791/bug8057791.java fails
+  - JDK-8163161: [PIT][TEST_BUG] increase timeout in javax/swing/plaf/nimbus/8057791/bug8057791.java
   - JDK-8165808: Add release barriers when allocating objects with concurrent collection
+  - JDK-8168292: [TESTBUG] [macosx] Test java/awt/TrayIcon/DragEventSource/DragEventSource.java fails on OS X
   - JDK-8185003: JMX: Add a version of ThreadMXBean.dumpAllThreads with a maxDepth argument
   - JDK-8197981: Missing return statement in __sync_val_compare_and_swap_8
   - JDK-8202076: test/jdk/java/io/File/WinSpecialFiles.java on windows with VS2017
@@ -34,6 +38,7 @@ Live versions of these release notes can be found at:
   - JDK-8215727: Restore JFR thread sampler loop to old / previous behavior
   - JDK-8220657: JFR.dump does not work when filename is set
   - JDK-8221342: [TESTBUG] Generate Dockerfile for docker testing
+  - JDK-8223108: Test java/awt/EventQueue/NonComponentSourcePost.java is unstable
   - JDK-8224502: [TESTBUG] JDK docker test TestSystemMetrics.java fails with access issues and OOM
   - JDK-8231209: [REDO] ThreadMXBean::getThreadAllocatedBytes() can be quicker for self thread
   - JDK-8231968: getCurrentThreadAllocatedBytes default implementation s/b getThreadAllocatedBytes
@@ -67,6 +72,7 @@ Live versions of these release notes can be found at:
   - JDK-8254683: [TEST_BUG] jdk/test/sun/tools/jconsole/WorkerDeadlockTest.java fails
   - JDK-8255003: Build failures on Solaris
   - JDK-8255269: Unsigned overflow in g1Policy.cpp
+  - JDK-8255603: Memory/Performance regression after JDK-8210985
 * Shenandoah
   - Fix racy update of code roots
 
