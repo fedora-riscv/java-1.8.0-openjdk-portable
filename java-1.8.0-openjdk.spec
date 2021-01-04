@@ -43,7 +43,7 @@
 %global debug_warning This package is unoptimised with full debugging. Install only as needed and remove ASAP.
 %global debug_on with full debug on
 %global fastdebug_warning This package is optimised with full debugging. Install only as needed and remove ASAP.
-%global for_fastdebug_on with minimal debug on
+%global for_fastdebug with minimal debug on
 %global for_debug for packages with debug on
 
 %if %{with release}
