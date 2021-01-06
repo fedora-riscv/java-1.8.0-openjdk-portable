@@ -274,7 +274,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u282-b03
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u282-b04
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1342,8 +1342,6 @@ Patch112: %{name}-gcc11.patch
 Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_equals_to_int.patch
 # x86: S8199936, PR3533: HotSpot generates code with unaligned stack, crashes on SSE operations (-mstackrealign workaround)
 Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
-# AArch64: PR3519: Fix further functions with a missing return value (AArch64)
-Patch106: pr3519-fix_further_functions_with_a_missing_return_value.patch
 # S390 ambiguous log2_intptr calls
 Patch107: s390-8214206_fix.patch
 
@@ -1825,7 +1823,6 @@ sh %{SOURCE12}
 %patch107
 
 # AArch64 fixes
-%patch106
 
 # x86 fixes
 %patch105
@@ -2594,6 +2591,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Wed Jan 06 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b04-0.0.ea
+- Update to aarch64-shenandoah-jdk8u282-b04 (EA)
+- Update release notes for 8u282-b04.
+- Remove upstreamed patch PR3519
+
 * Sat Jan 02 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b03-0.0.ea
 - Update to aarch64-shenandoah-jdk8u282-b03 (EA)
 - Update release notes for 8u282-b03.
