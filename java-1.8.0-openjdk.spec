@@ -1413,6 +1413,7 @@ Patch1000: rh1648249-add_commented_out_nss_cfg_provider_to_java_security.patch
 # Dependencies
 #
 #############################################
+BuildRequires: make
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: alsa-lib-devel
