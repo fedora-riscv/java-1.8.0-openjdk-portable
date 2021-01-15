@@ -77,6 +77,7 @@ Live versions of these release notes can be found at:
   - JDK-8166663: Simplify oops_on_card_seq_iterate_careful
   - JDK-8166862: CMS needs klass_or_null_acquire
   - JDK-8168292: [TESTBUG] [macosx] Test java/awt/TrayIcon/DragEventSource/DragEventSource.java fails on OS X
+  - JDK-8168682: jdk/test/java/lang/ClassLoader/forNameLeak/ClassForNameLeak.java fails with -Xcomp
   - JDK-8179083: Uninitialized notifier in Java Monitor Wait tracing event
   - JDK-8185003: JMX: Add a version of ThreadMXBean.dumpAllThreads with a maxDepth argument
   - JDK-8197981: Missing return statement in __sync_val_compare_and_swap_8
@@ -97,6 +98,7 @@ Live versions of these release notes can be found at:
   - JDK-8221710: [TESTBUG] more configurable parameters for docker testing
   - JDK-8223108: Test java/awt/EventQueue/NonComponentSourcePost.java is unstable
   - JDK-8224502: [TESTBUG] JDK docker test TestSystemMetrics.java fails with access issues and OOM
+  - JDK-8225072: Add LuxTrust certificate that is expiring in March 2021 to list of allowed but expired certs
   - JDK-8227006: [linux] Runtime.availableProcessors execution time increased by factor of 100
   - JDK-8229868: Update Apache Santuario TPRM version
   - JDK-8231209: [REDO] ThreadMXBean::getThreadAllocatedBytes() can be quicker for self thread
@@ -106,6 +108,7 @@ Live versions of these release notes can be found at:
   - JDK-8234270: [REDO] JDK-8204128 NMT might report incorrect numbers for Compiler area
   - JDK-8234339: replace JLI_StrTok in java_md_solinux.c
   - JDK-8238448: RSASSA-PSS signature verification fail when using certain odd key sizes
+  - JDK-8239105: Add exception for expiring Digicert root certificates to VerifyCACerts test
   - JDK-8242335: Additional Tests for RSASSA-PSS
   - JDK-8242480: Negative value may be returned by getFreeSwapSpaceSize() in the docker
   - JDK-8244225: stringop-overflow warning on strncpy call from compile_the_world_in
@@ -114,8 +117,8 @@ Live versions of these release notes can be found at:
   - JDK-8248214: Add paddings for TaskQueueSuper to reduce false-sharing cache contention
   - JDK-8249176: Update GlobalSignR6CA test certificates
   - JDK-8249846: Change of behavior after JDK-8237117: Better ForkJoinPool behavior
-  - JDK-8250665: Wrong translation for the month name of May in ar_JO,LB,SY
   - JDK-8250636: iso8601_time returns incorrect offset part on MacOS
+  - JDK-8250665: Wrong translation for the month name of May in ar_JO,LB,SY
   - JDK-8250928: JFR: Improve hash algorithm for stack traces
   - JDK-8251365: Build failure on AIX after 8250636
   - JDK-8251469: Better cleanup for test/jdk/javax/imageio/SetOutput.java
@@ -135,18 +138,35 @@ Live versions of these release notes can be found at:
   - JDK-8254144: Non-x86 Zero builds fail with return-type warning in os_linux_zero.cpp
   - JDK-8254166: Zero: return-type warning in zeroInterpreter_zero.cpp
   - JDK-8254683: [TEST_BUG] jdk/test/sun/tools/jconsole/WorkerDeadlockTest.java fails
+  - JDK-8254982: (tz) Upgrade time-zone data to tzdata2020c
   - JDK-8255003: Build failures on Solaris
+  - JDK-8255226: (tz) Upgrade time-zone data to tzdata2020d
   - JDK-8255269: Unsigned overflow in g1Policy.cpp
-  - JDK-8255717: Fix JFR crash in WriteObjectSampleStacktrace due to object not initialized
   - JDK-8255603: Memory/Performance regression after JDK-8210985
+  - JDK-8255717: Fix JFR crash in WriteObjectSampleStacktrace due to object not initialized
   - JDK-8256618: Zero: Linux x86_32 build still fails
   - JDK-8256671: Incorrect assignment operator used in guarantee() in genCollectedHeap
   - JDK-8256752: 8252395 incorrect copy rule for macos .dSYM folder
   - JDK-8257397: [TESTBUG] test/lib/containers/docker/Common.java refers to -Xlog:os+container=trace
+  - JDK-8258630: Add expiry exception for QuoVadis root certificate
 * AArch64 port
   - Fix AArch64 build failure after JDK-8062808 backport
 * Shenandoah
   - Fix racy update of code roots
+
+Notes on individual issues:
+===========================
+
+security-libs/javax.xml.crypto:
+
+JDK-8230839: Updated XML Signature Implementation to Apache Santuario 2.1.3
+===========================================================================
+The XML Signature implementation in the `java.xml.crypto` module has
+been updated to version 2.1.3 of Apache Santuario. New features
+include:
+
+* Added support for embedding elliptic curve public keys in the
+  KeyValue element
 
 New in release OpenJDK 8u275 (2020-11-05):
 ===========================================
