@@ -289,7 +289,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1293,6 +1293,8 @@ Patch1:   rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch
 Patch3:   rh1648644-java_access_bridge_privileged_security.patch
 # Turn on AssumeMP by default on RHEL systems
 Patch534: rh1648246-always_instruct_vm_to_assume_multiple_processors_are_available.patch
+# RH1582504: Use RSA as default for keytool, as DSA is disabled in all crypto policies except LEGACY
+Patch1003: rh1582504-rsa_default_for_keytool.patch
 
 #############################################
 #
@@ -1843,6 +1845,7 @@ sh %{SOURCE12}
 %patch539
 %patch600
 %patch1000
+%patch1003
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -2592,6 +2595,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sun Jan 24 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-1
+- Use RSA as default for keytool, as DSA is disabled in all crypto policies except LEGACY
+
 * Fri Jan 15 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-0
 - Update to aarch64-shenandoah-jdk8u282-b08 (GA)
 - Update release notes for 8u282-b08.
