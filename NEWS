@@ -9,6 +9,8 @@ Live versions of these release notes can be found at:
   * https://bitly.com/openjdk8u282
   * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u282.txt
 
+* Security fixes
+  - JDK-8247619: Improve Direct Buffering of Characters
 * Other changes
   - JDK-6962725: Regtest javax/swing/JFileChooser/6738668/bug6738668.java fails under Linux
   - JDK-8008657: JSpinner setComponentOrientation doesn't affect on text orientation
