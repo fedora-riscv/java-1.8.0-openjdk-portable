@@ -289,7 +289,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2289,6 +2289,13 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/demo \
   | sed 's|'$RPM_BUILD_ROOT'||' \
   | sed 's|^|%doc |' \
   >> %{name}-demo.files"$suffix"
+# Find demo directories.
+find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/demo \
+  $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/sample \
+  -type d | sort \
+  | sed 's|'$RPM_BUILD_ROOT'||' \
+  | sed 's|^|%dir |' \
+  >> %{name}-demo.files"$suffix"
 
 # Create links which leads to separately installed java-atk-bridge and allow configuration
 # links points to java-atk-wrapper - an dependence
@@ -2595,6 +2602,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Jan 25 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-2
+- Add directories to files directive for demo package.
+
 * Sun Jan 24 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-1
 - Use RSA as default for keytool, as DSA is disabled in all crypto policies except LEGACY
 
