@@ -41,10 +41,11 @@
 %global normal_suffix ""
 
 %global debug_warning This package is unoptimised with full debugging. Install only as needed and remove ASAP.
-%global debug_on with full debug on
 %global fastdebug_warning This package is optimised with full debugging. Install only as needed and remove ASAP.
-%global for_fastdebug with minimal debug on
-%global for_debug for packages with debug on
+%global debug_on unoptimised with full debugging on
+%global fastdebug_on optimised with full debugging on
+%global for_fastdebug for packages with debugging on and optimisation
+%global for_debug for packages with debugging on and no optimisation
 
 %if %{with release}
 %global include_normal_build 1
@@ -310,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1220,7 +1221,7 @@ Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 # provides >= 1.6.0 must specify the epoch, "java >= 1:1.6.0".
 
 Epoch:   1
-Summary: %{origin_nice} Runtime Environment %{majorver}
+Summary: %{origin_nice} %{majorver} Runtime Environment
 
 # HotSpot code is licensed under GPLv2
 # JDK library code is licensed under GPLv2 with the Classpath exception
@@ -1479,160 +1480,160 @@ BuildRequires: systemtap-sdt-devel
 %{java_rpo %{nil}}
 
 %description
-The %{origin_nice} runtime environment %{majorver}.
+The %{origin_nice} %{majorver} runtime environment.
 
 %if %{include_debug_build}
 %package slowdebug
-Summary: %{origin_nice} Runtime Environment %{majorver} %{debug_on}
+Summary: %{origin_nice} %{majorver} Runtime Environment %{debug_on}
 
 %{java_rpo -- %{debug_suffix_unquoted}}
 %description slowdebug
-The %{origin_nice} runtime environment %{majorver}.
+The %{origin_nice} %{majorver} runtime environment.
 %{debug_warning}
 %endif
 
 %if %{include_fastdebug_build}
 %package fastdebug
-Summary: %{origin_nice} Runtime Environment %{majorver} %{fastdebug_on}
+Summary: %{origin_nice} %{majorver} Runtime Environment %{fastdebug_on}
 Group:   Development/Languages
 
 %{java_rpo -- %{fastdebug_suffix_unquoted}}
 %description fastdebug
-The %{origin_nice} runtime environment.
+The %{origin_nice} %{majorver} runtime environment.
 %{fastdebug_warning}
 %endif
 
 %if %{include_normal_build}
 %package headless
-Summary: %{origin_nice} Headless Runtime Environment %{majorver}
+Summary: %{origin_nice} %{majorver} Headless Runtime Environment
 
 %{java_headless_rpo %{nil}}
 
 %description headless
-The %{origin_nice} runtime environment %{majorver} without audio and video support.
+The %{origin_nice} %{majorver} runtime environment without audio and video support.
 %endif
 
 %if %{include_debug_build}
 %package headless-slowdebug
-Summary: %{origin_nice} Runtime Environment %{majorver} %{debug_on}
+Summary: %{origin_nice} %{majorver} Runtime Environment %{debug_on}
 
 %{java_headless_rpo -- %{debug_suffix_unquoted}}
 
 %description headless-slowdebug
-The %{origin_nice} runtime environment %{majorver} without audio and video support.
+The %{origin_nice} %{majorver} runtime environment without audio and video support.
 %{debug_warning}
 %endif
 
 %if %{include_fastdebug_build}
 %package headless-fastdebug
-Summary: %{origin_nice} Runtime Environment %{fastdebug_on}
+Summary: %{origin_nice} %{majorver} Runtime Environment %{fastdebug_on}
 Group:   Development/Languages
 
 %{java_headless_rpo -- %{fastdebug_suffix_unquoted}}
 
 %description headless-fastdebug
-The %{origin_nice} runtime environment %{majorver} without audio and video support.
+The %{origin_nice} %{majorver} runtime environment without audio and video support.
 %{fastdebug_warning}
 %endif
 
 %if %{include_normal_build}
 %package devel
-Summary: %{origin_nice} Development Environment %{majorver}
+Summary: %{origin_nice} %{majorver} Development Environment
 
 %{java_devel_rpo %{nil}}
 
 %description devel
-The %{origin_nice} development tools %{majorver}.
+The %{origin_nice} %{majorver} development tools.
 %endif
 
 %if %{include_debug_build}
 %package devel-slowdebug
-Summary: %{origin_nice} Development Environment %{majorver} %{debug_on}
+Summary: %{origin_nice} %{majorver} Development Environment %{debug_on}
 
 %{java_devel_rpo -- %{debug_suffix_unquoted}}
 
 %description devel-slowdebug
-The %{origin_nice} development tools %{majorver}.
+The %{origin_nice} %{majorver} development tools.
 %{debug_warning}
 %endif
 
 %if %{include_fastdebug_build}
 %package devel-fastdebug
-Summary: %{origin_nice} Development Environment %{majorver} %{fastdebug_on}
+Summary: %{origin_nice} %{majorver} Development Environment %{fastdebug_on}
 Group:   Development/Tools
 
 %{java_devel_rpo -- %{fastdebug_suffix_unquoted}}
 
 %description devel-fastdebug
-The %{origin_nice} development tools %{majorver}.
+The %{origin_nice} %{majorver} development tools.
 %{fastdebug_warning}
 %endif
 
 %if %{include_normal_build}
 %package demo
-Summary: %{origin_nice} Demos %{majorver}
+Summary: %{origin_nice} %{majorver} Demos
 
 %{java_demo_rpo %{nil}}
 
 %description demo
-The %{origin_nice} demos %{majorver}.
+The %{origin_nice} %{majorver} demos.
 %endif
 
 %if %{include_debug_build}
 %package demo-slowdebug
-Summary: %{origin_nice} Demos %{majorver} %{debug_on}
+Summary: %{origin_nice} %{majorver} Demos %{debug_on}
 
 %{java_demo_rpo -- %{debug_suffix_unquoted}}
 
 %description demo-slowdebug
-The %{origin_nice} demos %{majorver}.
+The %{origin_nice} %{majorver} demos.
 %{debug_warning}
 %endif
 
 %if %{include_fastdebug_build}
 %package demo-fastdebug
-Summary: %{origin_nice} Demos %{majorver} %{fastdebug_on}
+Summary: %{origin_nice} %{majorver} Demos %{fastdebug_on}
 Group:   Development/Languages
 
 %{java_demo_rpo -- %{fastdebug_suffix_unquoted}}
 
 %description demo-fastdebug
-The %{origin_nice} demos %{majorver}.
+The %{origin_nice} %{majorver} demos.
 %{fastdebug_warning}
 %endif
 
 %if %{include_normal_build}
 %package src
-Summary: %{origin_nice} Source Bundle %{majorver}
+Summary: %{origin_nice} %{majorver} Source Bundle
 
 %{java_src_rpo %{nil}}
 
 %description src
-The java-%{origin}-src sub-package contains the complete %{origin_nice} %{majorver}
+The %{compatiblename}-src sub-package contains the complete %{origin_nice} %{majorver}
 class library source code for use by IDE indexers and debuggers.
 %endif
 
 %if %{include_debug_build}
 %package src-slowdebug
-Summary: %{origin_nice} Source Bundle %{majorver} %{for_debug}
+Summary: %{origin_nice} %{majorver} Source Bundle %{for_debug}
 
 %{java_src_rpo -- %{debug_suffix_unquoted}}
 
 %description src-slowdebug
-The java-%{origin}-src-slowdebug sub-package contains the complete %{origin_nice} %{majorver}
- class library source code for use by IDE indexers and debuggers. Debugging %{for_debug}.
+The %{compatiblename}-src-slowdebug sub-package contains the complete %{origin_nice} %{majorver}
+ class library source code for use by IDE indexers and debuggers, %{for_debug}.
 %endif
 
 %if %{include_fastdebug_build}
 %package src-fastdebug
-Summary: %{origin_nice} Source Bundle %{majorver} %{for_fastdebug}
+Summary: %{origin_nice} %{majorver} Source Bundle %{for_fastdebug}
 Group:   Development/Languages
 
 %{java_src_rpo -- %{fastdebug_suffix_unquoted}}
 
 %description src-fastdebug
-The java-%{origin}-src-fastdebug sub-package contains the complete %{origin_nice} %{majorver}
- class library source code for use by IDE indexers and debuggers. Debugging %{for_fastdebug}.
+The %{compatiblename}-src-fastdebug sub-package contains the complete %{origin_nice} %{majorver}
+ class library source code for use by IDE indexers and debuggers, %{for_fastdebug}.
 %endif
 
 
@@ -2613,6 +2614,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Sat Jan 30 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-4
+- Cleanup package descriptions and version number placement.
+
 * Tue Jan 26 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-3
 - Include a test in the RPM to check the build has the correct vendor information.
 - Use 'oj_' prefix on new vendor globals to avoid a conflict with RPM's vendor value.
