@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      5
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -383,6 +383,14 @@
 %global alt_java_name     alt-java
 
 %global rpm_state_dir %{_localstatedir}/lib/rpm-state/
+
+# For flatpack builds hard-code /usr/sbin/alternatives,
+# otherwise use %%{_sbindir} relative path.
+%if 0%{?flatpak}
+%global alternatives_requires /usr/sbin/alternatives
+%else
+%global alternatives_requires %{_sbindir}/alternatives
+%endif
 
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
@@ -1110,9 +1118,9 @@ OrderWithRequires: copy-jdk-configs
 # for printing support
 Requires: cups-libs
 # Post requires alternatives to install tool alternatives
-Requires(post):   %{_sbindir}/alternatives
+Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall tool alternatives
-Requires(postun): %{_sbindir}/alternatives
+Requires(postun): %{alternatives_requires}
 # for optional support of kernel stream control, card reader and printing bindings
 %if 0%{?fedora} || 0%{?rhel} >= 8
 Suggests: lksctp-tools%{?_isa}, pcsc-lite-devel%{?_isa}
@@ -1136,9 +1144,9 @@ Provides: java-headless%{?1} = %{epoch}:%{version}-%{release}
 Requires:         %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install tool alternatives
-Requires(post):   %{_sbindir}/alternatives
+Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall tool alternatives
-Requires(postun): %{_sbindir}/alternatives
+Requires(postun): %{alternatives_requires}
 
 # Standard JPackage devel provides
 Provides: java-sdk-%{javaver}-%{origin}%{?1} = %{epoch}:%{version}-%{release}
@@ -1168,9 +1176,9 @@ Provides: java-%{origin}-demo%{?1} = %{epoch}:%{version}-%{release}
 %define java_javadoc_rpo() %{expand:
 OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
 # Post requires alternatives to install javadoc alternative
-Requires(post):   %{_sbindir}/alternatives
+Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall javadoc alternative
-Requires(postun): %{_sbindir}/alternatives
+Requires(postun): %{alternatives_requires}
 
 # Standard JPackage javadoc provides
 Provides: java-%{javaver}-javadoc%{?1} = %{epoch}:%{version}-%{release}
@@ -2614,6 +2622,9 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Feb 18 2021 Stephan Bergmann <sbergman@redhat.com> - 1:1.8.0.282.b08-5
+- Hardcode /usr/sbin/alternatives for Flatpak builds
+
 * Sat Jan 30 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.282.b08-4
 - Cleanup package descriptions and version number placement.
 
