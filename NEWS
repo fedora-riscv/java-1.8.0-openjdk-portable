@@ -17,6 +17,7 @@ Live versions of these release notes can be found at:
   - JDK-8038723: Openup some PrinterJob tests
   - JDK-8041561: Inconsistent opacity behaviour between JCheckBox and JRadioButton
   - JDK-8078450: Implement consistent process for quarantine of tests
+  - JDK-8078614: WindowsClassicLookAndFeel MetalComboBoxUI.getbaseLine fails with IllegalArgumentException
   - JDK-8080953: [TEST_BUG]Test java/awt/FontClass/DebugFonts.java fails due to wrongly typed bugid
   - JDK-8081547: Prepare client libs regression tests for running in a concurrent, headless jtreg environment
   - JDK-8141457: keytool default cert fingerprint algorithm should be SHA-256
@@ -25,6 +26,7 @@ Live versions of these release notes can be found at:
   - JDK-8167281: IIOMetadataNode bugs in getElementsByTagName and NodeList.item methods
   - JDK-8168996: C2 crash at postaloc.cpp:140 : assert(false) failed: unexpected yanked node
   - JDK-8185934: keytool shows "Signature algorithm: SHA1withECDSA, -1-bit key"
+  - JDK-8198334: java/awt/FileDialog/8003399/bug8003399.java fails in headless mode
   - JDK-8202343: Disable TLS 1.0 and 1.1
   - JDK-8211339: NPE during SSL handshake caused by HostnameChecker
   - JDK-8216987: ciMethodData::load_data() unpacks MDOs with non-atomic copy
@@ -45,7 +47,9 @@ Live versions of these release notes can be found at:
   - JDK-8242141: New System Properties to configure the TLS signature schemes
   - JDK-8244621: [macos10.15] Garbled FX printing plus CoreText warnings on Catalina when building with Xcode 11
   - JDK-8249183: JVM crash in "AwtFrame::WmSize" method
+  - JDK-8249251: [dark_mode ubuntu 20.04] The selected menu is not highlighted in GTKLookAndFeel
   - JDK-8249588: libwindowsaccessbridge issues on 64bit Windows
+  - JDK-8250582: Revert Principal Name type to NT-UNKNOWN when requesting TGS Kerberos tickets
   - JDK-8250984: Memory Docker tests fail on some Linux kernels w/o cgroupv1 swap limit capabilities
   - JDK-8251397: NPE on ClassValue.ClassValueMap.cacheArray
   - JDK-8252470: java/awt/dnd/DisposeFrameOnDragCrash/DisposeFrameOnDragTest.java fails on Windows
@@ -60,11 +64,13 @@ Live versions of these release notes can be found at:
   - JDK-8258241: [8u] Missing doPrivileged() hunks from JDK-8226575
   - JDK-8258396: SIGILL in jdk.jfr.internal.PlatformRecorder.rotateDisk()
   - JDK-8258430: 8u backport of JDK-8063107 missing test/javax/swing/JRadioButton/8041561/bug8041561.java changes
+  - JDK-8258833: Cancel multi-part cipher operations in SunPKCS11 after failures
   - JDK-8258933: G1 needs klass_or_null_acquire
   - JDK-8259312: VerifyCACerts.java fails as soneraclass2ca cert will
   - JDK-8259384: CUP version wrong in THIRD_PARTY_README after JDK-8233548
   - JDK-8259568: PPC64 builds broken after JDK-8221408 8u backport
   - Normalise whitespace in AArch64 sources prior to merge of upstreamed version in 8u292-b01.
+  - Revert differences against upstream 8u
 
 Notes on individual issues:
 ===========================
