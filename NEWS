@@ -16,6 +16,7 @@ Live versions of these release notes can be found at:
   - JDK-8035186: j2se_jdk/jdk/test/java/lang/invoke/lambda/LogGeneratedClassesTest.java - assertion error
   - JDK-8038723: Openup some PrinterJob tests
   - JDK-8041561: Inconsistent opacity behaviour between JCheckBox and JRadioButton
+  - JDK-8061777: (zipfs) IllegalArgumentException in ZipCoder.toString when using Shitft_JIS
   - JDK-8078450: Implement consistent process for quarantine of tests
   - JDK-8078614: WindowsClassicLookAndFeel MetalComboBoxUI.getbaseLine fails with IllegalArgumentException
   - JDK-8080953: [TEST_BUG]Test java/awt/FontClass/DebugFonts.java fails due to wrongly typed bugid
@@ -23,9 +24,11 @@ Live versions of these release notes can be found at:
   - JDK-8141457: keytool default cert fingerprint algorithm should be SHA-256
   - JDK-8145051: Wrong parameter name in synthetic lambda method leads to verifier error
   - JDK-8150204: (fs) Enhance java/nio/file/Files/probeContentType/Basic.java debugging output
+  - JDK-8158525: Update a few java/net tests to use the loopback address instead of the host address
   - JDK-8160217: JavaSound should clean up resources better
   - JDK-8167281: IIOMetadataNode bugs in getElementsByTagName and NodeList.item methods
   - JDK-8168996: C2 crash at postaloc.cpp:140 : assert(false) failed: unexpected yanked node
+  - JDK-8171410: aarch64: long multiplyExact shifts by 31 instead of 63
   - JDK-8172404: Tools should warn if weak algorithms are used before restricting them
   - JDK-8185934: keytool shows "Signature algorithm: SHA1withECDSA, -1-bit key"
   - JDK-8198334: java/awt/FileDialog/8003399/bug8003399.java fails in headless mode
@@ -37,6 +40,7 @@ Live versions of these release notes can be found at:
   - JDK-8219991: New fix of the deadlock in sun.security.ssl.SSLSocketImpl
   - JDK-8221408: Windows 32bit build build errors/warnings in hotspot
   - JDK-8223186: HotSpot compile warnings from GCC 9
+  - JDK-8225435: Upgrade IANA Language Subtag Registry to the latest for JDK14
   - JDK-8225805: Java Access Bridge does not close the logger
   - JDK-8226899: Problemlist compiler/rtm tests
   - JDK-8227642: [TESTBUG] Make docker tests podman compatible
@@ -46,7 +50,10 @@ Live versions of these release notes can be found at:
   - JDK-8233228: Disable weak named curves by default in TLS, CertPath, and Signed JAR
   - JDK-8234727: sun/security/ssl/X509TrustManagerImpl tests support TLSv1.3
   - JDK-8234728: Some security tests should support TLSv1.3
+  - JDK-8235263: Revert TLS 1.3 change that wrapped IOExceptions
+  - JDK-8235311: Tag mismatch may alert bad_record_mac
   - JDK-8235874: The ordering of Cipher Suites is not maintained provided through jdk.tls.client.cipherSuites and jdk.tls.server.cipherSuites system property.
+  - JDK-8236500: Windows ucrt.dll should be looked up in versioned WINSDK subdirectory
   - JDK-8238579: HttpsURLConnection drops the timeout and hangs forever in read
   - JDK-8239091: Reversed arguments in call to strstr in freetype "debug" code.
   - JDK-8240827: Downport SSLSocketImpl.java from "8221882: Use fiber-friendly java.util.concurrent.locks in JSSE"
@@ -77,7 +84,10 @@ Live versions of these release notes can be found at:
   - JDK-8259312: VerifyCACerts.java fails as soneraclass2ca cert will
   - JDK-8259384: CUP version wrong in THIRD_PARTY_README after JDK-8233548
   - JDK-8259568: PPC64 builds broken after JDK-8221408 8u backport
+  - JDK-8260349: Cannot programmatically retrieve Metaspace max set via JAVA_TOOL_OPTIONS
   - JDK-8260930: AARCH64: Invalid value passed to critical JNI function
+  - JDK-8261766: [8u] hotspot needs to recognise cl.exe 19.16 to build with VS2017
+  - JDK-8262075: sun/security/krb5/auto/UseCacheAndStoreKey.java timed out intermittently
   - Normalise whitespace in AArch64 sources prior to merge of upstreamed version in 8u292-b01.
   - Revert differences against upstream 8u
 
