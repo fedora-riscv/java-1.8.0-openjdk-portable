@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2622,6 +2622,10 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Mar 18 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b05-0.1.ea
+- Re-organise S/390 patches for upstream submission, separating 8u upstream from Shenandoah fixes.
+- Add new formatting case found in memprofiler.cpp on debug builds to PR3593 patch.
+
 * Mon Mar 08 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b05-0.0.ea
 - Update to aarch64-shenandoah-jdk8u292-b05 (EA)
 - Update release notes for 8u292-b05.
