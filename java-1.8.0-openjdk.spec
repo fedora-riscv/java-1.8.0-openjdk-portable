@@ -296,7 +296,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u292-b05
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u292-b05-shenandoah-merge-2021-03-11
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2622,6 +2622,12 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Thu Mar 18 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b05-0.2.ea
+- Update to aarch64-shenandoah-jdk8u292-b05-shenandoah-merge-2021-03-11 (EA)
+- Update release notes for 8u292-b05-shenandoah-merge-2021-03-11.
+- Extend s390 patch to fix issue caused by JDK-8252660 backport and lack of JDK-8188813 in 8u.
+- Revise JDK-8252660 s390 failure to make _soft_max_size a jlong so pointer types are accurate.
+
 * Thu Mar 18 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b05-0.1.ea
 - Re-organise S/390 patches for upstream submission, separating 8u upstream from Shenandoah fixes.
 - Add new formatting case found in memprofiler.cpp on debug builds to PR3593 patch.
