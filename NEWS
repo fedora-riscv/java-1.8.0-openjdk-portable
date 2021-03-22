@@ -94,6 +94,7 @@ Live versions of these release notes can be found at:
   - JDK-8258430: 8u backport of JDK-8063107 missing test/javax/swing/JRadioButton/8041561/bug8041561.java changes
   - JDK-8258833: Cancel multi-part cipher operations in SunPKCS11 after failures
   - JDK-8258933: G1 needs klass_or_null_acquire
+  - JDK-8259048: (tz) Upgrade time-zone data to tzdata2020f
   - JDK-8259312: VerifyCACerts.java fails as soneraclass2ca cert will
   - JDK-8259384: CUP version wrong in THIRD_PARTY_README after JDK-8233548
   - JDK-8259568: PPC64 builds broken after JDK-8221408 8u backport

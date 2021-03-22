@@ -296,7 +296,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u292-b05-shenandoah-merge-2021-03-11
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u292-b06
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1105,8 +1105,8 @@ Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/ and macros
 Requires: javapackages-filesystem
 # Require zoneinfo data provided by tzdata-java subpackage.
-# 2020b required as of JDK-8254177 in October CPU
-Requires: tzdata-java >= 2020b
+# 2020f required as of JDK-8259048 in April CPU
+Requires: tzdata-java >= 2020f
 # for support of kernel stream control
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
@@ -1474,8 +1474,8 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-# 2020b required as of JDK-8254177 in October CPU
-BuildRequires: tzdata-java >= 2020b
+# 2020f required as of JDK-8259048 in April CPU
+BuildRequires: tzdata-java >= 2020f
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
@@ -2622,6 +2622,11 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Mar 22 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b06-0.0.ea
+- Update to aarch64-shenandoah-jdk8u292-b06 (EA)
+- Update release notes for 8u292-b06.
+- Require tzdata 2020f due to JDK-8259048
+
 * Thu Mar 18 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b05-0.2.ea
 - Update to aarch64-shenandoah-jdk8u292-b05-shenandoah-merge-2021-03-11 (EA)
 - Update release notes for 8u292-b05-shenandoah-merge-2021-03-11.
