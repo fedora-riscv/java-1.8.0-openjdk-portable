@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -354,7 +354,7 @@
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1590796#c14
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1655938
-%global _privatelibs libatk-wrapper[.]so.*|libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
+%global _privatelibs libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
 %global _publiclibs libjawt[.]so.*|libjava[.]so.*|libjvm[.]so.*|libverify[.]so.*|libjsig[.]so.*
 %if %is_system_jdk
 %global __provides_exclude ^(%{_privatelibs})$
@@ -1064,12 +1064,6 @@ exit 0
 %endif
 }
 
-%define files_accessibility() %{expand:
-%{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libatk-wrapper.so
-%{_jvmdir}/%{jredir -- %{?1}}/lib/ext/java-atk-wrapper.jar
-%{_jvmdir}/%{jredir -- %{?1}}/lib/accessibility.properties
-}
-
 # not-duplicated requires/provides/obsoletes for normal/debug packages
 %define java_rpo() %{expand:
 Requires: fontconfig%{?_isa}
@@ -1200,17 +1194,6 @@ Provides: java-%{origin}-src%{?1} = %{epoch}:%{version}-%{release}
 %endif
 }
 
-%define java_accessibility_rpo() %{expand:
-Requires: java-atk-wrapper%{?_isa}
-Requires: %{name}%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
-OrderWithRequires: %{name}-headless%{?1}%{?_isa} = %{epoch}:%{version}-%{release}
-
-Provides: java-accessibility%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-accessibility%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-%{origin}-accessibility%{?1} = %{epoch}:%{version}-%{release}
-
-}
 
 # Prevent brp-java-repack-jars from being run
 %global __jar_repack 0
@@ -1302,11 +1285,6 @@ Source16: CheckVendor.java
 # either in their current form or at all.
 ############################################
 
-# Accessibility patches
-# Ignore AWTError when assistive technologies are loaded 
-Patch1:   rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch
-# Restrict access to java-atk-wrapper classes
-Patch3:   rh1648644-java_access_bridge_privileged_security.patch
 # Turn on AssumeMP by default on RHEL systems
 Patch534: rh1648246-always_instruct_vm_to_assume_multiple_processors_are_available.patch
 # RH1582504: Use RSA as default for keytool, as DSA is disabled in all crypto policies except LEGACY
@@ -1671,44 +1649,6 @@ BuildArch: noarch
 The %{origin_nice} %{majorver} API documentation compressed in a single archive.
 %endif
 
-%if %{include_normal_build}
-%package accessibility
-Summary: %{origin_nice} %{majorver} accessibility connector
-
-%{java_accessibility_rpo %{nil}}
-
-%description accessibility
-Enables accessibility support in %{origin_nice} %{majorver} by using java-atk-wrapper. This allows
-compatible at-spi2 based accessibility programs to work for AWT and Swing-based
-programs.
-
-Please note, the java-atk-wrapper is still in beta, and %{origin_nice} %{majorver} itself is still
-being tuned to be working with accessibility features. There are known issues
-with accessibility on, so please do not install this package unless you really
-need to.
-%endif
-
-%if %{include_debug_build}
-%package accessibility-slowdebug
-Summary: %{origin_nice} %{majorver} accessibility connector %{for_debug}
-
-%{java_accessibility_rpo -- %{debug_suffix_unquoted}}
-
-%description accessibility-slowdebug
-See normal java-%{version}-openjdk-accessibility description.
-%endif
-
-%if %{include_fastdebug_build}
-%package accessibility-fastdebug
-Summary: %{origin_nice} %{majorver} accessibility connector %{for_fastdebug}
-
-%{java_accessibility_rpo -- %{fastdebug_suffix_unquoted}}
-
-%description accessibility-fastdebug
-See normal java-%{version}-openjdk-accessibility description.
-%endif
-
-
 %if %{with_openjfx_binding}
 %package openjfx
 Summary: OpenJDK x OpenJFX connector. This package adds symliks finishing Java FX integration to %{name}
@@ -1832,8 +1772,6 @@ sh %{SOURCE12}
 %patch400
 %patch401
 
-%patch1
-%patch3
 %patch5
 
 # s390 build fixes
@@ -2317,21 +2255,6 @@ find $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- $suffix}/demo \
   | sed 's|^|%dir |' \
   >> %{name}-demo.files"$suffix"
 
-# Create links which leads to separately installed java-atk-bridge and allow configuration
-# links points to java-atk-wrapper - an dependence
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}
-    ln -s %{_libdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so
-  popd
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/ext
-     ln -s %{_libdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
-  popd
-  pushd $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/
-    echo "#Config file to  enable java-atk-wrapper" > accessibility.properties
-    echo "" >> accessibility.properties
-    echo "assistive_technologies=org.GNOME.Accessibility.AtkWrapper" >> accessibility.properties
-    echo "" >> accessibility.properties
-  popd
-
 # intentionally after all else, fx links  with redirections on its own
 %if %{with_openjfx_binding}
   FXSDK_FILES=%{name}-openjfx-devel.files"$suffix"
@@ -2534,7 +2457,6 @@ require "copy_jdk_configs.lua"
 # placeholder
 %endif
 
-
 %if %{include_normal_build}
 %files headless
 # important note, see https://bugzilla.redhat.com/show_bug.cgi?id=1038092 for whole issue
@@ -2557,9 +2479,6 @@ require "copy_jdk_configs.lua"
 # same for debug variant
 %files javadoc-zip
 %{files_javadoc_zip %{nil}}
-
-%files accessibility
-%{files_accessibility %{nil}}
 
 %if %{with_openjfx_binding}
 %files openjfx -f %{name}-openjfx.files
@@ -2584,9 +2503,6 @@ require "copy_jdk_configs.lua"
 %files src-slowdebug
 %{files_src -- %{debug_suffix_unquoted}}
 
-%files accessibility-slowdebug
-%{files_accessibility -- %{debug_suffix_unquoted}}
-
 %if %{with_openjfx_binding}
 %files openjfx-slowdebug -f %{name}-openjfx.files-slowdebug
 
@@ -2604,15 +2520,11 @@ require "copy_jdk_configs.lua"
 %files devel-fastdebug
 %{files_devel -- %{fastdebug_suffix_unquoted}}
 
-
 %files demo-fastdebug  -f %{name}-demo.files-fastdebug
 %{files_demo -- %{fastdebug_suffix_unquoted}}
 
 %files src-fastdebug
 %{files_src -- %{fastdebug_suffix_unquoted}}
-
-%files accessibility-fastdebug
-%{files_accessibility -- %{fastdebug_suffix_unquoted}}
 
 %if %{with_openjfx_binding}
 %files openjfx-fastdebug -f %{name}-openjfx.files-fastdebug
@@ -2622,6 +2534,16 @@ require "copy_jdk_configs.lua"
 %endif
 
 %changelog
+* Mon Mar 24 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b06-0.1.ea
+- removal of atk accessibility bridge bindings:
+- removed libatk-wrapper[.]so.* from global _privatelibs
+- removed files_accessibility and java_accessibility_rpo macros
+- removed patch1 rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch and patch3 rh1648644-java_access_bridge_privileged_security.patch
+- removal of accessibility{,-slowdebug,-fastdebug} subpackages
+- no longer creating symlinks of %%{_libdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so and  %%{_libdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
+- no longer creating %%{_jvmdir}/%{jredir -- $suffix}/lib/accessibility.properties with content of "assistive_technologies=org.GNOME.Accessibility.AtkWrapper"
+- removal of accessibility{,-slowdebug,-fastdebug} subpackages files sections
+
 * Mon Mar 22 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b06-0.0.ea
 - Update to aarch64-shenandoah-jdk8u292-b06 (EA)
 - Update release notes for 8u292-b06.
