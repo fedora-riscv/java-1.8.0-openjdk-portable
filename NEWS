@@ -104,6 +104,7 @@ Live versions of these release notes can be found at:
   - JDK-8261766: [8u] hotspot needs to recognise cl.exe 19.16 to build with VS2017
   - JDK-8262073: assert(allocates2(pc)) failed: not in CodeBuffer memory
   - JDK-8262075: sun/security/krb5/auto/UseCacheAndStoreKey.java timed out intermittently
+  - JDK-8263008: AARCH64: Add debug info for libsaproc.so
 * Shenandoah
   - Normalise whitespace in AArch64 sources prior to merge of upstreamed version in 8u292-b01.
   - Revert differences against upstream 8u
