@@ -158,10 +158,14 @@
 # Build and test slowdebug first as it provides the best diagnostics
 %global build_loop  %{slowdebug_build} %{fastdebug_build} %{normal_build}
 
+%if 0%{?flatpak}
+%global bootstrap_build false
+%else
 %ifarch %{bootstrap_arches}
 %global bootstrap_build true
 %else
 %global bootstrap_build false
+%endif
 %endif
 
 %global bootstrap_targets images
@@ -344,7 +348,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1233,11 +1237,13 @@ Requires: tzdata-java >= 2021e
 # for support of kernel stream control
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
+%if ! 0%{?flatpak}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum enforce it,
 # not rpm transaction and so no configs are persisted when pure rpm -u is run. It may be
 # considered as regression
 Requires: copy-jdk-configs >= 4.0
 OrderWithRequires: copy-jdk-configs
+%endif
 # for printing support
 Requires: cups-libs
 # Post requires alternatives to install tool alternatives
@@ -2781,6 +2787,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Fri Jul 01 2022 Stephan Bergmann <sbergman@redhat.com> - 1:1.8.0.332.b09-3
+- Disable copy-jdk-configs for Flatpak builds
+- Fix flatpak builds by exempting them from bootstrap
+
 * Thu Jun 30 2022 Francisco Ferrari Bihurriet <fferrari@redhat.com> - 1:1.8.0.332.b09-2
 - RH2007331: SecretKey generate/import operations don't add the CKA_SIGN attribute in FIPS mode
 
