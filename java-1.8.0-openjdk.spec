@@ -2543,7 +2543,7 @@ require "copy_jdk_configs.lua"
 - Update to aarch64-shenandoah-jdk8u292-b07 (EA)
 - Update release notes for 8u292-b07.
 
-* Mon Mar 24 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b06-0.1.ea
+* Wed Mar 24 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b06-0.1.ea
 - removal of atk accessibility bridge bindings:
 - removed libatk-wrapper[.]so.* from global _privatelibs
 - removed files_accessibility and java_accessibility_rpo macros
