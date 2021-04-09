@@ -13,7 +13,7 @@ Live versions of these release notes can be found at:
   - JDK-6345095: regression test EmptyClipRenderingTest fails
   - JDK-6896810: TEST_BUG: java/lang/ref/SoftReference/Pin.java fails with OOME during System.out.println
   - JDK-6949753: [TEST BUG]: java/awt/print/PageFormat/PDialogTest.java needs update by removing a infinite loop
-  - JDK-7107012: sun.jvm.hostspot.code.CompressedReadStream readDouble() conversion to long mishandled
+  - JDK-7107012: sun.jvm.hotspot.code.CompressedReadStream readDouble() conversion to long mishandled
   - JDK-7112454: TEST_BUG: java/awt/Choice/PopdownGeneratesMouseEvents/PopdownGeneratesMouseEvents.html failed
   - JDK-7131835: [TEST_BUG] Test does not consider that the rounded edges of the window in Mac OS 10.7
   - JDK-7185221: [macosx] Regtest should not throw exception if a suitable display mode found
@@ -108,6 +108,7 @@ Live versions of these release notes can be found at:
   - JDK-8262073: assert(allocates2(pc)) failed: not in CodeBuffer memory
   - JDK-8262075: sun/security/krb5/auto/UseCacheAndStoreKey.java timed out intermittently
   - JDK-8263008: AARCH64: Add debug info for libsaproc.so
+  - JDK-8264171: Missing aarch64 parts of JDK-8236179 (C1 register allocation failure with T_ADDRESS)
 * Shenandoah
   - Normalise whitespace in AArch64 sources prior to merge of upstreamed version in 8u292-b01.
   - Revert differences against upstream 8u
