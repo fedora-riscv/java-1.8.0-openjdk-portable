@@ -9,6 +9,13 @@ Live versions of these release notes can be found at:
   * https://bitly.com/openjdk8u292
   * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u292.txt
 
+* Security fixes
+  - JDK-8227467: Better class method invocations
+  - JDK-8244473: Contextualize registration for JNDI
+  - JDK-8244543: Enhanced handling of abstract classes
+  - JDK-8249906, CVE-2021-2163: Enhance opening JARs
+  - JDK-8250568, CVE-2021-2161: Less ambiguous processing
+  - JDK-8253799: Make lists of normal filenames
 * Other changes
   - JDK-6345095: regression test EmptyClipRenderingTest fails
   - JDK-6896810: TEST_BUG: java/lang/ref/SoftReference/Pin.java fails with OOME during System.out.println
@@ -92,6 +99,7 @@ Live versions of these release notes can be found at:
   - JDK-8256682: JDK-8202343 is incomplete
   - JDK-8257746: Regression introduced with JDK-8250984 - memory might be null in some machines
   - JDK-8258241: [8u] Missing doPrivileged() hunks from JDK-8226575
+  - JDK-8258247: Couple of issues in fix for JDK-8249906
   - JDK-8258396: SIGILL in jdk.jfr.internal.PlatformRecorder.rotateDisk()
   - JDK-8258430: 8u backport of JDK-8063107 missing test/javax/swing/JRadioButton/8041561/bug8041561.java changes
   - JDK-8258833: Cancel multi-part cipher operations in SunPKCS11 after failures
@@ -99,10 +107,12 @@ Live versions of these release notes can be found at:
   - JDK-8259048: (tz) Upgrade time-zone data to tzdata2020f
   - JDK-8259312: VerifyCACerts.java fails as soneraclass2ca cert will
   - JDK-8259384: CUP version wrong in THIRD_PARTY_README after JDK-8233548
+  - JDK-8259428: AlgorithmId.getEncodedParams() should return copy
   - JDK-8259568: PPC64 builds broken after JDK-8221408 8u backport
   - JDK-8260349: Cannot programmatically retrieve Metaspace max set via JAVA_TOOL_OPTIONS
   - JDK-8260356: (tz) Upgrade time-zone data to tzdata2021a
   - JDK-8260930: AARCH64: Invalid value passed to critical JNI function
+  - JDK-8261183: Follow on to Make lists of normal filenames
   - JDK-8261231: Windows IME was disabled after DnD operation
   - JDK-8261766: [8u] hotspot needs to recognise cl.exe 19.16 to build with VS2017
   - JDK-8262073: assert(allocates2(pc)) failed: not in CodeBuffer memory
