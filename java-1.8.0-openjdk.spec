@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1465,6 +1465,15 @@ BuildRequires: systemtap-sdt-devel
 # when it is built in debug-only this package is just placeholder
 %{java_rpo %{nil}}
 
+# Fix upgrade path after removal of accessibility subpackage
+# on commit 0c79c1451ef42c540682fb75329a92bb110609e7
+# As main accessibility was requiring main package, main package now have to
+# obsolete java-1.8.0-openjdk-accessibility-{release, slowdebug, fastdebug} < 1:1.8.0.292.b06
+# otherwise update fails
+Obsoletes: java-1.8.0-openjdk-accessibility < 1:1.8.0.292.b06
+Obsoletes: java-1.8.0-openjdk-accessibility-slowdebug < 1:1.8.0.292.b06
+Obsoletes: java-1.8.0-openjdk-accessibility-fastdebug < 1:1.8.0.292.b06
+
 %description
 The %{origin_nice} %{majorver} runtime environment.
 
@@ -2541,6 +2550,11 @@ cjc.mainProgram(arg)
 %endif
 
 %changelog
+* Mon May 03 2021 Sérgio Basto <sergio@serjux.com> - 1:1.8.0.292.b10-2
+- Fix upgrade path after removal of accessibility subpackage. As main accessibility was requiring main package,
+  main package now have to obsolete java-1.8.0-openjdk-accessibility-{release, slowdebug, fastdebug} < 1:1.8.0.292.b06
+  otherwise update fails
+
 * Fri Apr 29 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b10-1
 - adapted to newst cjc to fix issue with rpm 4.17
 
