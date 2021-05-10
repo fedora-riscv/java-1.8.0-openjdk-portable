@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1107,7 +1107,7 @@ Requires: lksctp-tools%{?_isa}
 # tool to copy jdk's configs - should be Recommends only, but then only dnf/yum enforce it,
 # not rpm transaction and so no configs are persisted when pure rpm -u is run. It may be
 # considered as regression
-Requires: copy-jdk-configs >= 3.9
+Requires: copy-jdk-configs >= 4.0
 OrderWithRequires: copy-jdk-configs
 # for printing support
 Requires: cups-libs
@@ -2369,10 +2369,10 @@ else
   return
   end
 end
--- run content of included file with fake args
+arg = nil ;  -- it is better to null the arg up, no meter if they exists or not, and use cjc as module in unified way, instead of relaying on "main" method during require "copy_jdk_configs.lua"
 cjc = require "copy_jdk_configs.lua"
-arg = {"--currentjvm", "%{uniquesuffix %{nil}}", "--jvmdir", "%{_jvmdir %{nil}}", "--origname", "%{name}", "--origjavaver", "%{javaver}", "--arch", "%{_arch}", "--temp", "%{rpm_state_dir}/%{name}.%{_arch}"}
-cjc.mainProgram(arg)
+args = {"--currentjvm", "%{uniquesuffix %{nil}}", "--jvmdir", "%{_jvmdir %{nil}}", "--origname", "%{name}", "--origjavaver", "%{javaver}", "--arch", "%{_arch}", "--temp", "%{rpm_state_dir}/%{name}.%{_arch}"}
+cjc.mainProgram(args)
 
 %post
 %{post_script %{nil}}
@@ -2550,6 +2550,9 @@ cjc.mainProgram(arg)
 %endif
 
 %changelog
+* Mon May 10 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b10-3
+- removed cjc backward comaptiblity, to fix when both rpm 4.16 and 4.17 are in transaction
+
 * Mon May 03 2021 Sérgio Basto <sergio@serjux.com> - 1:1.8.0.292.b10-2
 - Fix upgrade path after removal of accessibility subpackage. As main accessibility was requiring main package,
   main package now have to obsolete java-1.8.0-openjdk-accessibility-{release, slowdebug, fastdebug} < 1:1.8.0.292.b06
