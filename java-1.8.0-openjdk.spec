@@ -296,7 +296,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u292-b10
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -311,12 +311,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -2550,6 +2550,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Sat May 22 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b01-0.0.ea
+- Update to aarch64-shenandoah-jdk8u302-b01 (EA)
+- Update release notes for 8u302-b01.
+- Switch to EA mode.
+
 * Mon May 10 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b10-3
 - removed cjc backward comaptiblity, to fix when both rpm 4.16 and 4.17 are in transaction
 
