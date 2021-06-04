@@ -15,6 +15,9 @@ Live versions of these release notes can be found at:
   - JDK-7059970: Test case: javax/imageio/plugins/png/ITXtTest.java is not closing a file
   - JDK-8030123: java/beans/Introspector/Test8027648.java fails
   - JDK-8033289: clang: clean up unused function warning
+  - JDK-8034856: gcc warnings compiling src/solaris/native/sun/security/pkcs11
+  - JDK-8034857: gcc warnings compiling src/solaris/native/sun/management
+  - JDK-8035054: JarFacade.c should not include ctype.h
   - JDK-8036095: RMI tests using testlibrary.RMID and testlibrary.JavaVM do not pass through vmoptions
   - JDK-8042891: Format issues embedded in macros for two g1 source files
   - JDK-8055754: filemap.cpp does not compile with clang
@@ -25,6 +28,7 @@ Live versions of these release notes can be found at:
   - JDK-8073446: TimeZone getOffset API does not return a dst offset between years 2038-2137
   - JDK-8075071: [TEST_BUG] TimSortStackSize2.java: OOME: Java heap space: MaxHeap shrinked by MaxRAMFraction
   - JDK-8077364: "if( !this )" construct prevents build on Xcode 6.3
+  - JDK-8129511: PlatformMidi.c:83 uses malloc without malloc header
   - JDK-8130308: Too low memory usage in TestPromotionFromSurvivorToTenuredAfterMinorGC.java
   - JDK-8132148: G1 hs_err region dump legend out of sync with region values
   - JDK-8132709: [TESTBUG] gc/g1/TestHumongousShrinkHeap.java might fail on embedded
