@@ -13,6 +13,7 @@ Live versions of these release notes can be found at:
 * Other changes
   - JDK-6878250: (so) IllegalBlockingModeException thrown when reading from a closed SocketChannel's InputStream
   - JDK-7059970: Test case: javax/imageio/plugins/png/ITXtTest.java is not closing a file
+  - JDK-8019470: Changes needed to compile JDK 8 on MacOS with clang compiler
   - JDK-8030123: java/beans/Introspector/Test8027648.java fails
   - JDK-8033289: clang: clean up unused function warning
   - JDK-8034856: gcc warnings compiling src/solaris/native/sun/security/pkcs11
@@ -35,6 +36,7 @@ Live versions of these release notes can be found at:
   - JDK-8134672: [TEST_BUG] Some tests should check isDisplayChangeSupported
   - JDK-8134883: C1 hard crash in range check elimination in Nashorn test262parallel
   - JDK-8136592: [TEST_BUG] Fix 2 platform-specific closed regtests for jigsaw
+  - JDK-8138820: JDK Hotspot build fails with Xcode 7.0.1
   - JDK-8151786: [TESTBUG] java/beans/XMLEncoder/Test4625418.java timed out intermittently
   - JDK-8159898: Negative array size in java/beans/Introspector/Test8027905.java
   - JDK-8166046: [TESTBUG] compiler/stringopts/TestStringObjectInitialization.java fails with OOME
@@ -62,11 +64,17 @@ Live versions of these release notes can be found at:
   - JDK-8231949: [PPC64, s390]: Make async profiling more reliable
   - JDK-8234011: (zipfs) Memory leak in ZipFileSystem.releaseDeflater()
   - JDK-8241649: Optimize Character.toString
+  - JDK-8241829: Cleanup the code for PrinterJob on windows
   - JDK-8243559: Remove root certificates with 1024-bit keys
   - JDK-8247350: [aarch64] assert(false) failed: wrong size of mach node
   - JDK-8249278: Revert JDK-8226253 which breaks the spec of AccessibleState.SHOWING for JList
+  - JDK-8252883: AccessDeniedException caused by delayed file deletion on Windows
   - JDK-8255086: Update the root locale display names
   - JDK-8255734: VM should ignore SIGXFSZ on ppc64, s390 too
+  - JDK-8256818: SSLSocket that is never bound or connected leaks socket resources
+  - JDK-8257670: sun/security/ssl/SSLSocketImpl/SSLSocketLeak.java reports leaks
+  - JDK-8257884: Re-enable sun/security/ssl/SSLSocketImpl/SSLSocketLeak.java as automatic test
+  - JDK-8257997: sun/security/ssl/SSLSocketImpl/SSLSocketLeak.java again reports leaks after JDK-8257884
   - JDK-8257999: Parallel GC crash in gc/parallel/TestDynShrinkHeap.java: new region is not in covered_region
   - JDK-8258419: RSA cipher buffer cleanup
   - JDK-8258669: fastdebug jvm crashes when do event based tracing for monitor inflation
@@ -90,6 +98,7 @@ Live versions of these release notes can be found at:
   - JDK-8263600: change rmidRunning to a simple lookup
   - JDK-8264509: jdk8u MacOS zipped debug symbols won't build
   - JDK-8264562: assert(verify_field_bit(1)) failed: Attempting to write an uninitialized event field: type
+  - JDK-8264640: CMS ParScanClosure misses a barrier
   - JDK-8264816: Weak handles leak causes GC to take longer
   - JDK-8265832: runtime/StackGap/testme.sh fails to compile in 8u
   - JDK-8265988: Fix sun/text/IntHashtable/Bug4170614 for JDK 8u
