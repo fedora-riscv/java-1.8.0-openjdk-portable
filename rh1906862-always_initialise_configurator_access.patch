@@ -1,0 +1,65 @@
+# HG changeset patch
+# User andrew
+# Date 1608219816 0
+#      Thu Dec 17 15:43:36 2020 +0000
+# Node ID db5d1b28bfce04352b3a48960bf836f6eb20804b
+# Parent  a2cfa397150e99b813354226d536eb8509b5850b
+RH1906862: Always initialise JavaSecuritySystemConfiguratorAccess
+
+diff --git openjdk.orig/jdk/src/share/classes/java/security/Security.java openjdk/jdk/src/share/classes/java/security/Security.java
+--- openjdk.orig/jdk/src/share/classes/java/security/Security.java
++++ openjdk/jdk/src/share/classes/java/security/Security.java
+@@ -30,6 +30,8 @@
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.io.*;
+ import java.net.URL;
++import sun.misc.SharedSecrets;
++import sun.misc.JavaSecuritySystemConfiguratorAccess;
+ import sun.security.util.Debug;
+ import sun.security.util.PropertyExpander;
+ 
+@@ -69,6 +71,15 @@
+     }
+ 
+     static {
++        // Initialise here as used by code with system properties disabled
++        SharedSecrets.setJavaSecuritySystemConfiguratorAccess(
++            new JavaSecuritySystemConfiguratorAccess() {
++                @Override
++                public boolean isSystemFipsEnabled() {
++                    return SystemConfigurator.isSystemFipsEnabled();
++                }
++            });
++
+         // doPrivileged here because there are multiple
+         // things in initialize that might require privs.
+         // (the FileInputStream call and the File.exists call,
+diff --git openjdk.orig/jdk/src/share/classes/java/security/SystemConfigurator.java openjdk/jdk/src/share/classes/java/security/SystemConfigurator.java
+--- openjdk.orig/jdk/src/share/classes/java/security/SystemConfigurator.java
++++ openjdk/jdk/src/share/classes/java/security/SystemConfigurator.java
+@@ -39,8 +39,6 @@
+ import java.util.Properties;
+ import java.util.regex.Pattern;
+ 
+-import sun.misc.SharedSecrets;
+-import sun.misc.JavaSecuritySystemConfiguratorAccess;
+ import sun.security.util.Debug;
+ 
+ /**
+@@ -66,16 +64,6 @@
+ 
+     private static boolean systemFipsEnabled = false;
+ 
+-    static {
+-        SharedSecrets.setJavaSecuritySystemConfiguratorAccess(
+-            new JavaSecuritySystemConfiguratorAccess() {
+-                @Override
+-                public boolean isSystemFipsEnabled() {
+-                    return SystemConfigurator.isSystemFipsEnabled();
+-                }
+-            });
+-    }
+-
+     /*
+      * Invoked when java.security.Security class is initialized, if
+      * java.security.disableSystemPropertiesFile property is not set and

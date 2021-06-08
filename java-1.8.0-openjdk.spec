@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -756,7 +756,9 @@ exit 0
 %{_mandir}/man1/unpack200-%{uniquesuffix -- %{?1}}.1*
 %{_mandir}/man1/policytool-%{uniquesuffix -- %{?1}}.1*
 %{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.cfg
+%{_jvmdir}/%{jredir -- %{?1}}/lib/security/nss.fips.cfg
 %config(noreplace) %{etcjavadir -- %{?1}}/lib/security/nss.cfg
+%config(noreplace) %{etcjavadir -- %{?1}}/lib/security/nss.fips.cfg
 %ifarch %{share_arches}
 %attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/server/classes.jsa
 %attr(444, root, root) %ghost %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/client/classes.jsa
@@ -1111,6 +1113,8 @@ Requires: copy-jdk-configs >= 4.0
 OrderWithRequires: copy-jdk-configs
 # for printing support
 Requires: cups-libs
+# for FIPS PKCS11 provider
+Requires: nss
 # Post requires alternatives to install tool alternatives
 Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall tool alternatives
@@ -1267,14 +1271,18 @@ Source14: TestECDSA.java
 # Verify system crypto (policy) can be disabled via a property
 Source15: TestSecurityProperties.java
 
+# Ensure vendor settings are correct
+Source16: CheckVendor.java
+
+# nss fips configuration file
+Source17: nss.fips.cfg.in
+
 Source20: repackReproduciblePolycies.sh
 
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
 
-# Ensure vendor settings are correct
-Source16: CheckVendor.java
 
 ############################################
 #
@@ -1289,6 +1297,18 @@ Source16: CheckVendor.java
 Patch534: rh1648246-always_instruct_vm_to_assume_multiple_processors_are_available.patch
 # RH1582504: Use RSA as default for keytool, as DSA is disabled in all crypto policies except LEGACY
 Patch1003: rh1582504-rsa_default_for_keytool.patch
+
+# FIPS support patches
+# RH1648249: Add PKCS11 provider to java.security
+Patch1000: rh1648249-add_commented_out_nss_cfg_provider_to_java_security.patch
+# RH1655466: Support RHEL FIPS mode using SunPKCS11 provider
+Patch1001: rh1655466-global_crypto_and_fips.patch
+# RH1760838: No ciphersuites available for SSLSocket in FIPS mode
+Patch1002: rh1760838-fips_default_keystore_type.patch
+# RH1860986: Disable TLSv1.3 with the NSS-FIPS provider until PKCS#11 v3.0 support is available
+Patch1004: rh1860986-disable_tlsv1.3_in_fips_mode.patch
+# RH1906862: Always initialise JavaSecuritySystemConfiguratorAccess
+Patch1005: rh1906862-always_initialise_configurator_access.patch
 
 #############################################
 #
@@ -1364,6 +1384,8 @@ Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: jdk8042159-allow_using_system_installed_lcms2-root.patch
 Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
+# JDK-8195607, PR3776, RH1760437: sun/security/pkcs11/Secmod/TestNssDbSqlite.java failed with "NSS initialization failed" on NSS 3.34.1
+Patch580: jdk8195607-pr3776-rh1760437-nss_sqlite_db_config.patch
 
 #############################################
 #
@@ -1402,7 +1424,6 @@ Patch201: jdk8043805-allow_using_system_installed_libjpeg.patch
 # This section includes patches to code other
 # that from OpenJDK.
 #############################################
-Patch1000: rh1648249-add_commented_out_nss_cfg_provider_to_java_security.patch
 
 #############################################
 #
@@ -1803,12 +1824,17 @@ sh %{SOURCE12}
 %patch574
 %patch111
 %patch112
+%patch580
 
 # RPM-only fixes
 %patch539
 %patch600
 %patch1000
+%patch1001
+%patch1002
 %patch1003
+%patch1004
+%patch1005
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -1867,6 +1893,9 @@ done
 # Setup nss.cfg
 sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 
+# Setup nss.fips.cfg
+sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE17} > nss.fips.cfg
+sed -i -e "s:@NSS_SECMOD@:/etc/pki/nssdb:g" nss.fips.cfg
 
 %build
 # How many CPU's do we have?
@@ -2009,6 +2038,9 @@ export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
+
+# Install nss.fips.cfg: NSS configuration for global FIPS mode (crypto-policies)
+install -m 644 nss.fips.cfg $JAVA_HOME/jre/lib/security/
 
 # Use system-wide tzdata
 rm $JAVA_HOME/jre/lib/tzdb.dat
@@ -2309,7 +2341,7 @@ touch -t 201401010000 $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/lib/securi
 # moving config files to /etc
 mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/unlimited/
 mkdir -p $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/lib/security/policy/limited/
-for file in lib/security/cacerts lib/security/policy/unlimited/US_export_policy.jar lib/security/policy/unlimited/local_policy.jar lib/security/policy/limited/US_export_policy.jar lib/security/policy/limited/local_policy.jar lib/security/java.policy lib/security/java.security lib/security/blacklisted.certs lib/logging.properties lib/calendars.properties lib/security/nss.cfg lib/net.properties ; do
+for file in lib/security/cacerts lib/security/policy/unlimited/US_export_policy.jar lib/security/policy/unlimited/local_policy.jar lib/security/policy/limited/US_export_policy.jar lib/security/policy/limited/local_policy.jar lib/security/java.policy lib/security/java.security lib/security/blacklisted.certs lib/logging.properties lib/calendars.properties lib/security/nss.cfg lib/security/nss.fips.cfg lib/net.properties ; do
   mv      $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file   $RPM_BUILD_ROOT/%{etcjavadir -- $suffix}/$file
   ln -sf  %{etcjavadir -- $suffix}/$file                          $RPM_BUILD_ROOT/%{_jvmdir}/%{jredir -- $suffix}/$file
 done
@@ -2550,6 +2582,22 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Jun 07 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b03-0.1.ea
+- Backport FIPS mode patch (RH1655466) to java-1.8.0-openjdk, simplifying provider removal.
+- nss.fips.cfg needs to be moved to %%{etcjavadir} and symlinked into the JDK, like nss.cfg
+- SunPKCS11 runtime provider name is a concatenation of "SunPKCS11-" and the name in the config file.
+- Change nss.fips.cfg config name to "NSS-FIPS" to avoid confusion with nss.cfg.
+- Disable FIPS mode support unless com.redhat.fips is set to "true".
+- Add JDK-8195607/PR3776 to support NSS SQLite databases.
+- Enable alignment with FIPS crypto policy by default (-Dcom.redhat.fips=false to disable).
+- Move setup of JavaSecuritySystemConfiguratorAccess to Security class so it always occurs (RH1906862)
+- Add explicit runtime dependency on NSS for the PKCS11 provider in FIPS mode
+
+* Mon Jun 07 2021 Martin Balao <mbalao@redhat.com> - 1:1.8.0.302.b03-0.1.ea
+- Support the FIPS mode crypto policy on RHEL 8 (RH1655466)
+- Use appropriate keystore types when in FIPS mode (RH1760838)
+- Disable TLSv1.3 when using the NSS-FIPS provider (RH1860986)
+
 * Wed Jun 02 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b03-0.0.ea
 - Update to aarch64-shenandoah-jdk8u302-b03 (EA)
 - Update release notes for 8u302-b03.
@@ -2571,7 +2619,7 @@ cjc.mainProgram(args)
   main package now have to obsolete java-1.8.0-openjdk-accessibility-{release, slowdebug, fastdebug} < 1:1.8.0.292.b06
   otherwise update fails
 
-* Fri Apr 29 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b10-1
+* Thu Apr 29 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.292.b10-1
 - adapted to newst cjc to fix issue with rpm 4.17
 
 * Tue Apr 13 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b10-0
