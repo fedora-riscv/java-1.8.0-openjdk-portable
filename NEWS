@@ -103,6 +103,17 @@ Live versions of these release notes can be found at:
   - JDK-8265832: runtime/StackGap/testme.sh fails to compile in 8u
   - JDK-8265988: Fix sun/text/IntHashtable/Bug4170614 for JDK 8u
   - JDK-8266191: Missing aarch64 parts of JDK-8181872 (C1: possible overflow when strength reducing integer multiply by constant)
+* Shenandoah
+  - [backport] JDK-8259580: Shenandoah: uninitialized label in VerifyThreadGCState
+  - [backport] JDK-8259954: gc/shenandoah/mxbeans tests fail with -Xcomp
+  - [backport] JDK-8261251: Shenandoah: Use object size for full GC humongous
+  - [backport] JDK-8261413: Shenandoah: Disable class-unloading in I-U mode
+  - [backport] JDK-8265239: Shenandoah: Shenandoah heap region count could be off by 1
+  - [backport] JDK-8266802: Shenandoah: Round up region size to page size unconditionally
+  - [backport] JDK-8267561: Shenandoah: Reference processing not properly setup for outside of cycle degenerated GC
+  - [backport] JDK-8268127: Shenandoah: Heap size may be too small for region to align to large page size
+  - [backport] JDK-8268699: Shenandoah: Add test for JDK-8268127
+  - Shenandoah: Process weak roots during class unloading cycle
 
 Notes on individual issues:
 ===========================
