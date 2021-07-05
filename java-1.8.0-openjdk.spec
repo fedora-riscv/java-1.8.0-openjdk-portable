@@ -138,10 +138,8 @@
 %global bootstrap_build 1
 
 # If you disable both builds, then the build fails
-# Note that the debug build requires the normal build for docs
-%global build_loop %{normal_build} %{fastdebug_build} %{slowdebug_build}
-# Test slowdebug first as it provides the best diagnostics
-%global rev_build_loop  %{slowdebug_build} %{fastdebug_build} %{normal_build}
+# Build and test slowdebug first as it provides the best diagnostics
+%global build_loop  %{slowdebug_build} %{fastdebug_build} %{normal_build}
 
 %global bootstrap_targets images
 %global release_targets images docs-zip
@@ -311,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      0
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2058,7 +2056,7 @@ done
 %check
 
 # We test debug first as it will give better diagnostics on a crash
-for suffix in %{rev_build_loop} ; do
+for suffix in %{build_loop} ; do
 
 export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
 
@@ -2582,6 +2580,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Jul 05 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b05-0.1.ea
+- Use the "reverse" build loop (debug first) as the main and only build loop to get more diagnostics.
+
 * Fri Jul 02 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b05-0.0.ea
 - Update to aarch64-shenandoah-jdk8u302-b05 (EA)
 - Update release notes for 8u302-b05.
