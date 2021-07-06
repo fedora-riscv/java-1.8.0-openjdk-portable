@@ -139,7 +139,9 @@ Live versions of these release notes can be found at:
   - JDK-8266929: Unable to use algorithms from 3p providers
   - JDK-8267235: [macos_aarch64] InterpreterRuntime::throw_pending_exception messing up LR results in crash
   - JDK-8267426: MonitorVmStartTerminate test timed out on Embedded VM
+  - JDK-8267545: [8u] Enable Xcode 12 builds on macOS
   - JDK-8267689: [aarch64] Crash due to bad shift in indirect addressing mode
+  - JDK-8268444: keytool -v -list print is incorrect after backport JDK-8141457
 * Shenandoah
   - [backport] JDK-8259580: Shenandoah: uninitialized label in VerifyThreadGCState
   - [backport] JDK-8259954: gc/shenandoah/mxbeans tests fail with -Xcomp
@@ -203,6 +205,10 @@ characters.  This means applications that used characters above
 U+000007F that were previously encoded using UTF-8 may need to either
 be modified to perform the UTF-8 conversion, or set the Java security
 property `jdk.tls.alpnCharset` to "UTF-8" revert the behavior.
+
+See the updated guide at
+https://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/alpn.html
+for more information.
 
 JDK-8244460: Support for certificate_authorities Extension
 ==========================================================

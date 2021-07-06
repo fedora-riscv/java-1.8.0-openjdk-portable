@@ -294,7 +294,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b05
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b06
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -309,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      0
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2580,6 +2580,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Tue Jul 06 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b06-0.0.ea
+- Update to aarch64-shenandoah-jdk8u302-b06 (EA)
+- Update release notes for 8u302-b06.
+
 * Mon Jul 05 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b05-0.1.ea
 - Use the "reverse" build loop (debug first) as the main and only build loop to get more diagnostics.
 
