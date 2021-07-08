@@ -142,6 +142,8 @@ Live versions of these release notes can be found at:
   - JDK-8267545: [8u] Enable Xcode 12 builds on macOS
   - JDK-8267689: [aarch64] Crash due to bad shift in indirect addressing mode
   - JDK-8268444: keytool -v -list print is incorrect after backport JDK-8141457
+  - JDK-8269388: Default build of OpenJDK 8 fails on newer GCCs with warnings as errors on format-overflow
+  - JDK-8269468: JDK-8269388 breaks the build on older GCCs
 * Shenandoah
   - [backport] JDK-8259580: Shenandoah: uninitialized label in VerifyThreadGCState
   - [backport] JDK-8259954: gc/shenandoah/mxbeans tests fail with -Xcomp
@@ -173,7 +175,7 @@ Distinguished Name: OU=VeriSign Trust Network, OU="(c) 1998 VeriSign, Inc. - For
 Alias Name: verisignclass3ca [jdk]
 Distinguished Name: OU=Class 3 Public Primary Certification Authority, O="VeriSign, Inc.", C=US
 
-Alias Name: verisignclass3g2caÂ[jdk]
+Alias Name: verisignclass3g2ca [jdk]
 Distinguished Name: OU=VeriSign Trust Network, OU="(c) 1998 VeriSign, Inc. - For authorized use only", OU=Class 3 Public Primary Certification Authority - G2, O="VeriSign, Inc.", C=US
 
 Alias Name: verisigntsaca [jdk]
