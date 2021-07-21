@@ -294,7 +294,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b07
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b08
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -314,7 +314,7 @@
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           0
+%global is_ga           1
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -2580,6 +2580,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Fri Jul 16 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b08-0
+- Update to aarch64-shenandoah-jdk8u302-b08 (EA)
+- Update release notes for 8u302-b08.
+- Switch to GA mode for final release.
+
 * Thu Jul 08 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.302.b07-0.0.ea
 - Update to aarch64-shenandoah-jdk8u302-b07 (EA)
 - Update release notes for 8u302-b07.
