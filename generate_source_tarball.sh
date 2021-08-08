@@ -19,12 +19,25 @@
 # level folder, name is created, based on parameter
 #
 
+SCRIPT_DIR=$(dirname $0)
+JCONSOLE_JS_PATCH_DEFAULT=${SCRIPT_DIR}/jconsole-plugin.patch
+
 if [ ! "x$PR3822" = "x" ] ; then
   if [ ! -f "$PR3822" ] ; then
-    echo "You have specified PR3822 as $PR3822 but it does not exists. exiting"
+    echo "You have specified PR3822 as $PR3822 but it does not exist. Exiting"
     exit 1
   fi
 fi
+
+if [ "x${JCONSOLE_JS_PATCH}" != "x" ] ; then
+    if [ ! -f "${JCONSOLE_JS_PATCH}" ] ; then
+	echo "You have specified the jconsole.js patch as ${JCONSOLE_JS_PATCH} but it does not exist. Exiting.";
+	exit 2;
+    fi
+else
+    JCONSOLE_JS_PATCH=${JCONSOLE_JS_PATCH_DEFAULT}
+fi
+
 set -e
 
 OPENJDK_URL_DEFAULT=http://hg.openjdk.java.net
@@ -42,6 +55,7 @@ if [ "x$1" = "xhelp" ] ; then
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
     echo "PR3822 - the path to the PR3822 patch to apply (optional; downloaded if unavailable)"
+    echo "JCONSOLE_JS_PATCH - the path to a patch to fix non-availiability of jconsole.js (optional; defaults to ${JCONSOLE_JS_PATCH_DEFAULT})"
     echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
@@ -88,6 +102,22 @@ if [ "x$REPO_ROOT" = "x" ] ; then
     REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
     echo "No repository root specified; default to ${REPO_ROOT}"
 fi;
+if [ "x$REPOS" = "x" ] ; then
+    REPOS=${REPOS_DEFAULT}
+    echo "No repositories specified; defaulting to ${REPOS}"
+fi;
+
+echo -e "Settings:"
+echo -e "\tVERSION: ${VERSION}"
+echo -e "\tPROJECT_NAME: ${PROJECT_NAME}"
+echo -e "\tREPO_NAME: ${REPO_NAME}"
+echo -e "\tOPENJDK_URL: ${OPENJDK_URL}"
+echo -e "\tCOMPRESSION: ${COMPRESSION}"
+echo -e "\tFILE_NAME_ROOT: ${FILE_NAME_ROOT}"
+echo -e "\tREPO_ROOT: ${REPO_ROOT}"
+echo -e "\tPR3822: ${PR3822}"
+echo -e "\tJCONSOLE_JS_PATCH: ${JCONSOLE_JS_PATCH}"
+echo -e "\tREPOS: ${REPOS}"
 
 mkdir "${FILE_NAME_ROOT}"
 pushd "${FILE_NAME_ROOT}"
@@ -96,22 +126,22 @@ echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
 hg clone ${REPO_ROOT} openjdk -r ${VERSION}
 pushd openjdk
 	
-
-if [ "x$REPOS" = "x" ] ; then
-    repos=${REPOS_DEFAULT}
-    echo "No repositories specified; defaulting to ${repos}"
-else
-    repos=$REPOS
-    echo "Repositories: ${repos}"
-fi;
-
-for subrepo in $repos
+for subrepo in ${REPOS}
 do
     echo "Cloning ${VERSION} ${subrepo} repository from ${REPO_ROOT}"
     hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
 done
 
-if [ -d jdk ]; then 
+# UnderlineTaglet.java has a BSD license with a field-of-use restriction, making it non-Free
+if [ -d langtools ] ; then
+    echo "Removing langtools test case with non-Free license"
+    rm -vf langtools/test/tools/javadoc/api/basic/TagletPathTest.java
+    rm -vf langtools/test/tools/javadoc/api/basic/taglets/UnderlineTaglet.java
+fi
+if [ -d jdk ]; then
+# jconsole.js has a BSD license with a field-of-use restriction, making it non-Free
+echo "Removing jconsole-plugin file with non-Free license"
+rm -vf jdk/src/share/demo/scripting/jconsole-plugin/src/resources/jconsole.js
 echo "Removing EC source code we don't build"
 rm -vf jdk/src/share/native/sun/security/ec/impl/ec2.h
 rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_163.c
@@ -123,7 +153,6 @@ rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_192.c
 rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
 
 echo "Syncing EC list with NSS"
-
 if [ "x$PR3822" = "x" ] ; then
 # get pr3822.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
 # Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3822)
@@ -135,6 +164,10 @@ else
     patch -Np1 < $PR3822
 fi;
 fi
+
+echo "Patching out use of jconsole.js"
+patch -Np1 < ${JCONSOLE_JS_PATCH}
+
 find . -name '*.orig' -exec rm -vf '{}' ';'
 
 popd
@@ -144,7 +177,7 @@ if [ "X$COMPRESSION" = "Xxz" ] ; then
 else
     SWITCH=czf
 fi
-TARBALL_NAME=${FILE_NAME_ROOT}-4curve.tar.${COMPRESSION}
+TARBALL_NAME=${FILE_NAME_ROOT}-4curve-clean.tar.${COMPRESSION}
 tar --exclude-vcs -$SWITCH ${TARBALL_NAME} openjdk
 mv ${TARBALL_NAME} ..
 
