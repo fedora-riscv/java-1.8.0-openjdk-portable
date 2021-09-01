@@ -3,6 +3,51 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u312 (2021-10-19):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bitly.com/openjdk8u312
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u312.txt
+
+* Other changes
+  - JDK-7146776: deadlock between URLStreamHandler.getHostAddress and file.Handler.openconnection
+  - JDK-8004148: NPE in sun.awt.SunToolkit.getWindowDeactivationTime
+  - JDK-8027154: [TESTBUG] Test java/awt/Mouse/GetMousePositionTest/GetMousePositionWithPopup.java fails
+  - JDK-8035001: TEST_BUG: the retry logic in RMID.start() should check that the subprocess hasn't terminated
+  - JDK-8035424: (reflect) Performance problem in sun.reflect.generics.parser.SignatureParser
+  - JDK-8042557: compiler/uncommontrap/TestSpecTrapClassUnloading.java fails with: GC triggered before VM initialization completed
+  - JDK-8054118: java/net/ipv6tests/UdpTest.java failed intermittently
+  - JDK-8065215: Print warning summary at end of configure
+  - JDK-8072767: DefaultCellEditor for comboBox creates ActionEvent with wrong source object
+  - JDK-8079891: Store configure log in $BUILD/configure.log
+  - JDK-8080082: configure fails if you create an empty directory and then run configure from it
+  - JDK-8086003: Test fails on OSX with java.lang.RuntimeException 'Narrow klass base: 0x0000000000000000, Narrow klass shift: 3' missing
+  - JDK-8134989: java/net/MulticastSocket/TestInterfaces.java failed due to unexpected IP address
+  - JDK-8156584: Initialization race in sun.security.x509.AlgorithmId.get
+  - JDK-8166673: The new implementation of Robot.waitForIdle() may hang
+  - JDK-8170467: (reflect) Optimize SignatureParser's use of StringBuilders
+  - JDK-8196181: sun/java2d/GdiRendering/InsetClipping.java fails
+  - JDK-8202837: PBES2 AlgorithmId encoding error in PKCS12 KeyStore
+  - JDK-8206189: sun/security/pkcs12/EmptyPassword.java fails with Sequence tag error
+  - JDK-8214418: half-closed SSLEngine status may cause application dead loop
+  - JDK-8214513: A PKCS12 keystore from Java 8 using custom PBE parameters cannot be read in Java 11
+  - JDK-8220786: Create new switch to redirect error reporting output to stdout or stderr
+  - JDK-8229243: SunPKCS11-Solaris provider tests failing on Solaris 11.4
+  - JDK-8231222: fix pkcs11 P11_DEBUG guarded native traces
+  - JDK-8238567: SoftMainMixer.processAudioBuffers(): Wrong handling of stoppedMixers
+  - JDK-8240518: Incorrect JNU_ReleaseStringPlatformChars in Windows Print
+  - JDK-8241248: NullPointerException in sun.security.ssl.HKDF.extract(HKDF.java:93)
+  - JDK-8248901: Signed immediate support in .../share/assembler.hpp is broken.
+  - JDK-8259338: Add expiry exception for identrustdstx3 alias to VerifyCACerts.java test
+  - JDK-8262000: jdk/jfr/event/gc/detailed/TestPromotionFailedEventWithParallelScavenge.java failed with "OutOfMemoryError: Java heap space"
+  - JDK-8262829: Native crash in Win32PrintServiceLookup.getAllPrinterNames()
+  - JDK-8263311: Watch registry changes for remote printers update instead of polling
+  - JDK-8265238: [8u] [macos] build failure in OpenJDK8u after JDK-8211301 in older xcode
+  - JDK-8265978: make test should look for more locations when searching for exit code
+  - JDK-8269810: [8u] Update generated_configure.sh after JDK-8250876 backport
+  - JDK-8269953: config.log is not in build directory after 8u backport of JDK-8079891
+  - JDK-8271466: StackGap test fails on aarch64 due to "-m64"
+
 New in release OpenJDK 8u302 (2021-07-20):
 ===========================================
 Live versions of these release notes can be found at:

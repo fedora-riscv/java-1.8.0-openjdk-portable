@@ -294,7 +294,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u302-b08
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -314,7 +314,7 @@
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -1238,7 +1238,7 @@ URL:      http://openjdk.java.net/
 # FILE_NAME_ROOT=%%{shenandoah_project}-%%{shenandoah_repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}-4curve-clean.tar.xz
+Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}-4curve.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -2590,6 +2590,12 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Wed Sep 01 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b01-0.1.ea
+- Update to aarch64-shenandoah-jdk8u312-b01 (EA)
+- Update release notes for 8u312-b01.
+- Switch to EA mode.
+- Remove "-clean" suffix as no 8u312 builds are unclean.
+
 * Mon Aug 30 2021 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.302.b08-2
 - alternatives creation moved to posttrans
 - Thus fixing the old reisntall issue:

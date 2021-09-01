@@ -177,7 +177,7 @@ if [ "X$COMPRESSION" = "Xxz" ] ; then
 else
     SWITCH=czf
 fi
-TARBALL_NAME=${FILE_NAME_ROOT}-4curve-clean.tar.${COMPRESSION}
+TARBALL_NAME=${FILE_NAME_ROOT}-4curve.tar.${COMPRESSION}
 tar --exclude-vcs -$SWITCH ${TARBALL_NAME} openjdk
 mv ${TARBALL_NAME} ..
 
