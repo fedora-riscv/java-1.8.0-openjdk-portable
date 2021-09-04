@@ -1,0 +1,344 @@
+diff --git openjdk.orig/jdk/make/lib/SecurityLibraries.gmk openjdk/jdk/make/lib/SecurityLibraries.gmk
+--- openjdk.orig/jdk/make/lib/SecurityLibraries.gmk
++++ openjdk/jdk/make/lib/SecurityLibraries.gmk
+@@ -289,3 +289,34 @@
+ 
+   endif
+ endif
++
++################################################################################
++# Create the systemconf library
++
++LIBSYSTEMCONF_CFLAGS :=
++LIBSYSTEMCONF_CXXFLAGS :=
++
++ifeq ($(USE_SYSCONF_NSS), true)
++  LIBSYSTEMCONF_CFLAGS += $(NSS_CFLAGS) -DSYSCONF_NSS
++  LIBSYSTEMCONF_CXXFLAGS += $(NSS_CFLAGS) -DSYSCONF_NSS
++endif
++
++ifeq ($(OPENJDK_BUILD_OS), linux)
++  $(eval $(call SetupNativeCompilation,BUILD_LIBSYSTEMCONF, \
++      LIBRARY := systemconf, \
++      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
++      SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/security, \
++      LANG := C, \
++      OPTIMIZATION := LOW, \
++      CFLAGS := $(CFLAGS_JDKLIB) $(LIBSYSTEMCONF_CFLAGS), \
++      CXXFLAGS := $(CXXFLAGS_JDKLIB) $(LIBSYSTEMCONF_CXXFLAGS), \
++      MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsystemconf/mapfile-vers, \
++      LDFLAGS := $(LDFLAGS_JDKLIB) \
++          $(call SET_SHARED_LIBRARY_ORIGIN), \
++      LDFLAGS_SUFFIX := $(LIBDL) $(NSS_LIBS), \
++      OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsystemconf, \
++      DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
++
++  BUILD_LIBRARIES += $(BUILD_LIBSYSTEMCONF)
++endif
++
+diff --git openjdk.orig/jdk/make/mapfiles/libsystemconf/mapfile-vers openjdk/jdk/make/mapfiles/libsystemconf/mapfile-vers
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/make/mapfiles/libsystemconf/mapfile-vers
+@@ -0,0 +1,35 @@
++#
++# Copyright (c) 2021, Red Hat, Inc.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.  Oracle designates this
++# particular file as subject to the "Classpath" exception as provided
++# by Oracle in the LICENSE file that accompanied this code.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++# Define public interface.
++
++SUNWprivate_1.1 {
++	global:
++		DEF_JNI_OnLoad;
++		DEF_JNI_OnUnLoad;
++		Java_java_security_SystemConfigurator_getSystemFIPSEnabled;
++	local:
++		*;
++};
+diff --git openjdk.orig/jdk/src/share/classes/java/security/SystemConfigurator.java openjdk/jdk/src/share/classes/java/security/SystemConfigurator.java
+--- openjdk.orig/jdk/src/share/classes/java/security/SystemConfigurator.java
++++ openjdk/jdk/src/share/classes/java/security/SystemConfigurator.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2019, 2020, Red Hat, Inc.
++ * Copyright (c) 2019, 2021, Red Hat, Inc.
+  *
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+@@ -30,14 +30,9 @@
+ import java.io.FileInputStream;
+ import java.io.IOException;
+ 
+-import java.nio.file.Files;
+-import java.nio.file.FileSystems;
+-import java.nio.file.Path;
+-
+ import java.util.Iterator;
+ import java.util.Map.Entry;
+ import java.util.Properties;
+-import java.util.regex.Pattern;
+ 
+ import sun.security.util.Debug;
+ 
+@@ -59,10 +54,21 @@
+     private static final String CRYPTO_POLICIES_JAVA_CONFIG =
+             CRYPTO_POLICIES_BASE_DIR + "/back-ends/java.config";
+ 
+-    private static final String CRYPTO_POLICIES_CONFIG =
+-            CRYPTO_POLICIES_BASE_DIR + "/config";
++    private static boolean systemFipsEnabled = false;
++
++    private static final String SYSTEMCONF_NATIVE_LIB = "systemconf";
++
++    private static native boolean getSystemFIPSEnabled()
++            throws IOException;
+ 
+-    private static boolean systemFipsEnabled = false;
++    static {
++        AccessController.doPrivileged(new PrivilegedAction<Void>() {
++            public Void run() {
++                System.loadLibrary(SYSTEMCONF_NATIVE_LIB);
++                return null;
++            }
++        });
++    }
+ 
+     /*
+      * Invoked when java.security.Security class is initialized, if
+@@ -171,17 +177,34 @@
+     }
+ 
+     /*
+-     * FIPS is enabled only if crypto-policies are set to "FIPS"
+-     * and the com.redhat.fips property is true.
++     * OpenJDK FIPS mode will be enabled only if the com.redhat.fips
++     * system property is true (default) and the system is in FIPS mode.
++     *
++     * There are 2 possible ways in which OpenJDK detects that the system
++     * is in FIPS mode: 1) if the NSS SECMOD_GetSystemFIPSEnabled API is
++     * available at OpenJDK's built-time, it is called; 2) otherwise, the
++     * /proc/sys/crypto/fips_enabled file is read.
+      */
+-    private static boolean enableFips() throws Exception {
++    private static boolean enableFips() throws IOException {
+         boolean shouldEnable = Boolean.valueOf(System.getProperty("com.redhat.fips", "true"));
+         if (shouldEnable) {
+-            Path configPath = FileSystems.getDefault().getPath(CRYPTO_POLICIES_CONFIG);
+-            String cryptoPoliciesConfig = new String(Files.readAllBytes(configPath));
+-            if (sdebug != null) { sdebug.println("Crypto config:\n" + cryptoPoliciesConfig); }
+-            Pattern pattern = Pattern.compile("^FIPS$", Pattern.MULTILINE);
+-            return pattern.matcher(cryptoPoliciesConfig).find();
++            if (sdebug != null) {
++                sdebug.println("Calling getSystemFIPSEnabled (libsystemconf)...");
++            }
++            try {
++                shouldEnable = getSystemFIPSEnabled();
++                if (sdebug != null) {
++                    sdebug.println("Call to getSystemFIPSEnabled (libsystemconf) returned: "
++                            + shouldEnable);
++                }
++                return shouldEnable;
++            } catch (IOException e) {
++                if (sdebug != null) {
++                    sdebug.println("Call to getSystemFIPSEnabled (libsystemconf) failed:");
++                    sdebug.println(e.getMessage());
++                }
++                throw e;
++            }
+         } else {
+             return false;
+         }
+diff --git openjdk.orig/jdk/src/solaris/native/java/security/systemconf.c openjdk/jdk/src/solaris/native/java/security/systemconf.c
+new file mode 100644
+--- /dev/null
++++ openjdk/jdk/src/solaris/native/java/security/systemconf.c
+@@ -0,0 +1,168 @@
++/*
++ * Copyright (c) 2021, Red Hat, Inc.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#include <dlfcn.h>
++#include <jni.h>
++#include <jni_util.h>
++#include <stdio.h>
++
++#ifdef SYSCONF_NSS
++#include <nss3/pk11pub.h>
++#endif //SYSCONF_NSS
++
++#include "java_security_SystemConfigurator.h"
++
++#define FIPS_ENABLED_PATH "/proc/sys/crypto/fips_enabled"
++#define MSG_MAX_SIZE 96
++
++static jmethodID debugPrintlnMethodID = NULL;
++static jobject debugObj = NULL;
++
++static void throwIOException(JNIEnv *env, const char *msg);
++static void dbgPrint(JNIEnv *env, const char* msg);
++
++/*
++ * Class:     java_security_SystemConfigurator
++ * Method:    JNI_OnLoad
++ */
++JNIEXPORT jint JNICALL DEF_JNI_OnLoad(JavaVM *vm, void *reserved)
++{
++    JNIEnv *env;
++    jclass sysConfCls, debugCls;
++    jfieldID sdebugFld;
++
++    if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_2) != JNI_OK) {
++        return JNI_EVERSION; /* JNI version not supported */
++    }
++
++    sysConfCls = (*env)->FindClass(env,"java/security/SystemConfigurator");
++    if (sysConfCls == NULL) {
++        printf("libsystemconf: SystemConfigurator class not found\n");
++        return JNI_ERR;
++    }
++    sdebugFld = (*env)->GetStaticFieldID(env, sysConfCls,
++            "sdebug", "Lsun/security/util/Debug;");
++    if (sdebugFld == NULL) {
++        printf("libsystemconf: SystemConfigurator::sdebug field not found\n");
++        return JNI_ERR;
++    }
++    debugObj = (*env)->GetStaticObjectField(env, sysConfCls, sdebugFld);
++    if (debugObj != NULL) {
++        debugCls = (*env)->FindClass(env,"sun/security/util/Debug");
++        if (debugCls == NULL) {
++            printf("libsystemconf: Debug class not found\n");
++            return JNI_ERR;
++        }
++        debugPrintlnMethodID = (*env)->GetMethodID(env, debugCls,
++                "println", "(Ljava/lang/String;)V");
++        if (debugPrintlnMethodID == NULL) {
++            printf("libsystemconf: Debug::println(String) method not found\n");
++            return JNI_ERR;
++        }
++        debugObj = (*env)->NewGlobalRef(env, debugObj);
++    }
++
++    return (*env)->GetVersion(env);
++}
++
++/*
++ * Class:     java_security_SystemConfigurator
++ * Method:    JNI_OnUnload
++ */
++JNIEXPORT void JNICALL DEF_JNI_OnUnload(JavaVM *vm, void *reserved)
++{
++    JNIEnv *env;
++
++    if (debugObj != NULL) {
++        if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_2) != JNI_OK) {
++            return; /* Should not happen */
++        }
++        (*env)->DeleteGlobalRef(env, debugObj);
++    }
++}
++
++JNIEXPORT jboolean JNICALL Java_java_security_SystemConfigurator_getSystemFIPSEnabled
++  (JNIEnv *env, jclass cls)
++{
++    int fips_enabled;
++    char msg[MSG_MAX_SIZE];
++    int msg_bytes;
++
++#ifdef SYSCONF_NSS
++
++    dbgPrint(env, "getSystemFIPSEnabled: calling SECMOD_GetSystemFIPSEnabled");
++    fips_enabled = SECMOD_GetSystemFIPSEnabled();
++    msg_bytes = snprintf(msg, MSG_MAX_SIZE, "getSystemFIPSEnabled:" \
++            " SECMOD_GetSystemFIPSEnabled returned 0x%x", fips_enabled);
++    if (msg_bytes > 0 && msg_bytes < MSG_MAX_SIZE) {
++        dbgPrint(env, msg);
++    } else {
++        dbgPrint(env, "getSystemFIPSEnabled: cannot render" \
++                " SECMOD_GetSystemFIPSEnabled return value");
++    }
++    return (fips_enabled == 1 ? JNI_TRUE : JNI_FALSE);
++
++#else // SYSCONF_NSS
++
++    FILE *fe;
++
++    dbgPrint(env, "getSystemFIPSEnabled: reading " FIPS_ENABLED_PATH);
++    if ((fe = fopen(FIPS_ENABLED_PATH, "r")) == NULL) {
++        throwIOException(env, "Cannot open " FIPS_ENABLED_PATH);
++    }
++    fips_enabled = fgetc(fe);
++    fclose(fe);
++    if (fips_enabled == EOF) {
++        throwIOException(env, "Cannot read " FIPS_ENABLED_PATH);
++    }
++    msg_bytes = snprintf(msg, MSG_MAX_SIZE, "getSystemFIPSEnabled:" \
++            " read character is '%c'", fips_enabled);
++    if (msg_bytes > 0 && msg_bytes < MSG_MAX_SIZE) {
++        dbgPrint(env, msg);
++    } else {
++        dbgPrint(env, "getSystemFIPSEnabled: cannot render" \
++                " read character");
++    }
++    return (fips_enabled == '1' ? JNI_TRUE : JNI_FALSE);
++
++#endif // SYSCONF_NSS
++}
++
++static void throwIOException(JNIEnv *env, const char *msg)
++{
++    jclass cls = (*env)->FindClass(env, "java/io/IOException");
++    if (cls != 0)
++        (*env)->ThrowNew(env, cls, msg);
++}
++
++static void dbgPrint(JNIEnv *env, const char* msg)
++{
++    jstring jMsg;
++    if (debugObj != NULL) {
++        jMsg = (*env)->NewStringUTF(env, msg);
++        CHECK_NULL(jMsg);
++        (*env)->CallVoidMethod(env, debugObj, debugPrintlnMethodID, jMsg);
++    }
++}

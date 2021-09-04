@@ -309,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -352,7 +352,7 @@
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1590796#c14
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1655938
-%global _privatelibs libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
+%global _privatelibs libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libsystemconf[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
 %global _publiclibs libjawt[.]so.*|libjava[.]so.*|libjvm[.]so.*|libverify[.]so.*|libjsig[.]so.*
 %if %is_system_jdk
 %global __provides_exclude ^(%{_privatelibs})$
@@ -805,6 +805,7 @@ exit 0
 %endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsctp.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsunec.so
+%{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libsystemconf.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libunpack.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libverify.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libzip.so
@@ -1112,8 +1113,6 @@ Requires: copy-jdk-configs >= 4.0
 OrderWithRequires: copy-jdk-configs
 # for printing support
 Requires: cups-libs
-# for FIPS PKCS11 provider
-Requires: nss
 # Post requires alternatives to install tool alternatives
 Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall tool alternatives
@@ -1308,6 +1307,9 @@ Patch1002: rh1760838-fips_default_keystore_type.patch
 Patch1004: rh1860986-disable_tlsv1.3_in_fips_mode.patch
 # RH1906862: Always initialise JavaSecuritySystemConfiguratorAccess
 Patch1005: rh1906862-always_initialise_configurator_access.patch
+# RH1929465: Improve system FIPS detection
+Patch1006: rh1929465-improve_system_FIPS_detection-root.patch
+Patch1007: rh1929465-improve_system_FIPS_detection-jdk.patch
 
 #############################################
 #
@@ -1454,8 +1456,8 @@ BuildRequires: libXinerama-devel
 BuildRequires: libXrender-devel
 BuildRequires: libXt-devel
 BuildRequires: libXtst-devel
-# Requirements for setting up the nss.cfg
-BuildRequires: nss-devel
+# Requirements for setting up the nss.cfg and FIPS support
+BuildRequires: nss-devel >= 3.53
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
@@ -1834,6 +1836,8 @@ sh %{SOURCE12}
 %patch1003
 %patch1004
 %patch1005
+%patch1006
+%patch1007
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -1965,6 +1969,7 @@ function buildjdk() {
     --with-vendor-vm-bug-url="%{oj_vendor_bug_url}" \
     --with-boot-jdk=${buildjdk} \
     --with-debug-level=${debuglevel} \
+    --enable-sysconf-nss \
     --enable-unlimited-crypto \
     --with-zlib=system \
     --with-libjpeg=system \
@@ -2590,7 +2595,15 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
-* Wed Sep 01 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b01-0.1.ea
+* Wed Sep 01 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b01-0.3.ea
+- Port FIPS system detection support to OpenJDK 8u
+- Minor code cleanups on FIPS detection patch and check for SECMOD_GetSystemFIPSEnabled in configure.
+- Remove unneeded Requires on NSS as it will now be dynamically linked and detected by RPM.
+
+* Wed Sep 01 2021 Martin Balao <mbalao@redhat.com> - 1:1.8.0.312.b01-0.3.ea
+- Detect FIPS using SECMOD_GetSystemFIPSEnabled in the new libsystemconf JDK library.
+
+* Wed Sep 01 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b01-0.2.ea
 - Update to aarch64-shenandoah-jdk8u312-b01 (EA)
 - Update release notes for 8u312-b01.
 - Switch to EA mode.
