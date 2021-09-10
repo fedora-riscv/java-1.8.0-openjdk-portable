@@ -294,7 +294,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b01
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b02
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -309,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2595,6 +2595,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Fri Sep 10 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b02-0.1.ea
+- Update to aarch64-shenandoah-jdk8u312-b02 (EA)
+- Update release notes for 8u312-b02.
+
 * Wed Sep 01 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b01-0.3.ea
 - Port FIPS system detection support to OpenJDK 8u
 - Minor code cleanups on FIPS detection patch and check for SECMOD_GetSystemFIPSEnabled in configure.

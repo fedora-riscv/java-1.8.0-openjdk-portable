@@ -37,12 +37,14 @@ Live versions of these release notes can be found at:
   - JDK-8238567: SoftMainMixer.processAudioBuffers(): Wrong handling of stoppedMixers
   - JDK-8240518: Incorrect JNU_ReleaseStringPlatformChars in Windows Print
   - JDK-8241248: NullPointerException in sun.security.ssl.HKDF.extract(HKDF.java:93)
+  - JDK-8247469: getSystemCpuLoad() returns -1 on linux when some offline cpus are present and cpusets.effective_cpus is not available
   - JDK-8248901: Signed immediate support in .../share/assembler.hpp is broken.
   - JDK-8259338: Add expiry exception for identrustdstx3 alias to VerifyCACerts.java test
   - JDK-8262000: jdk/jfr/event/gc/detailed/TestPromotionFailedEventWithParallelScavenge.java failed with "OutOfMemoryError: Java heap space"
   - JDK-8262829: Native crash in Win32PrintServiceLookup.getAllPrinterNames()
   - JDK-8263311: Watch registry changes for remote printers update instead of polling
   - JDK-8265238: [8u] [macos] build failure in OpenJDK8u after JDK-8211301 in older xcode
+  - JDK-8265836: OperatingSystemImpl.getCpuLoad() returns incorrect CPU load inside a container
   - JDK-8265978: make test should look for more locations when searching for exit code
   - JDK-8269810: [8u] Update generated_configure.sh after JDK-8250876 backport
   - JDK-8269953: config.log is not in build directory after 8u backport of JDK-8079891
