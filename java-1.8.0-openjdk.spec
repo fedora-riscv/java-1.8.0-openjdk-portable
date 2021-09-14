@@ -309,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1310,6 +1310,8 @@ Patch1005: rh1906862-always_initialise_configurator_access.patch
 # RH1929465: Improve system FIPS detection
 Patch1006: rh1929465-improve_system_FIPS_detection-root.patch
 Patch1007: rh1929465-improve_system_FIPS_detection-jdk.patch
+# RH1996182: Login to the NSS software token in FIPS mode
+Patch1008: rh1996182-login_to_nss_software_token.patch
 
 #############################################
 #
@@ -1838,6 +1840,7 @@ sh %{SOURCE12}
 %patch1005
 %patch1006
 %patch1007
+%patch1008
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -2595,6 +2598,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Fri Sep 10 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b03-0.2.ea
+- Add patch to login to the NSS software token when in FIPS mode.
+
 * Mon Sep 13 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b03-0.1.ea
 - Update to aarch64-shenandoah-jdk8u312-b03 (EA)
 - Update release notes for 8u312-b03.
