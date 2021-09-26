@@ -294,7 +294,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b03
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b04
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -309,7 +309,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2598,7 +2598,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
-* Fri Sep 10 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b03-0.2.ea
+* Sun Sep 26 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b04-0.1.ea
+- Update to aarch64-shenandoah-jdk8u312-b04 (EA)
+- Update release notes for 8u312-b04.
+
+* Tue Sep 14 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b03-0.2.ea
 - Add patch to login to the NSS software token when in FIPS mode.
 
 * Mon Sep 13 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b03-0.1.ea
@@ -2727,7 +2731,7 @@ cjc.mainProgram(args)
 - removed patch1 rh1648242-accessible_toolkit_crash_do_not_break_jvm.patch and patch3 rh1648644-java_access_bridge_privileged_security.patch
 - removal of accessibility{,-slowdebug,-fastdebug} subpackages
 - no longer creating symlinks of %%{_libdir}/java-atk-wrapper/libatk-wrapper.so.0 libatk-wrapper.so and  %%{_libdir}/java-atk-wrapper/java-atk-wrapper.jar  java-atk-wrapper.jar
-- no longer creating %%{_jvmdir}/%{jredir -- $suffix}/lib/accessibility.properties with content of "assistive_technologies=org.GNOME.Accessibility.AtkWrapper"
+- no longer creating %%{_jvmdir}/%%{jredir -- $suffix}/lib/accessibility.properties with content of "assistive_technologies=org.GNOME.Accessibility.AtkWrapper"
 - removal of accessibility{,-slowdebug,-fastdebug} subpackages files sections
 
 * Mon Mar 22 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.292.b06-0.0.ea
