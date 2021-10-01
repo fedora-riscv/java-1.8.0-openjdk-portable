@@ -22,6 +22,8 @@
 %bcond_without slowdebug
 # Enable release builds by default on relevant arches.
 %bcond_without release
+# Remove build artifacts by default
+%bcond_with artifacts
 
 # The -g flag says to use strip -g instead of full strip on DSOs or EXEs.
 # This fixes detailed NMT and other tools which need minimal debug info.
@@ -309,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -343,6 +345,7 @@
 %global jdkimage       j2sdk-image
 # output dir stub
 %define buildoutputdir() %{expand:build/jdk8.build%{?1}}
+%define installoutputdir() %{expand:install/jdk8.install%{?1}}
 # we can copy the javadoc to not arched dir, or make it not noarch
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
 # main id and dir of this jdk
@@ -1045,8 +1048,8 @@ exit 0
 %define files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}
-#javadoc is in jdk8 noarch, so also licnese file must be treated like it
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
+#javadoc is in jdk8 noarch, so also license file must be treated like it
+%license %{installoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 %if %is_system_jdk
 %if %{is_release_build -- %{?1}}
 %ghost %{_javadocdir}/java
@@ -1057,8 +1060,8 @@ exit 0
 %define files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip
-#javadoc is in jdk8 noarch, so also licnese file must be treated like it
-%license %{buildoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
+#javadoc is in jdk8 noarch, so also license file must be treated like it
+%license %{installoutputdir -- %{?1}}/images/%{jdkimage}/jre/LICENSE
 %if %is_system_jdk
 %if %{is_release_build -- %{?1}}
 %ghost %{_javadocdir}/java-zip
@@ -1938,9 +1941,10 @@ export EXTRA_CFLAGS EXTRA_ASFLAGS
 
 function buildjdk() {
     local outputdir=${1}
-    local buildjdk=${2}
-    local maketargets=${3}
-    local debuglevel=${4}
+    local installdir=${2}
+    local buildjdk=${3}
+    local maketargets=${4}
+    local debuglevel=${5}
 
     local top_srcdir_abs_path=$(pwd)/%{top_level_dir_name}
     # Variable used in hs_err hook on build failures
@@ -1950,7 +1954,7 @@ function buildjdk() {
     ${buildjdk}/bin/java -version
     echo "Building 8u%{updatever}-%{buildver}, milestone %{milestone}"
 
-    mkdir -p ${outputdir}
+    mkdir -p ${outputdir} ${installdir}
     pushd ${outputdir}
 
     bash ${top_srcdir_abs_path}/configure \
@@ -2011,6 +2015,23 @@ function buildjdk() {
     find images/%{jdkimage}/bin/ -exec chmod +x {} \;
 
     popd >& /dev/null
+
+    echo "Installing build from ${outputdir} to ${installdir}..."
+    echo "Installing images..."
+    mv ${outputdir}/images ${installdir}
+    if [ -d ${outputdir}/bundles ] ; then
+	echo "Installing bundles...";
+	mv ${outputdir}/bundles ${installdir} ;
+    fi
+    if [ -d ${outputdir}/docs ] ; then
+	echo "Installing docs...";
+	mv ${outputdir}/docs ${installdir} ;
+    fi
+
+%if !%{with artifacts}
+    echo "Removing output directory...";
+    rm -rf ${outputdir}
+%endif
 }
 
 for suffix in %{build_loop} ; do
@@ -2024,6 +2045,8 @@ fi
 systemjdk=/usr/lib/jvm/java-openjdk
 builddir=%{buildoutputdir -- $suffix}
 bootbuilddir=boot${builddir}
+installdir=%{installoutputdir -- $suffix}
+bootinstalldir=boot${installdir}
 
 # Debug builds don't need same targets as release for
 # build speed-up
@@ -2033,15 +2056,15 @@ if echo $debugbuild | grep -q "debug" ; then
 fi
 
 %if %{bootstrap_build}
-buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
-buildjdk ${builddir} $(pwd)/${bootbuilddir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
-rm -rf ${bootbuilddir}
+buildjdk ${bootbuilddir} ${bootinstalldir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
+buildjdk ${builddir} ${installdir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
+%{!?with_artifacts:rm -rf ${bootinstalldir}}
 %else
-buildjdk ${builddir} ${systemjdk} "${maketargets}" ${debugbuild}
+buildjdk ${builddir} ${installdir} ${systemjdk} "${maketargets}" ${debugbuild}
 %endif
 
 # Install nss.cfg right away as we will be using the JRE above
-export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
+export JAVA_HOME=$(pwd)/%{installoutputdir -- $suffix}/images/%{jdkimage}
 
 # Install nss.cfg right away as we will be using the JRE above
 install -m 644 nss.cfg $JAVA_HOME/jre/lib/security/
@@ -2067,7 +2090,7 @@ done
 # We test debug first as it will give better diagnostics on a crash
 for suffix in %{build_loop} ; do
 
-export JAVA_HOME=$(pwd)/%{buildoutputdir -- $suffix}/images/%{jdkimage}
+export JAVA_HOME=$(pwd)/%{installoutputdir -- $suffix}/images/%{jdkimage}
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -2182,7 +2205,7 @@ STRIP_KEEP_SYMTAB=libjvm*
 for suffix in %{build_loop} ; do
 
 # Install the jdk
-pushd %{buildoutputdir -- $suffix}/images/%{jdkimage}
+pushd %{installoutputdir -- $suffix}/images/%{jdkimage}
 
 # Install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/server/
@@ -2249,9 +2272,9 @@ popd
 if ! echo $suffix | grep -q "debug" ; then
   # Install Javadoc documentation
   install -d -m 755 $RPM_BUILD_ROOT%{_javadocdir}
-  cp -a %{buildoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
+  cp -a %{installoutputdir -- $suffix}/docs $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}
   built_doc_archive=`echo "jdk-%{javaver}_%{updatever}%{milestone_version}$suffix-%{buildver}-docs.zip" | sed  s/slowdebug/debug/`
-  cp -a %{buildoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
+  cp -a %{installoutputdir -- $suffix}/bundles/$built_doc_archive  $RPM_BUILD_ROOT%{_javadocdir}/%{uniquejavadocdir -- $suffix}.zip
 fi
 
 # Install release notes
@@ -2598,6 +2621,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Sep 27 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b04-0.2.ea
+- Reduce disk footprint by removing build artifacts by default.
+
 * Sun Sep 26 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b04-0.1.ea
 - Update to aarch64-shenandoah-jdk8u312-b04 (EA)
 - Update release notes for 8u312-b04.
