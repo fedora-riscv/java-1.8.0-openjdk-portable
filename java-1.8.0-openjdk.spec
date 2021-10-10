@@ -311,7 +311,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1315,6 +1315,8 @@ Patch1006: rh1929465-improve_system_FIPS_detection-root.patch
 Patch1007: rh1929465-improve_system_FIPS_detection-jdk.patch
 # RH1996182: Login to the NSS software token in FIPS mode
 Patch1008: rh1996182-login_to_nss_software_token.patch
+# RH1991003: Allow plain key import unless com.redhat.fips.plainKeySupport is set to false
+Patch1011: rh1991003-enable_fips_keys_import.patch
 
 #############################################
 #
@@ -1844,6 +1846,7 @@ sh %{SOURCE12}
 %patch1006
 %patch1007
 %patch1008
+%patch1011
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -2621,6 +2624,12 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Thu Oct 07 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b05-0.2.ea
+- Allow plain key import to be disabled with -Dcom.redhat.fips.plainKeySupport=false
+
+* Thu Oct 07 2021 Martin Balao <mbalao@redhat.com> - 1:1.8.0.312.b05-0.2.ea
+- Add patch to allow plain key import.
+
 * Thu Sep 30 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b05-0.1.ea
 - Update to aarch64-shenandoah-jdk8u312-b05 (EA)
 - Update release notes for 8u312-b05.
