@@ -86,13 +86,18 @@
 %global ppc64be         ppc64 ppc64p7
 # Set of architectures which support multiple ABIs
 %global multilib_arches %{power64} sparc64 x86_64
-# Set of architectures for which we build debug builds
+# Set of architectures for which we build slowdebug builds
 %global debug_arches    %{ix86} x86_64 sparcv9 sparc64 %{aarch64} %{power64}
+# Set of architectures for which we build fastdebug builds
+%global fastdebug_arches x86_64 ppc64le aarch64
 # Set of architectures with a Just-In-Time (JIT) compiler
 %global jit_arches      %{debug_arches}
+# Set of architectures which use the Zero assembler port (!jit_arches)
+%global zero_arches %{arm} ppc s390 s390x
+# Set of architectures which run a full bootstrap cycle
+%global bootstrap_arches %{jit_arches} %{zero_arches}
 # Set of architectures which support SystemTap tapsets
 %global systemtap_arches %{jit_arches}
-%global fastdebug_arches x86_64 ppc64le aarch64
 # Set of architectures which support the serviceability agent
 %global sa_arches       %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 # Set of architectures which support class data sharing
@@ -137,11 +142,16 @@
 %else
 %global fastdebug_build %{nil}
 %endif
-%global bootstrap_build 1
 
 # If you disable both builds, then the build fails
 # Build and test slowdebug first as it provides the best diagnostics
 %global build_loop  %{slowdebug_build} %{fastdebug_build} %{normal_build}
+
+%ifarch %{bootstrap_arches}
+%global bootstrap_build true
+%else
+%global bootstrap_build false
+%endif
 
 %global bootstrap_targets images
 %global release_targets images docs-zip
@@ -311,7 +321,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2051,19 +2061,23 @@ installdir=%{installoutputdir -- $suffix}
 bootinstalldir=boot${installdir}
 
 # Debug builds don't need same targets as release for
-# build speed-up
-maketargets="%{release_targets}"
+# build speed-up. We also avoid bootstrapping these
+# slower builds.
 if echo $debugbuild | grep -q "debug" ; then
   maketargets="%{debug_targets}"
+  run_bootstrap=false
+else
+  maketargets="%{release_targets}"
+  run_bootstrap=%{bootstrap_build}
 fi
 
-%if %{bootstrap_build}
-buildjdk ${bootbuilddir} ${bootinstalldir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
-buildjdk ${builddir} ${installdir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
-%{!?with_artifacts:rm -rf ${bootinstalldir}}
-%else
-buildjdk ${builddir} ${installdir} ${systemjdk} "${maketargets}" ${debugbuild}
-%endif
+if ${run_bootstrap} ; then
+  buildjdk ${bootbuilddir} ${bootinstalldir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
+  buildjdk ${builddir} ${installdir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
+  %{!?with_artifacts:rm -rf ${bootinstalldir}}
+else
+  buildjdk ${builddir} ${installdir} ${systemjdk} "${maketargets}" ${debugbuild}
+fi
 
 # Install nss.cfg right away as we will be using the JRE above
 export JAVA_HOME=$(pwd)/%{installoutputdir -- $suffix}/images/%{jdkimage}
@@ -2623,6 +2637,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Dec 06 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b07-3
+- Turn off bootstrapping for slow debug builds, which are particularly slow on ppc64le.
+
 * Wed Nov 03 2021 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.312.b07-2
 - Use 'sql:' prefix in nss.fips.cfg as F35+ no longer ship the legacy
   secmod.db file as part of nss
