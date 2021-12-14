@@ -306,7 +306,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u312-b07
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -321,12 +321,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -2637,6 +2637,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Tue Dec 14 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b01-0.1.ea
+- Update to aarch64-shenandoah-jdk8u322-b01 (EA)
+- Update release notes for 8u322-b01.
+- Switch to EA mode.
+
 * Mon Dec 06 2021 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.312.b07-3
 - Turn off bootstrapping for slow debug builds, which are particularly slow on ppc64le.
 
