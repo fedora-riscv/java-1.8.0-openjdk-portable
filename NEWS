@@ -16,6 +16,7 @@ Live versions of these release notes can be found at:
   - JDK-8041928: MouseEvent.getModifiersEx gives wrong result
   - JDK-8042199: The build of J2DBench via makefile is broken after the JDK-8005402
   - JDK-8044365: (dc) MulticastSendReceiveTests.java failing with ENOMEM when joining group (OS X 10.9)
+  - JDK-8048021: Remove @version tag in jaxp repo
   - JDK-8049348: compiler/intrinsics/bmi/verifycode tests on lzcnt and tzcnt use incorrect assumption about REXB prefix usage
   - JDK-8060027: Tests java/beans/XMLEncoder/Test4903007.java and java/beans/XMLEncoder/java_awt_GridBagLayout.java
   - JDK-8066588: javax/management/remote/mandatory/connection/RMIConnector_NPETest.java fails to compile
@@ -49,6 +50,7 @@ Live versions of these release notes can be found at:
   - JDK-8232178: MacVolumesTest failed after upgrade to MacOS Catalina
   - JDK-8232226: [macos 10.15] test/jdk/java/awt/color/EqualityTest/EqualityTest.java may fail
   - JDK-8235153: [TESTBUG] [macos 10.15] java/awt/Graphics/DrawImageBG/SystemBgColorTest.java fails
+  - JDK-8236897: Fix the copyright header for pkcs11gcm2.h
   - JDK-8237499: JFR: Include stack trace in the ThreadStart event
   - JDK-8239886: Minimal VM build fails after JDK-8237499
   - JDK-8261397: Try Catch Method Failing to Work When Dividing An Integer By 0
