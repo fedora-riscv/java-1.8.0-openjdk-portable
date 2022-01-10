@@ -306,7 +306,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	aarch64-port
 %global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b03
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b04
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -1114,8 +1114,8 @@ Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/ and macros
 Requires: javapackages-filesystem
 # Require zoneinfo data provided by tzdata-java subpackage.
-# 2021a required as of JDK-8260356 in April CPU
-Requires: tzdata-java >= 2021a
+# 2021c required as of JDK-8274407 in January 2022 CPU
+Requires: tzdata-java >= 2021c
 # for support of kernel stream control
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
@@ -1491,8 +1491,8 @@ BuildRequires: java-1.8.0-openjdk-devel
 %ifnarch %{jit_arches}
 BuildRequires: libffi-devel
 %endif
-# 2021a required as of JDK-8260356 in April CPU
-BuildRequires: tzdata-java >= 2021a
+# 2021c required as of JDK-8274407 in January 2022 CPU
+BuildRequires: tzdata-java >= 2021c
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
@@ -2637,6 +2637,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Jan 10 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b04-0.1.ea
+- Update to aarch64-shenandoah-jdk8u322-b04 (EA)
+- Update release notes for 8u322-b04.
+- Require tzdata 2021c as of JDK-8274407.
+
 * Fri Jan 07 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b03-0.1.ea
 - Update to aarch64-shenandoah-jdk8u322-b03 (EA)
 - Update release notes for 8u322-b03.

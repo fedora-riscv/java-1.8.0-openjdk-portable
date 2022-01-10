@@ -58,6 +58,9 @@ Live versions of these release notes can be found at:
   - JDK-8272342: [TEST_BUG] java/awt/print/PrinterJob/PageDialogMarginTest.java catches all exceptions
   - JDK-8273342: Null pointer dereference in classFileParser.cpp:2817
   - JDK-8273826: Correct Manifest file name and NPE checks
+  - JDK-8274407: (tz) Update Timezone Data to 2021c
+  - JDK-8274467: TestZoneInfo310.java fails with tzdata2021b
+  - JDK-8274468: TimeZoneTest.java fails with tzdata2021b
   - JDK-8274595: DisableRMIOverHTTPTest failed: connection refused
   - JDK-8274779: HttpURLConnection: HttpClient and HttpsClient incorrectly check request method when set to POST
 
@@ -81,6 +84,18 @@ The following root certificate from Google has been removed from the
 
 Alias Name: globalsignr2ca [jdk]
 Distinguished Name: CN=GlobalSign, O=GlobalSign, OU=GlobalSign Root CA - R2
+
+core-libs/java.time:
+
+JDK-8274857:  Update Timezone Data to 2021c
+===========================================
+IANA Time Zone Database, on which JDK's Date/Time libraries are based,
+has been updated to version 2021c
+(https://mm.icann.org/pipermail/tz-announce/2021-October/000067.html). Note
+that with this update, some of the time zone rules prior to the year
+1970 have been modified according to the changes which were introduced
+with 2021b. For more detail, refer to the announcement of 2021b
+(https://mm.icann.org/pipermail/tz-announce/2021-September/000066.html)
 
 New in release OpenJDK 8u312 (2021-10-19):
 ===========================================
