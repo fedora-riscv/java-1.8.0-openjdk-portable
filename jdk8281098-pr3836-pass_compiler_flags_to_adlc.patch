@@ -1,0 +1,67 @@
+# HG changeset patch
+# User Andrew John Hughes <gnu_andrew@member.fsf.org>
+# Date 1620365804 -3600
+#      Fri May 07 06:36:44 2021 +0100
+# Node ID 39b62f35eca823b4c9a98bc1dc0cb9acb87360f8
+# Parent  723b59ed1afe878c5cd35f080399c8ceec4f776b
+PR3836: Extra compiler flags not passed to adlc build
+
+diff --git openjdk.orig/hotspot/make/aix/makefiles/adlc.make openjdk/hotspot/make/aix/makefiles/adlc.make
+--- openjdk.orig/hotspot/make/aix/makefiles/adlc.make
++++ openjdk/hotspot/make/aix/makefiles/adlc.make
+@@ -69,6 +69,11 @@
+ CFLAGS_WARN = -w
+ CFLAGS += $(CFLAGS_WARN)
+ 
++# Extra flags from gnumake's invocation or environment
++CFLAGS += $(EXTRA_CFLAGS)
++LFLAGS += $(EXTRA_CFLAGS) $(EXTRA_LDFLAGS)
++ASFLAGS += $(EXTRA_ASFLAGS)
++
+ OBJECTNAMES = \
+ 	adlparse.o \
+ 	archDesc.o \
+diff --git openjdk.orig/hotspot/make/bsd/makefiles/adlc.make openjdk/hotspot/make/bsd/makefiles/adlc.make
+--- openjdk.orig/hotspot/make/bsd/makefiles/adlc.make
++++ openjdk/hotspot/make/bsd/makefiles/adlc.make
+@@ -71,6 +71,11 @@
+ endif
+ CFLAGS += $(CFLAGS_WARN)
+ 
++# Extra flags from gnumake's invocation or environment
++CFLAGS += $(EXTRA_CFLAGS)
++LFLAGS += $(EXTRA_CFLAGS) $(EXTRA_LDFLAGS)
++ASFLAGS += $(EXTRA_ASFLAGS)
++
+ OBJECTNAMES = \
+ 	adlparse.o \
+ 	archDesc.o \
+diff --git openjdk.orig/hotspot/make/linux/makefiles/adlc.make openjdk/hotspot/make/linux/makefiles/adlc.make
+--- openjdk.orig/hotspot/make/linux/makefiles/adlc.make
++++ openjdk/hotspot/make/linux/makefiles/adlc.make
+@@ -69,6 +69,11 @@
+ CFLAGS_WARN = $(WARNINGS_ARE_ERRORS)
+ CFLAGS += $(CFLAGS_WARN)
+ 
++# Extra flags from gnumake's invocation or environment
++CFLAGS += $(EXTRA_CFLAGS)
++LFLAGS += $(EXTRA_CFLAGS) $(EXTRA_LDFLAGS)
++ASFLAGS += $(EXTRA_ASFLAGS)
++
+ OBJECTNAMES = \
+ 	adlparse.o \
+ 	archDesc.o \
+diff --git openjdk.orig/hotspot/make/solaris/makefiles/adlc.make openjdk/hotspot/make/solaris/makefiles/adlc.make
+--- openjdk.orig/hotspot/make/solaris/makefiles/adlc.make
++++ openjdk/hotspot/make/solaris/makefiles/adlc.make
+@@ -85,6 +85,10 @@
+ endif
+ CFLAGS += $(CFLAGS_WARN)
+ 
++# Extra flags from gnumake's invocation or environment
++CFLAGS += $(EXTRA_CFLAGS)
++ASFLAGS += $(EXTRA_ASFLAGS)
++
+ ifeq ("${Platform_compiler}", "sparcWorks")
+ # Enable the following CFLAGS addition if you need to compare the
+ # built ELF objects.
