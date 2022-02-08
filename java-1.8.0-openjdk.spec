@@ -115,15 +115,10 @@
 %global share_arches    %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 # Set of architectures which support JFR
 %global jfr_arches      %{jit_arches}
-# Set of architectures where we verify backtraces with gdb (ideally all)
-# Temporarily disable check on x86, x86_64, ppc64le and s390x as gdb crashes
-# ../../gdb/objfiles.h:510: internal-error: sect_index_data not initialized
-# A problem internal to GDB has been detected,
-# further debugging may prove unreliable.
-# See https://bugzilla.redhat.com/show_bug.cgi?id=2041970
-%global gdb_arches sparcv9 sparc64 %{aarch64} %{arm} ppc s390
 # Set of architectures for which alt-java has SSB mitigation
 %global ssbd_arches x86_64
+# Set of architectures where we verify backtraces with gdb
+%global gdb_arches %{jit_arches} %{zero_arches}
 
 # By default, we build a debug build during main build on JIT architectures
 %if %{with slowdebug}
@@ -349,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2688,6 +2683,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Feb 07 2022 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.322.b04-0.3.ea
+- Re-enable gdb backtrace check.
+
 * Thu Jan 20 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b04-0.2.ea
 - Temporarily move x86 to use Zero in order to get a working build
 - Introduce architecture restriction logic for the gdb test. (RH2041970)
