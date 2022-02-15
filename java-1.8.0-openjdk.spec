@@ -327,9 +327,9 @@
 %endif
 
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
-%global shenandoah_project	aarch64-port
-%global shenandoah_repo		jdk8u-shenandoah
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b04
+%global shenandoah_project	openjdk
+%global shenandoah_repo		shenandoah-jdk8u
+%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b05
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1141,8 +1141,8 @@ Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/ and macros
 Requires: javapackages-filesystem
 # Require zoneinfo data provided by tzdata-java subpackage.
-# 2021c required as of JDK-8274407 in January 2022 CPU
-Requires: tzdata-java >= 2021c
+# 2021e required as of JDK-8275766 in January 2022 CPU
+Requires: tzdata-java >= 2021e
 # for support of kernel stream control
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
@@ -1514,8 +1514,8 @@ BuildRequires: java-%{buildjdkver}-openjdk-devel >= 1.7.0.151-2.6.11.3
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
 %endif
-# 2021c required as of JDK-8274407 in January 2022 CPU
-BuildRequires: tzdata-java >= 2021c
+# 2021e required as of JDK-8275766 in January 2022 CPU
+BuildRequires: tzdata-java >= 2021e
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
@@ -2683,6 +2683,12 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Tue Feb 15 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b05-0.1.ea
+- Update to aarch64-shenandoah-jdk8u322-b05 (EA)
+- Update release notes for 8u322-b05.
+- Require tzdata 2021e as of JDK-8275766.
+- Update tarball generation script to use git following shenandoah-jdk8u's move to github
+
 * Mon Feb 07 2022 Severin Gehwolf <sgehwolf@redhat.com> - 1:1.8.0.322.b04-0.3.ea
 - Re-enable gdb backtrace check.
 

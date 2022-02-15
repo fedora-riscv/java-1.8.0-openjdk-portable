@@ -7,9 +7,9 @@
 # If you want to use a local copy of patch PR3822, set the path to it in the PR3822 variable
 #
 # In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
-# PROJECT_NAME=jdk8u   OR   aarch64-port 
-# REPO_NAME=jdk8u60    OR   jdk8u60 
-# VERSION=jdk8u60-b27  OR aarch64-jdk8u65-b17 OR for head, keyword 'tip' should do the job there
+# PROJECT_NAME=openjdk
+# REPO_NAME=shenandoah-jdk8u
+# VERSION=HEAD
 # 
 # They are used to create correct name and are used in construction of sources url (unless REPO_ROOT is set)
 
@@ -40,7 +40,7 @@ fi
 
 set -e
 
-OPENJDK_URL_DEFAULT=http://hg.openjdk.java.net
+OPENJDK_URL_DEFAULT=https://github.com
 COMPRESSION_DEFAULT=xz
 # jdk is last for its size
 REPOS_DEFAULT="hotspot corba jaxws jaxp langtools nashorn jdk"
@@ -99,7 +99,7 @@ if [ "x$FILE_NAME_ROOT" = "x" ] ; then
     echo "No file name root specified; default to ${FILE_NAME_ROOT}"
 fi
 if [ "x$REPO_ROOT" = "x" ] ; then
-    REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
+    REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}.git"
     echo "No repository root specified; default to ${REPO_ROOT}"
 fi;
 if [ "x$REPOS" = "x" ] ; then
@@ -123,15 +123,9 @@ mkdir "${FILE_NAME_ROOT}"
 pushd "${FILE_NAME_ROOT}"
 
 echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
-hg clone ${REPO_ROOT} openjdk -r ${VERSION}
+git clone -b ${VERSION} ${REPO_ROOT} openjdk
 pushd openjdk
 	
-for subrepo in ${REPOS}
-do
-    echo "Cloning ${VERSION} ${subrepo} repository from ${REPO_ROOT}"
-    hg clone ${REPO_ROOT}/${subrepo} -r ${VERSION}
-done
-
 # UnderlineTaglet.java has a BSD license with a field-of-use restriction, making it non-Free
 if [ -d langtools ] ; then
     echo "Removing langtools test case with non-Free license"

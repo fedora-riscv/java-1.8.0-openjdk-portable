@@ -63,6 +63,9 @@ Live versions of these release notes can be found at:
   - JDK-8274468: TimeZoneTest.java fails with tzdata2021b
   - JDK-8274595: DisableRMIOverHTTPTest failed: connection refused
   - JDK-8274779: HttpURLConnection: HttpClient and HttpsClient incorrectly check request method when set to POST
+  - JDK-8275766: (tz) Update Timezone Data to 2021e
+  - JDK-8275849: TestZoneInfo310.java fails with tzdata2021e
+  - JDK-8276536: Update TimeZoneNames files to follow the changes made by JDK-8275766
 
 Notes on individual issues:
 ===========================
