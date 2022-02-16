@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1354,6 +1354,9 @@ Patch1007: rh1929465-improve_system_FIPS_detection-jdk.patch
 Patch1008: rh1996182-login_to_nss_software_token.patch
 # RH1991003: Allow plain key import unless com.redhat.fips.plainKeySupport is set to false
 Patch1011: rh1991003-enable_fips_keys_import.patch
+# RH2021263: Resolve outstanding FIPS issues
+Patch1014: rh2021263-fips_ensure_security_initialised.patch
+Patch1015: rh2021263-fips_missing_native_returns.patch
 
 #############################################
 #
@@ -1881,6 +1884,8 @@ sh %{SOURCE12}
 %patch1007
 %patch1008
 %patch1011
+%patch1014
+%patch1015
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
@@ -2683,6 +2688,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Wed Feb 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-2
+- Fix FIPS issues in native code and with initialisation of java.security.Security
+
 * Wed Feb 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-1
 - Update to aarch64-shenandoah-jdk8u322-b06 (EA)
 - Update release notes for 8u322-b06.

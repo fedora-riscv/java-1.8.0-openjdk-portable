@@ -1,0 +1,28 @@
+commit 06c2decab204fcce5aca2d285953fcac1820b1ae
+Author: Andrew John Hughes <andrew@openjdk.org>
+Date:   Mon Jan 24 01:23:28 2022 +0000
+
+    RH2021263: Make sure java.security.Security is initialised when retrieving JavaSecuritySystemConfiguratorAccess instance
+
+diff --git openjdk.orig/jdk/src/share/classes/sun/misc/SharedSecrets.java openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
+index 40ca609e02..0dafe6f59c 100644
+--- openjdk.orig/jdk/src/share/classes/sun/misc/SharedSecrets.java
++++ openjdk/jdk/src/share/classes/sun/misc/SharedSecrets.java
+@@ -31,6 +31,7 @@ import java.io.Console;
+ import java.io.FileDescriptor;
+ import java.io.ObjectInputStream;
+ import java.security.ProtectionDomain;
++import java.security.Security;
+ import java.security.Signature;
+ 
+ import java.security.AccessController;
+@@ -255,6 +256,9 @@ public class SharedSecrets {
+     }
+ 
+     public static JavaSecuritySystemConfiguratorAccess getJavaSecuritySystemConfiguratorAccess() {
++        if (javaSecuritySystemConfiguratorAccess == null) {
++            unsafe.ensureClassInitialized(Security.class);
++        }
+         return javaSecuritySystemConfiguratorAccess;
+     }
+ }

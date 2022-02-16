@@ -1,0 +1,24 @@
+commit 7f58a05104138ebdfd3b7b968ed67ea4c8573073
+Author: Fridrich Strba <fstrba@suse.com>
+Date:   Mon Jan 24 01:10:57 2022 +0000
+
+    RH2021263: Return in C code after having generated Java exception
+
+diff --git openjdk.orig/jdk/src/solaris/native/java/security/systemconf.c openjdk/jdk/src/solaris/native/java/security/systemconf.c
+index 6f4656bfcb..34d0ff0ce9 100644
+--- openjdk.orig/jdk/src/solaris/native/java/security/systemconf.c
++++ openjdk/jdk/src/solaris/native/java/security/systemconf.c
+@@ -131,11 +131,13 @@ JNIEXPORT jboolean JNICALL Java_java_security_SystemConfigurator_getSystemFIPSEn
+     dbgPrint(env, "getSystemFIPSEnabled: reading " FIPS_ENABLED_PATH);
+     if ((fe = fopen(FIPS_ENABLED_PATH, "r")) == NULL) {
+         throwIOException(env, "Cannot open " FIPS_ENABLED_PATH);
++        return JNI_FALSE;
+     }
+     fips_enabled = fgetc(fe);
+     fclose(fe);
+     if (fips_enabled == EOF) {
+         throwIOException(env, "Cannot read " FIPS_ENABLED_PATH);
++        return JNI_FALSE;
+     }
+     msg_bytes = snprintf(msg, MSG_MAX_SIZE, "getSystemFIPSEnabled:" \
+             " read character is '%c'", fips_enabled);
