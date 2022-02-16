@@ -100,9 +100,9 @@
 # Set of architectures for which we build fastdebug builds
 %global fastdebug_arches x86_64 ppc64le aarch64
 # Set of architectures with a Just-In-Time (JIT) compiler
-%global jit_arches      %{aarch64} %{power64} sparcv9 sparc64 x86_64
+%global jit_arches      %{aarch64} %{ix86} %{power64} sparcv9 sparc64 x86_64
 # Set of architectures which use the Zero assembler port (!jit_arches)
-%global zero_arches %{arm} %{ix86} ppc s390 s390x
+%global zero_arches %{arm} ppc s390 s390x
 # Set of architectures which run a full bootstrap cycle
 %global bootstrap_arches %{jit_arches} %{zero_arches}
 # Set of architectures which support SystemTap tapsets
@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      6
+%global rpmrelease      7
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1524,6 +1524,8 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 Patch580: jdk8195607-pr3776-rh1760437-nss_sqlite_db_config.patch
 # JDK-8257794: Zero: assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1) failed: wrong on Linux/x86_32
 Patch581: jdk8257794-remove_broken_assert.patch
+# JDK-8282231: x86-32: runtime call to SharedRuntime::ldiv corrupts registers
+Patch582: jdk8282231-x86_32-missing_call_effects.patch
 
 #############################################
 #
@@ -1959,6 +1961,7 @@ sh %{SOURCE12}
 %patch112
 %patch580
 %patch581
+%patch582
 
 # RPM-only fixes
 %patch539
@@ -2778,6 +2781,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Wed Mar 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-7
+- Reinstate JIT builds on x86_32.
+- Add JDK-8282231 to fix missing CALL effects on x86_32.
+
 * Sat Feb 26 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.322.b06-6
 - Storing and restoring alterntives during update manually
 - Fixing Bug 2001567 - update of JDK/JRE is removing its manually selected alterantives and select (as auto) system JDK/JRE
