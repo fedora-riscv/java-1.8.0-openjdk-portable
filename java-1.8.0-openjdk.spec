@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      5
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -426,6 +426,9 @@
 %global alternatives_requires %{_sbindir}/alternatives
 %endif
 
+%global family %{name}.%{_arch}
+%global family_noarch  %{name}
+
 %if %{with_systemtap}
 # Where to install systemtap tapset (links)
 # We would like these to be in a package specific sub-dir,
@@ -458,7 +461,7 @@ fi
 
 ext=.gz
 alternatives \\
-  --install %{_bindir}/java java %{jrebindir -- %{?1}}/java $PRIORITY  --family %{name}.%{_arch} \\
+  --install %{_bindir}/java java %{jrebindir -- %{?1}}/java $PRIORITY  --family %{family} \\
   --slave %{_jvmdir}/jre jre %{_jvmdir}/%{jredir -- %{?1}} \\
   --slave %{_bindir}/%{alt_java_name} %{alt_java_name} %{jrebindir -- %{?1}}/%{alt_java_name} \\
   --slave %{_bindir}/jjs jjs %{jrebindir -- %{?1}}/jjs \\
@@ -497,10 +500,10 @@ alternatives \\
   %{_mandir}/man1/unpack200-%{uniquesuffix -- %{?1}}.1$ext
 
 for X in %{origin} %{javaver} ; do
-  alternatives --install %{_jvmdir}/jre-"$X" jre_"$X" %{_jvmdir}/%{jredir -- %{?1}} $PRIORITY --family %{name}.%{_arch}
+  alternatives --install %{_jvmdir}/jre-"$X" jre_"$X" %{_jvmdir}/%{jredir -- %{?1}} $PRIORITY --family %{family}
 done
 
-alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk -- %{?1}} $PRIORITY  --family %{name}.%{_arch}
+alternatives --install %{_jvmdir}/jre-%{javaver}-%{origin} jre_%{javaver}_%{origin} %{_jvmdir}/%{jrelnk -- %{?1}} $PRIORITY  --family %{family}
 }
 
 %define post_headless() %{expand:
@@ -552,7 +555,7 @@ fi
 
 ext=.gz
 alternatives \\
-  --install %{_bindir}/javac javac %{sdkbindir -- %{?1}}/javac $PRIORITY  --family %{name}.%{_arch} \\
+  --install %{_bindir}/javac javac %{sdkbindir -- %{?1}}/javac $PRIORITY  --family %{family} \\
   --slave %{_jvmdir}/java java_sdk %{_jvmdir}/%{sdkdir -- %{?1}} \\
   --slave %{_bindir}/appletviewer appletviewer %{sdkbindir -- %{?1}}/appletviewer \\
   --slave %{_bindir}/clhsdb clhsdb %{sdkbindir -- %{?1}}/clhsdb \\
@@ -648,10 +651,10 @@ alternatives \\
 
 for X in %{origin} %{javaver} ; do
   alternatives \\
-    --install %{_jvmdir}/java-"$X" java_sdk_"$X" %{_jvmdir}/%{sdkdir -- %{?1}} $PRIORITY  --family %{name}.%{_arch}
+    --install %{_jvmdir}/java-"$X" java_sdk_"$X" %{_jvmdir}/%{sdkdir -- %{?1}} $PRIORITY  --family %{family}
 done
 
-update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir -- %{?1}} $PRIORITY  --family %{name}.%{_arch}
+update-alternatives --install %{_jvmdir}/java-%{javaver}-%{origin} java_sdk_%{javaver}_%{origin} %{_jvmdir}/%{sdkdir -- %{?1}} $PRIORITY  --family %{family}
 }
 
 %define post_devel() %{expand:
@@ -689,7 +692,7 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java javadocdir %{_javadocdir}/%{uniquejavadocdir -- %{?1}}/api \\
-  $PRIORITY  --family %{name}
+  $PRIORITY  --family %{family_noarch}
 exit 0
 }
 
@@ -706,7 +709,7 @@ fi
 
 alternatives \\
   --install %{_javadocdir}/java-zip javadoczip %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip \\
-  $PRIORITY  --family %{name}
+  $PRIORITY  --family %{family_noarch}
 exit 0
 }
 
@@ -2691,6 +2694,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Sat Feb 26 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.322.b06-5
+- Family extracted to globals
+
 * Sat Feb 26 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.322.b06-4
 - javadoc-zip got its own provides next to plain javadoc ones
 
