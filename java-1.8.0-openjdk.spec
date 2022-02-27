@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1217,10 +1217,10 @@ Requires(post):   %{alternatives_requires}
 Requires(postun): %{alternatives_requires}
 
 # Standard JPackage javadoc provides
-Provides: java-%{javaver}-javadoc%{?1} = %{epoch}:%{version}-%{release}
-Provides: java-%{javaver}-%{origin}-javadoc%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-javadoc%{?1}%{?2} = %{epoch}:%{version}-%{release}
+Provides: java-%{javaver}-%{origin}-javadoc%{?1}%{?2} = %{epoch}:%{version}-%{release}
 %if %is_system_jdk
-Provides: java-javadoc%{?1} = %{epoch}:%{version}-%{release}
+Provides: java-javadoc%{?1}%{?2} = %{epoch}:%{version}-%{release}
 %endif
 }
 
@@ -1705,7 +1705,8 @@ Requires: javapackages-filesystem
 Obsoletes: javadoc-slowdebug < 1:1.8.0.222.b10-1
 BuildArch: noarch
 
-%{java_javadoc_rpo %{nil}}
+%{java_javadoc_rpo -- %{nil} -zip}
+%{java_javadoc_rpo -- %{nil} %{nil}}
 
 %description javadoc
 The %{origin_nice} %{majorver} API documentation.
@@ -1718,7 +1719,7 @@ Requires: javapackages-filesystem
 Obsoletes: javadoc-zip-slowdebug < 1:1.8.0.222.b10-1
 BuildArch: noarch
 
-%{java_javadoc_rpo %{nil}}
+%{java_javadoc_rpo -- %{nil} %{nil}}
 
 %description javadoc-zip
 The %{origin_nice} %{majorver} API documentation compressed in a single archive.
@@ -2690,6 +2691,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Sat Feb 26 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.322.b06-4
+- javadoc-zip got its own provides next to plain javadoc ones
+
 * Tue Feb 22 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-3
 - Separate crypto policy initialisation from FIPS initialisation, now they are no longer interdependent
 
