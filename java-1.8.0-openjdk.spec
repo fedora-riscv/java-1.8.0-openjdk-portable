@@ -329,7 +329,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	openjdk
 %global shenandoah_repo		shenandoah-jdk8u
-%global shenandoah_revision    	aarch64-shenandoah-jdk8u322-b06
+%global shenandoah_revision    	shenandoah-jdk8u332-b01
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -344,12 +344,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      7
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -2781,6 +2781,11 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Apr 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.332.b01-0.1.ea
+- Update to shenandoah-jdk8u332-b01 (EA)
+- Update release notes for 8u332-b01.
+- Switch to EA mode.
+
 * Wed Mar 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-7
 - Reinstate JIT builds on x86_32.
 - Add JDK-8282231 to fix missing CALL effects on x86_32.
