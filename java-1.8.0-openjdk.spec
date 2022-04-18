@@ -329,7 +329,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project	openjdk
 %global shenandoah_repo		shenandoah-jdk8u
-%global shenandoah_revision    	shenandoah-jdk8u332-b01
+%global shenandoah_revision    	shenandoah-jdk8u332-b06
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
 %global repo            %{shenandoah_repo}
@@ -2781,9 +2781,13 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Apr 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.332.b06-0.1.ea
+- Update to shenandoah-jdk8u332-b06 (EA)
+- Update release notes for shenandoah-8u332-b06.
+
 * Mon Apr 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.332.b01-0.1.ea
 - Update to shenandoah-jdk8u332-b01 (EA)
-- Update release notes for 8u332-b01.
+- Update release notes for shenandoah-8u332-b01.
 - Switch to EA mode.
 
 * Wed Mar 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.322.b06-7
