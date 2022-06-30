@@ -344,7 +344,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2781,6 +2781,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Thu Jun 30 2022 Francisco Ferrari Bihurriet <fferrari@redhat.com> - 1:1.8.0.332.b09-2
+- RH2007331: SecretKey generate/import operations don't add the CKA_SIGN attribute in FIPS mode
+
 * Mon Apr 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.332.b09-1
 - Update to shenandoah-jdk8u332-b09 (GA)
 - Update release notes for 8u332-b09.
