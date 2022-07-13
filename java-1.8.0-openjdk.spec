@@ -348,7 +348,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      5
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2282,7 +2282,9 @@ popd
 done
 
 %check
-
+%ifarch %{ix86}
+  exit 0
+%endif
 # We test debug first as it will give better diagnostics on a crash
 for suffix in %{build_loop} ; do
 
@@ -2404,6 +2406,18 @@ for suffix in %{build_loop} ; do
 
 # Install the jdk
 pushd %{installoutputdir -- $suffix}/images/%{jdkimage}
+
+%ifarch %{ix86}
+  for file in $(find $(pwd) | grep -e "/bin/" -e "\.so$") ; do
+    echo "deprecating $file"
+    echo '#!/bin/bash' > $file
+    echo 'echo "We are going to remove i686 jdk. Please fix your package accordingly!"' >> $file
+    echo 'echo "See https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs"' >> $file
+    echo 'echo "See https://pagure.io/fesco/issue/2772"' >> $file
+    echo 'echo "See https://bugzilla.redhat.com/show_bug.cgi?id=2083750"' >> $file
+    echo 'exit 1' >> $file
+  done
+%endif
 
 # Install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/server/
@@ -2819,6 +2833,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Thu Jul 14 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.332.b09-5
+- Replaced binaries and .so files with bash-stubs on i686 in preparation of the removal on that architecture:
+- https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs
+
 * Thu Jul 14 2022 FeRD (Frank Dana) <ferdnyc@gmail.com> - 1:1.8.0.332.b09-4
 - Add javaver- and origin-specific javadoc and javadoczip alternatives.
 
