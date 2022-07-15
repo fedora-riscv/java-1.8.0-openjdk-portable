@@ -348,7 +348,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      5
+%global rpmrelease      6
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1278,6 +1278,10 @@ OrderWithRequires: copy-jdk-configs
 %endif
 # for printing support
 Requires: cups-libs
+# for system security properties
+Requires: crypto-policies
+# for FIPS PKCS11 provider
+Requires: nss
 # Post requires alternatives to install tool alternatives
 Requires(post):   %{alternatives_requires}
 # Postun requires alternatives to uninstall tool alternatives
@@ -1633,8 +1637,10 @@ BuildRequires: libXinerama-devel
 BuildRequires: libXrender-devel
 BuildRequires: libXt-devel
 BuildRequires: libXtst-devel
-# Requirements for setting up the nss.cfg and FIPS support
+# Requirement for setting up nss.cfg and nss.fips.cfg
 BuildRequires: nss-devel >= 3.53
+# Requirement for system security property test
+BuildRequires: crypto-policies
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
@@ -2833,6 +2839,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Thu Jul 14 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.332.b09-6
+- Explicitly require crypto-policies during build and runtime for system security properties
+
 * Thu Jul 14 2022 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.332.b09-5
 - Replaced binaries and .so files with bash-stubs on i686 in preparation of the removal on that architecture:
 - https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs
