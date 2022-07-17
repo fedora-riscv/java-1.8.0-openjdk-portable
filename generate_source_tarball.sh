@@ -42,8 +42,8 @@ set -e
 
 OPENJDK_URL_DEFAULT=https://github.com
 COMPRESSION_DEFAULT=xz
-# jdk is last for its size
-REPOS_DEFAULT="hotspot corba jaxws jaxp langtools nashorn jdk"
+# Corresponding IcedTea version
+ICEDTEA_VERSION=3.0
 
 if [ "x$1" = "xhelp" ] ; then
     echo -e "Behaviour may be specified by setting the following variables:\n"
@@ -56,7 +56,6 @@ if [ "x$1" = "xhelp" ] ; then
     echo "REPO_ROOT - the location of the Mercurial repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
     echo "PR3822 - the path to the PR3822 patch to apply (optional; downloaded if unavailable)"
     echo "JCONSOLE_JS_PATCH - the path to a patch to fix non-availiability of jconsole.js (optional; defaults to ${JCONSOLE_JS_PATCH_DEFAULT})"
-    echo "REPOS - specify the repositories to use (optional; defaults to ${REPOS_DEFAULT})"
     exit 1;
 fi
 
@@ -102,10 +101,6 @@ if [ "x$REPO_ROOT" = "x" ] ; then
     REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}.git"
     echo "No repository root specified; default to ${REPO_ROOT}"
 fi;
-if [ "x$REPOS" = "x" ] ; then
-    REPOS=${REPOS_DEFAULT}
-    echo "No repositories specified; defaulting to ${REPOS}"
-fi;
 
 echo -e "Settings:"
 echo -e "\tVERSION: ${VERSION}"
@@ -117,13 +112,13 @@ echo -e "\tFILE_NAME_ROOT: ${FILE_NAME_ROOT}"
 echo -e "\tREPO_ROOT: ${REPO_ROOT}"
 echo -e "\tPR3822: ${PR3822}"
 echo -e "\tJCONSOLE_JS_PATCH: ${JCONSOLE_JS_PATCH}"
-echo -e "\tREPOS: ${REPOS}"
 
 mkdir "${FILE_NAME_ROOT}"
 pushd "${FILE_NAME_ROOT}"
 
 echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
 git clone -b ${VERSION} ${REPO_ROOT} openjdk
+
 pushd openjdk
 	
 # UnderlineTaglet.java has a BSD license with a field-of-use restriction, making it non-Free
@@ -132,39 +127,50 @@ if [ -d langtools ] ; then
     rm -vf langtools/test/tools/javadoc/api/basic/TagletPathTest.java
     rm -vf langtools/test/tools/javadoc/api/basic/taglets/UnderlineTaglet.java
 fi
-if [ -d jdk ]; then
-# jconsole.js has a BSD license with a field-of-use restriction, making it non-Free
-echo "Removing jconsole-plugin file with non-Free license"
-rm -vf jdk/src/share/demo/scripting/jconsole-plugin/src/resources/jconsole.js
-echo "Removing EC source code we don't build"
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2.h
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_163.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_193.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_233.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_aff.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_mont.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_192.c
-rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
 
-echo "Syncing EC list with NSS"
-if [ "x$PR3822" = "x" ] ; then
-# get pr3822.patch (from http://icedtea.classpath.org/hg/icedtea8) from most correct tag
-# Do not push it or publish it (see http://icedtea.classpath.org/bugzilla/show_bug.cgi?id=3822)
-    wget -O pr3822.patch http://icedtea.classpath.org/hg/icedtea8/raw-file/tip/patches/pr3822-4curve.patch
-    patch -Np1 < pr3822.patch
-    rm pr3822.patch
-else
-    echo "Applying ${PR3822}"
-    patch -Np1 < $PR3822
-fi;
+if [ -d jdk ]; then
+    # jconsole.js has a BSD license with a field-of-use restriction, making it non-Free
+    echo "Removing jconsole-plugin file with non-Free license"
+    rm -vf jdk/src/share/demo/scripting/jconsole-plugin/src/resources/jconsole.js
+    echo "Removing EC source code we don't build"
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2.h
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_163.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_193.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_233.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_aff.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_mont.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_192.c
+    rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
+
+    echo "Syncing EC list with NSS"
+    if [ "x$PR3822" = "x" ] ; then
+	# get pr3822.patch (from https://github.com/icedtea-git/icedtea) in the ${ICEDTEA_VERSION} branch
+	# Do not push it or publish it
+	wget -O pr3822.patch https://github.com/icedtea-git/icedtea/raw/${ICEDTEA_VERSION}/patches/pr3822-4curve.patch
+	echo "Applying ${PWD}/pr3822.patch"
+	git apply --stat --apply -v -p1 pr3822.patch
+	rm pr3822.patch
+    else
+	echo "Applying ${PR3822}"
+	git apply --stat --apply -v -p1 $PR3822
+    fi;
 fi
 
 echo "Patching out use of jconsole.js"
-patch -Np1 < ${JCONSOLE_JS_PATCH}
+git apply --stat --apply -v -p1 ${JCONSOLE_JS_PATCH}
 
 find . -name '*.orig' -exec rm -vf '{}' ';'
 
 popd
+
+# Generate .src-rev so build has knowledge of the revision the tarball was created from
+mkdir build
+pushd build
+sh ${PWD}/../openjdk/configure
+make store-source-revision
+popd
+rm -rf build
+
 echo "Compressing remaining forest"
 if [ "X$COMPRESSION" = "Xxz" ] ; then
     SWITCH=cJf
@@ -177,5 +183,3 @@ mv ${TARBALL_NAME} ..
 
 popd
 echo "Done. You may want to remove the uncompressed version."
-
-

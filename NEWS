@@ -3,6 +3,112 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u342 (2022-07-19):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bitly.com/openjdk8u342
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u342.txt
+
+* Other changes
+  - JDK-8031567: Better model for storing source revision information
+  - JDK-8076190: Customizing the generation of a PKCS12 keystore
+  - JDK-8129572: Cleanup usage of getResourceAsStream in jaxp
+  - JDK-8132256: jaxp: Investigate removal of com/sun/org/apache/bcel/internal/util/ClassPath.java
+  - JDK-8168926: C2: Bytecode escape analyzer crashes due to stack overflow
+  - JDK-8170385: JDK-8031567 broke source bundles
+  - JDK-8170392: JDK-8031567 broke builds from source bundles
+  - JDK-8170530: bash configure output contains a typo in a suggested library name
+  - JDK-8190753: (zipfs): Accessing a large entry (> 2^31 bytes) leads to a negative initial size for ByteArrayOutputStream
+  - JDK-8194154: System property user.dir should not be changed
+  - JDK-8202142: jfr/event/io/TestInstrumentation is unstable
+  - JDK-8221988: add possibility to build with Visual Studio 2019
+  - JDK-8223396: [TESTBUG] several jfr tests do not clean up files created in /tmp
+  - JDK-8230865: [TESTBUG] jdk/jfr/event/io/EvilInstrument.java fails at-run shell MakeJAR.sh target
+  - JDK-8235211: serviceability/attach/RemovingUnixDomainSocketTest.java fails with AttachNotSupportedException: Unable to open socket file
+  - JDK-8244973: serviceability/attach/RemovingUnixDomainSocketTest.java fails "stderr was not empty"
+  - JDK-8248876: LoadObject with bad base address created for exec file on linux
+  - JDK-8253424: Add support for running pre-submit testing using GitHub Actions
+  - JDK-8253865: Pre-submit testing using GitHub Actions does not detect failures reliably
+  - JDK-8254054: Pre-submit testing using GitHub Actions should not use the deprecated set-env command
+  - JDK-8254173: Add Zero, Minimal hotspot targets to submit workflow
+  - JDK-8254175: Build no-pch configuration in debug mode for submit checks
+  - JDK-8254282: Add Linux x86_32 builds to submit workflow
+  - JDK-8255239: The timezone of the hs_err_pid log file is corrupted in Japanese locale
+  - JDK-8255305: Add Linux x86_32 tier1 to submit workflow
+  - JDK-8255352: Archive important test outputs in submit workflow
+  - JDK-8255373: Submit workflow artifact name is always "test-results_.zip"
+  - JDK-8255895: Submit workflow artifacts miss hs_errs/replays due to ZIP include mismatch
+  - JDK-8256127: Add cross-compiled foreign architectures builds to submit workflow
+  - JDK-8256277: Github Action build on macOS should define OS and Xcode versions
+  - JDK-8256354: Github Action build on Windows should define OS and MSVC versions
+  - JDK-8256393: Github Actions build on Linux should define OS and GCC versions
+  - JDK-8256414: add optimized build to submit workflow
+  - JDK-8256747: GitHub Actions: decouple the hotspot build-only jobs from Linux x64 testing
+  - JDK-8257056: Submit workflow should apt-get update to avoid package installation errors
+  - JDK-8259924: GitHub actions fail on Linux x86_32 with "Could not configure libc6:i386"
+  - JDK-8260460: GitHub actions still fail on Linux x86_32 with "Could not configure libc6:i386"
+  - JDK-8261107: ArrayIndexOutOfBoundsException in the ICC_Profile.getInstance(InputStream)
+  - JDK-8263667: Avoid running GitHub actions on branches named pr/*
+  - JDK-8266187: Memory leak in appendBootClassPath()
+  - JDK-8274658: ISO 4217 Amendment 170 Update
+  - JDK-8274751: Drag And Drop hangs on Windows
+  - JDK-8278138: OpenJDK8 fails to start on Windows 8.1 after upgrading compiler to VS2017
+  - JDK-8279669: test/jdk/com/sun/jdi/TestScaffold.java uses wrong condition
+  - JDK-8281814: Debuginfo.diz contains redundant build path after backport JDK-8025936
+  - JDK-8282225: GHA: Allow one concurrent run per PR only
+  - JDK-8282458: Update .jcheck/conf file for 8u move to git
+  - JDK-8282552: Bump update version of OpenJDK: 8u342
+  - JDK-8283350: (tz) Update Timezone Data to 2022a
+  - JDK-8284620: CodeBuffer may leak _overflow_arena
+  - JDK-8284772: 8u GHA: Use GCC Major Version Dependencies Only
+  - JDK-8285445: cannot open file "NUL:"
+  - JDK-8285523: Improve test java/io/FileOutputStream/OpenNUL.java
+  - JDK-8285591: [11] add signum checks in DSA.java engineVerify
+  - JDK-8285727: [11u, 17u] Unify fix for JDK-8284920 with version from head
+  - JDK-8286989: Build failure on macOS after 8281814
+  - JDK-8287537: 8u JDK-8284620 backport broke AArch64 build
+
+Notes on individual issues:
+===========================
+
+security-libs/java.security:
+
+JDK-8215293: Customizing PKCS12 keystore Generation
+===================================================
+New system and security properties have been added to enable users to
+customize the generation of PKCS #12 keystores. This includes
+algorithms and parameters for key protection, certificate protection,
+and MacData. The detailed explanation and possible values for these
+properties can be found in the "PKCS12 KeyStore properties" section of
+the `java.security` file.
+
+Also, support for the following SHA-2 based HmacPBE algorithms has
+been added to the SunJCE provider:
+
+* HmacPBESHA224
+* HmacPBESHA256
+* HmacPBESHA384
+* HmacPBESHA512
+* HmacPBESHA512/224
+* HmacPBESHA512/256
+
+core-libs/java.io:
+
+JDK-8285660: Enable Windows Alternate Data Streams by default
+=============================================================
+The Windows implementation of `java.io.File` has been changed so that
+strict validity checks are **not** performed by default on file
+paths. This includes allowing colons (':') in the path other than only
+immediately after a single drive letter. It also allows paths that
+represent NTFS Alternate Data Streams (ADS), such as
+"filename:streamname". This restores the default behavior of
+`java.io.File` to what it was prior to the April 2022 CPU in which
+strict validity checks were not performed by default on file paths on
+Windows. To re-enable strict path checking in `java.io.File`, the
+system property `jdk.io.File.enableADS` should be set to `false` (case
+ignored). This might be preferable, for example, if Windows special
+device paths such as `NUL:` are *not* used.
+
 New in release OpenJDK 8u332 (2022-04-19):
 ===========================================
 Live versions of these release notes can be found at:
