@@ -282,7 +282,7 @@
 # New Version-String scheme-style defines
 %global majorver 8
 
-%ifarch %{ix86} x86_64
+%ifarch x86_64
 %global with_openjfx_binding 1
 %global openjfx_path %{_jvmdir}/openjfx8
 # links src directories
@@ -351,7 +351,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -449,9 +449,6 @@
 %global tapsetdirttapset %{tapsetroot}/tapset/
 %global tapsetdir %{tapsetdirttapset}/%{stapinstall}
 %endif
-
-# x86 is no longer supported
-ExcludeArch: %{ix86}
 
 # not-duplicated scriptlets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
@@ -838,6 +835,9 @@ exit 0
 exit 0
 }
 
+%ifarch %{ix86}
+%define files_jre() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-jre.sh}
+%else
 %define files_jre() %{expand:
 %{_datadir}/icons/hicolor/*x*/apps/java-%{javaver}-%{origin}.png
 %{_datadir}/applications/*policytool%{?1}.desktop
@@ -852,8 +852,11 @@ exit 0
 %endif
 %endif
 }
+%endif
 
-
+%ifarch %{ix86}
+%define files_jre_headless() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-headless.sh}
+%else
 %define files_jre_headless() %{expand:
 %defattr(-,root,root,-)
 %dir %{_sysconfdir}/.java/.systemPrefs
@@ -1034,7 +1037,11 @@ exit 0
 %endif
 %endif
 }
+%endif
 
+%ifarch %{ix86}
+%define files_devel() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-devel.sh}
+%else
 %define files_devel() %{expand:
 %defattr(-,root,root,-)
 %license %{_jvmdir}/%{sdkdir -- %{?1}}/ASSEMBLY_EXCEPTION
@@ -1192,19 +1199,30 @@ exit 0
 %endif
 %endif
 }
+%endif
 
-
+%ifarch %{ix86}
+%define files_demo() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-demo.sh}
+%else
 %define files_demo() %{expand:
 %defattr(-,root,root,-)
 %license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
 }
+%endif
 
+%ifarch %{ix86}
+%define files_src() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-src.sh}
+%else
 %define files_src() %{expand:
 %defattr(-,root,root,-)
 %doc README.md
 %{_jvmdir}/%{sdkdir -- %{?1}}/src.zip
 }
+%endif
 
+%ifarch %{ix86}
+%define files_javadoc() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-javadoc.sh}
+%else
 %define files_javadoc() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}
@@ -1219,7 +1237,11 @@ exit 0
 %endif
 %endif
 }
+%endif
 
+%ifarch %{ix86}
+%define files_javadoc_zip() %{expand:%{_jvmdir}/%{sdkdir -- %{?1}}/gone-javadoc_zip.sh}
+%else
 %define files_javadoc_zip() %{expand:
 %defattr(-,root,root,-)
 %doc %{_javadocdir}/%{uniquejavadocdir -- %{?1}}.zip
@@ -1234,6 +1256,7 @@ exit 0
 %endif
 %endif
 }
+%endif
 
 # not-duplicated requires/provides/obsoletes for normal/debug packages
 %define java_rpo() %{expand:
@@ -1647,8 +1670,14 @@ BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
 BuildRequires: unzip
+# x86 is deprecated and the package no longer contains a working JDK
+%ifarch %{ix86}
+# Require javapackages-filesystem to define %{_jvmdir}
+BuildRequires: javapackages-filesystem
+%else
 # Require a boot JDK which doesn't fail due to RH1482244
 BuildRequires: java-%{buildjdkver}-openjdk-devel >= 1.7.0.151-2.6.11.3
+%endif
 # Zero-assembler build requirement
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
@@ -2078,6 +2107,12 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE11} > nss.cfg
 sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE17} > nss.fips.cfg
 
 %build
+
+# x86 is deprecated
+%ifarch %{ix86}
+  exit 0
+%endif
+
 # How many CPU's do we have?
 export NUM_PROC=%(/usr/bin/getconf _NPROCESSORS_ONLN 2> /dev/null || :)
 export NUM_PROC=${NUM_PROC:-1}
@@ -2286,11 +2321,17 @@ fi
 done
 
 %check
-%ifarch %{ix86}
-  exit 0
-%endif
+
 # We test debug first as it will give better diagnostics on a crash
 for suffix in %{build_loop} ; do
+
+%ifarch %{ix86}
+
+  # Fake debugsourcefiles.list here after find-debuginfo.sh has already had a go
+  echo "%{_jvmdir}/%{sdkdir -- ${suffix}}/gone-debugsourcefiles.sh" >> debugsourcefiles.list
+  cat debugsourcefiles.list
+
+%else
 
 export JAVA_HOME=$(pwd)/%{installoutputdir -- $suffix}/images/%{jdkimage}
 
@@ -2405,6 +2446,8 @@ $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep "Compiled from"
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LineNumberTable
 $JAVA_HOME/bin/javap -l java.nio.ByteBuffer | grep LocalVariableTable
 
+%endif
+
 # build cycles check
 done
 
@@ -2413,20 +2456,36 @@ STRIP_KEEP_SYMTAB=libjvm*
 
 for suffix in %{build_loop} ; do
 
+%ifarch %{ix86}
+
+  mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- ${suffix}}
+
+  file=/tmp/gonejdk.$$
+  echo "OpenJDK on x86 is now deprecated"
+  echo '#!/bin/bash' > $file
+  echo 'echo "We are going to remove i686 jdk. Please fix your package accordingly!"' >> $file
+  echo 'echo "See https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs"' >> $file
+  echo 'echo "See https://pagure.io/fesco/issue/2772"' >> $file
+  echo 'echo "See https://bugzilla.redhat.com/show_bug.cgi?id=2083750"' >> $file
+  echo 'exit 1' >> $file
+
+  for pkgsuffix in jre headless devel demo src debugsourcefiles ; do
+      cp -a ${file} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- ${suffix}}/gone-${pkgsuffix}.sh
+  done
+
+  # Docs were only in the normal build
+  if ! echo $suffix | grep -q "debug" ; then
+      for pkgsuffix in javadoc javadoc_zip ; do
+	  cp -a ${file} $RPM_BUILD_ROOT%{_jvmdir}/%{sdkdir -- ${suffix}}/gone-${pkgsuffix}.sh
+      done
+  fi
+
+  rm -f ${file}
+
+%else
+
 # Install the jdk
 pushd %{installoutputdir -- $suffix}/images/%{jdkimage}
-
-%ifarch %{ix86}
-  for file in $(find $(pwd) | grep -e "/bin/" -e "\.so$") ; do
-    echo "deprecating $file"
-    echo '#!/bin/bash' > $file
-    echo 'echo "We are going to remove i686 jdk. Please fix your package accordingly!"' >> $file
-    echo 'echo "See https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs"' >> $file
-    echo 'echo "See https://pagure.io/fesco/issue/2772"' >> $file
-    echo 'echo "See https://bugzilla.redhat.com/show_bug.cgi?id=2083750"' >> $file
-    echo 'exit 1' >> $file
-  done
-%endif
 
 # Install jsa directories so we can owe them
 mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir -- $suffix}/lib/%{archinstall}/server/
@@ -2604,6 +2663,8 @@ find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "ASSEMBLY_EXCEPTION"
 find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "LICENSE" -exec chmod 644 {} \; ; 
 find $RPM_BUILD_ROOT/%{_jvmdir}/%{sdkdir -- $suffix}/ -name "THIRD_PARTY_README" -exec chmod 644 {} \; ; 
 
+%endif
+
 # end, dual install
 done
 
@@ -2774,7 +2835,9 @@ cjc.mainProgram(args)
 %files devel
 %{files_devel %{nil}}
 
+%ifnarch %{ix86}
 %files demo -f %{name}-demo.files
+%endif
 %{files_demo %{nil}}
 
 %files src
@@ -2805,7 +2868,9 @@ cjc.mainProgram(args)
 %files devel-slowdebug
 %{files_devel -- %{debug_suffix_unquoted}}
 
+%ifnarch %{ix86}
 %files demo-slowdebug -f %{name}-demo.files-slowdebug
+%endif
 %{files_demo -- %{debug_suffix_unquoted}}
 
 %files src-slowdebug
@@ -2828,7 +2893,9 @@ cjc.mainProgram(args)
 %files devel-fastdebug
 %{files_devel -- %{fastdebug_suffix_unquoted}}
 
+%ifnarch %{ix86}
 %files demo-fastdebug  -f %{name}-demo.files-fastdebug
+%endif
 %{files_demo -- %{fastdebug_suffix_unquoted}}
 
 %files src-fastdebug
@@ -2842,6 +2909,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Jul 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.2.ea
+- Try to build on x86 again by creating a husk of a JDK which does not depend on itself
+
 * Sun Jul 17 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.1.ea
 - Update to shenandoah-jdk8u342-b06 (EA)
 - Update release notes for shenandoah-8u342-b06.
