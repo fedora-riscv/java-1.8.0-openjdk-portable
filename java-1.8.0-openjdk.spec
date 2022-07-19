@@ -351,7 +351,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -2837,7 +2837,9 @@ cjc.mainProgram(args)
 %files devel
 %{files_devel %{nil}}
 
-%ifnarch %{ix86}
+%ifarch %{ix86}
+%files demo
+%else
 %files demo -f %{name}-demo.files
 %endif
 %{files_demo %{nil}}
@@ -2911,6 +2913,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Tue Jul 19 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.3.ea
+- Reinstate demo package on x86
+
 * Mon Jul 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.2.ea
 - Temporarily disable noarch status of javadoc and javadoc-zip so x86 can differ
 
