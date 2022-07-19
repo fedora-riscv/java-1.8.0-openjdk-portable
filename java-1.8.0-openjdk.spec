@@ -1867,7 +1867,8 @@ The %{compatiblename}-src-fastdebug sub-package contains the complete %{origin_n
 Summary: %{origin_nice} %{majorver} API documentation
 Requires: javapackages-filesystem
 Obsoletes: javadoc-slowdebug < 1:1.8.0.222.b10-1
-BuildArch: noarch
+# Temporarily disabled while we have a cripped x86 build
+#BuildArch: noarch
 
 %{java_javadoc_rpo -- %{nil} -zip}
 %{java_javadoc_rpo -- %{nil} %{nil}}
@@ -1881,7 +1882,8 @@ The %{origin_nice} %{majorver} API documentation.
 Summary: %{origin_nice} %{majorver} API documentation compressed in a single archive
 Requires: javapackages-filesystem
 Obsoletes: javadoc-zip-slowdebug < 1:1.8.0.222.b10-1
-BuildArch: noarch
+# Temporarily disabled while we have a cripped x86 build
+#BuildArch: noarch
 
 %{java_javadoc_rpo -- %{nil} %{nil}}
 
@@ -2909,6 +2911,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Mon Jul 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.2.ea
+- Temporarily disable noarch status of javadoc and javadoc-zip so x86 can differ
+
 * Mon Jul 18 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.2.ea
 - Try to build on x86 again by creating a husk of a JDK which does not depend on itself
 
