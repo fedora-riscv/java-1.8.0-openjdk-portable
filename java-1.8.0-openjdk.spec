@@ -335,7 +335,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project      openjdk
 %global shenandoah_repo         shenandoah-jdk8u
-%global openjdk_revision        jdk8u342-b06
+%global openjdk_revision        jdk8u342-b07
 %global shenandoah_revision     shenandoah-%{openjdk_revision}
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
@@ -351,12 +351,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           0
+%global is_ga           1
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -451,7 +451,11 @@
 %endif
 
 # x86 is no longer supported
+%if 0%{?java_arches:1}
 ExclusiveArch:  %{java_arches}
+%else
+ExcludeArch: %{ix86}
+%endif
 
 # not-duplicated scriptlets for normal/debug packages
 %global update_desktop_icons /usr/bin/gtk-update-icon-cache %{_datadir}/icons/hicolor &>/dev/null || :
@@ -2828,6 +2832,12 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Sun Jul 24 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b07-1
+- Update to shenandoah-jdk8u342-b07 (GA)
+- Update release notes for 8u342-b07.
+- Switch to GA mode for final release.
+- Exclude x86 where java_arches is undefined, in order to unbreak build
+
 * Fri Jul 22 2022 Jiri Vanek <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.4.ea
 - moved to build only on %%{java_arches}
 -- https://fedoraproject.org/wiki/Changes/Drop_i686_JDKs
@@ -2842,6 +2852,9 @@ cjc.mainProgram(args)
 -- this now excludes i686
 -- this is safely backport-able to older fedoras, as the macro was  backported proeprly (with i686 included)
 - https://bugzilla.redhat.com/show_bug.cgi?id=2104129
+
+* Thu Jul 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.342.b06-0.3.ea.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
 
 * Tue Jul 19 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.342.b06-0.3.ea
 - Reinstate demo package on x86
