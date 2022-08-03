@@ -3,6 +3,32 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u345 (2022-08-01):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u345
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u345.txt
+
+* Other changes
+  - JDK-8290832: It is no longer possible to change "user.dir" in the JDK8
+  - JDK-8291568: Bump update version of OpenJDK: 8u345
+
+Notes on individual issues:
+===========================
+
+core-libs/java.io:
+
+JDK-8290832: It is no longer possible to change "user.dir" in the JDK8
+======================================================================
+A change, JDK-8194154, was introduced in the 8u342 release of OpenJDK
+causing the JDK to ignore attempts to set the `user.dir` property.
+While this change is suitable for a major release (it was originally
+introduced in the initial release of OpenJDK 11), changing the
+behaviour of such a property in an update release creates
+compatibility issues in software that relies on the behaviour in prior
+versions of OpenJDK 8.  As a result, we have reverted this change in
+8u345.
+
 New in release OpenJDK 8u342 (2022-07-19):
 ===========================================
 Live versions of these release notes can be found at:
