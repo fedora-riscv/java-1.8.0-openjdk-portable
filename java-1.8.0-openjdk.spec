@@ -26,12 +26,24 @@
 %bcond_with artifacts
 # Build a fresh libjvm.so for use in a copy of the bootstrap JDK
 %bcond_without fresh_libjvm
+# Build with system libraries
+%bcond_with system_libs
 
 # Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
 %if %{with fresh_libjvm}
 %global build_hotspot_first 1
 %else
 %global build_hotspot_first 0
+%endif
+
+%if %{with system_libs}
+%global system_libs 1
+%global link_type system
+%global jpeg_lib |libjavajpeg[.]so.*
+%else
+%global system_libs 0
+%global link_type bundled
+%global jpeg_lib |libjpeg[.]so.*
 %endif
 
 # The -g flag says to use strip -g instead of full strip on DSOs or EXEs.
@@ -351,7 +363,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -395,7 +407,7 @@
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1590796#c14
 #         https://bugzilla.redhat.com/show_bug.cgi?id=1655938
-%global _privatelibs libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*|libjavajpeg[.]so.*|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libsystemconf[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
+%global _privatelibs libattach[.]so.*|libawt_headless[.]so.*|libawt[.]so.*|libawt_xawt[.]so.*|libdt_socket[.]so.*|libfontmanager[.]so.*|libhprof[.]so.*|libinstrument[.]so.*|libj2gss[.]so.*|libj2pcsc[.]so.*|libj2pkcs11[.]so.*|libjaas_unix[.]so.*|libjava_crw_demo[.]so.*%{jpeg_lib}|libjdwp[.]so.*|libjli[.]so.*|libjsdt[.]so.*|libjsoundalsa[.]so.*|libjsound[.]so.*|liblcms[.]so.*|libmanagement[.]so.*|libmlib_image[.]so.*|libnet[.]so.*|libnio[.]so.*|libnpt[.]so.*|libsaproc[.]so.*|libsctp[.]so.*|libsplashscreen[.]so.*|libsunec[.]so.*|libsystemconf[.]so.*|libunpack[.]so.*|libzip[.]so.*|lib[.]so\\(SUNWprivate_.*
 %global _publiclibs libjawt[.]so.*|libjava[.]so.*|libjvm[.]so.*|libverify[.]so.*|libjsig[.]so.*
 %if %is_system_jdk
 %global __provides_exclude ^(%{_privatelibs})$
@@ -952,7 +964,11 @@ exit 0
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjaas_unix.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjava.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjava_crw_demo.so
+%if %{system_libs}
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjavajpeg.so
+%else
+%{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjpeg.so
+%endif
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjdwp.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjsdt.so
 %{_jvmdir}/%{jredir -- %{?1}}/lib/%{archinstall}/libjsig.so
@@ -1629,12 +1645,8 @@ BuildRequires: desktop-file-utils
 BuildRequires: elfutils-devel
 BuildRequires: fontconfig-devel
 BuildRequires: freetype-devel
-BuildRequires: giflib-devel
 BuildRequires: gcc-c++
 BuildRequires: gdb
-BuildRequires: lcms2-devel
-BuildRequires: libjpeg-devel
-BuildRequires: libpng-devel
 BuildRequires: libxslt
 BuildRequires: libX11-devel
 BuildRequires: libXext-devel
@@ -1665,6 +1677,26 @@ BuildRequires: gcc >= 4.8.3-8
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
+
+%if %{system_libs}
+BuildRequires: giflib-devel
+BuildRequires: lcms2-devel
+BuildRequires: libjpeg-devel
+BuildRequires: libpng-devel
+%else
+# Version in jdk/src/share/native/sun/awt/giflib/gif_lib.h
+Provides: bundled(giflib) = 5.2.1
+# Version in jdk/src/share/native/sun/java2d/cmm/lcms/lcms2.h
+Provides: bundled(lcms2) = 2.10.0
+# Version in jdk/src/share/native/sun/awt/image/jpeg/jpeglib.h
+Provides: bundled(libjpeg) = 6b
+# Version in jdk/src/share/native/sun/awt/libpng/png.h
+Provides: bundled(libpng) = 1.6.37
+# We link statically against libstdc++ to increase portability
+BuildRequires: libstdc++-static
+%endif
+# Version in jdk/src/share/native/sun/font/layout/LEStandalone.h
+Provides: bundled(icu) = 4.6
 
 # this is always built, also during debug-only build
 # when it is built in debug-only this package is just placeholder
@@ -1974,14 +2006,18 @@ cp %{SOURCE101} %{top_level_dir_name}/common/autoconf/build-aux/
 
 # OpenJDK patches
 
+%if %{system_libs}
 # Remove libraries that are linked
 sh %{SOURCE12}
+%endif
 
 # System library fixes
+%if %{system_libs}
 %patch201
 %patch202
 %patch203
 %patch204
+%endif
 
 %patch5
 
@@ -2119,10 +2155,17 @@ function buildjdk() {
     local buildjdk=${2}
     local maketargets="${3}"
     local debuglevel=${4}
+    local link_opt=${5}
 
     local top_srcdir_abs_path=$(pwd)/%{top_level_dir_name}
     # Variable used in hs_err hook on build failures
     local top_builddir_abs_path=$(pwd)/${outputdir}
+
+    if [ "x${link_opt}" = "xbundled" ] ; then
+        libc_link_opt="static";
+    else
+        libc_link_opt="dynamic";
+    fi
 
     echo "Checking build JDK ${buildjdk} is operational..."
     ${buildjdk}/bin/java -version
@@ -2152,12 +2195,14 @@ function buildjdk() {
     --with-debug-level=${debuglevel} \
     --disable-sysconf-nss \
     --enable-unlimited-crypto \
-    --with-zlib=system \
-    --with-libjpeg=system \
-    --with-giflib=system \
-    --with-libpng=system \
-    --with-lcms=system \
-    --with-stdc++lib=dynamic \
+    --with-zlib=${link_opt} \
+    --with-giflib=${link_opt} \
+%if %{with system_libs}
+    --with-libjpeg=${link_opt} \
+    --with-libpng=${link_opt} \
+    --with-lcms=${link_opt} \
+%endif
+    --with-stdc++lib=${libc_link_opt} \
     --with-extra-cxxflags="$EXTRA_CPP_FLAGS" \
     --with-extra-cflags="$EXTRA_CFLAGS" \
     --with-extra-asflags="$EXTRA_ASFLAGS" \
@@ -2263,6 +2308,7 @@ builddir=%{buildoutputdir -- $suffix}
 bootbuilddir=boot${builddir}
 installdir=%{installoutputdir -- $suffix}
 bootinstalldir=boot${installdir}
+link_opt="%{link_type}"
 
 # Debug builds don't need same targets as release for
 # build speed-up. We also avoid bootstrapping these
@@ -2276,13 +2322,13 @@ else
 fi
 
 if ${run_bootstrap} ; then
-  buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
+  buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild} ${link_opt}
   installjdk ${bootbuilddir} ${bootinstalldir}
-  buildjdk ${builddir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
+  buildjdk ${builddir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild} ${link_opt}
   installjdk ${builddir} ${installdir}
   %{!?with_artifacts:rm -rf ${bootinstalldir}}
 else
-  buildjdk ${builddir} ${systemjdk} "${maketargets}" ${debugbuild}
+  buildjdk ${builddir} ${systemjdk} "${maketargets}" ${debugbuild} ${link_opt}
   installjdk ${builddir} ${installdir}
 fi
 
@@ -2832,6 +2878,9 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Tue Aug 30 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.345.b01-2
+- Switch to static builds, reducing system dependencies and making build more portable
+
 * Wed Aug 03 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.345.b01-1
 - Update to shenandoah-jdk8u345-b01 (GA)
 - Update release notes for 8u345-b01.
