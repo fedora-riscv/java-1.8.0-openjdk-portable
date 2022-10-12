@@ -3,6 +3,152 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u352 (2022-10-18):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u352
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u352.txt
+
+* Other changes
+  - JDK-7131823: bug in GIFImageReader
+  - JDK-7186258: InetAddress$Cache should replace currentTimeMillis with nanoTime for more precise and accurate
+  - JDK-8028265: Add legacy tz tests to OpenJDK
+  - JDK-8039955: [TESTBUG] jdk/lambda/LambdaTranslationTest1 - java.lang.AssertionError: expected [d:1234.000000] but found [d:1234,000000]
+  - JDK-8049228: Improve multithreaded scalability of InetAddress cache
+  - JDK-8071507: (ref) Clear phantom reference as soft and weak references do
+  - JDK-8087283: Add support for the XML Signature here() function to the JDK XPath implementation
+  - JDK-8130895: Test javax/swing/system/6799345/TestShutdown.java fails on Solaris11 Sparcv9
+  - JDK-8136354: [TEST_BUG] Test  java/awt/image/RescaleOp/RescaleAlphaTest.java with Bad action for script
+  - JDK-8139668: Generate README-build.html from markdown
+  - JDK-8143847: Remove REF_CLEANER reference category
+  - JDK-8150669: C1 intrinsic for Class.isPrimitive
+  - JDK-8155742: [Windows] robot.keyPress(KeyEvent.VK_ALT_GRAPH) throws java.lang.IllegalArgumentException in windows
+  - JDK-8173339: AArch64: Fix minimum stack size computations
+  - JDK-8173361: various crashes in JvmtiExport::post_compiled_method_load
+  - JDK-8175797: (ref) Reference::enqueue method should clear the reference object before enqueuing
+  - JDK-8178832: (ref) jdk.lang.ref.disableClearBeforeEnqueue property is ignored
+  - JDK-8183107: PKCS11 regression regarding checkKeySize
+  - JDK-8193780: (ref) Remove the undocumented "jdk.lang.ref.disableClearBeforeEnqueue" system property
+  - JDK-8194873: right ALT key hotkeys no longer work in Swing components
+  - JDK-8201793: (ref) Reference object should not support cloning
+  - JDK-8214427: probable bug in logic of ConcurrentHashMap.addCount()
+  - JDK-8232950: SUNPKCS11 Provider incorrectly check key length for PSS Signatures.
+  - JDK-8233019: java.lang.Class.isPrimitive() (C1) returns wrong result if Klass* is aligned to 32bit
+  - JDK-8235218: Minimal VM is broken after JDK-8173361
+  - JDK-8235385: Crash on aarch64 JDK due to long offset
+  - JDK-8245263: Enable TLSv1.3 by default on JDK 8u for Client roles
+  - JDK-8254178: Remove .hgignore
+  - JDK-8254318: Remove .hgtags
+  - JDK-8256722: handle VC++:1927 VS2019 in  abstract_vm_version
+  - JDK-8260589: Crash in JfrTraceIdLoadBarrier::load(_jclass*)
+  - JDK-8280963: Incorrect PrintFlags formatting on Windows
+  - JDK-8282538: PKCS11 tests fail on CentOS Stream 9
+  - JDK-8283849: AsyncGetCallTrace may crash JVM on guarantee
+  - JDK-8285400: Add '@apiNote' to the APIs defined in Java SE 8 MR 3
+  - JDK-8285497: Add system property for Java SE specification maintenance version
+  - JDK-8287132: Retire Runtime.runFinalizersOnExit so that it always throws UOE
+  - JDK-8287508: The tests added to jdk-8 by 8235385 are to be ported to jdk-11
+  - JDK-8287521: Bump update version of OpenJDK: 8u352
+  - JDK-8288763: Pack200 extraction failure with invalid size
+  - JDK-8288865: [aarch64] LDR instructions must use legitimized addresses
+  - JDK-8290000: Bump macOS GitHub actions to macOS 11
+  - JDK-8292579: (tz) Update Timezone Data to 2022c
+  - JDK-8292688: Support Security properties in security.testlibrary.Proc
+
+Notes on individual issues:
+===========================
+
+core-libs/java.lang:
+
+JDK-8201793: (ref) Reference object should not support cloning
+==============================================================
+`java.lang.ref.Reference::clone` method always throws
+`CloneNotSupportedException`. `Reference` objects cannot be
+meaningfully cloned. To create a new Reference object, call the
+constructor to create a `Reference` object with the same referent and
+reference queue instead.
+
+JDK-8175797: (ref) Reference::enqueue method should clear the reference object before enqueuing
+===============================================================================================
+`java.lang.ref.Reference.enqueue` method clears the reference object
+before it is added to the registered queue. When the `enqueue` method
+is called, the reference object is cleared and `get()` method will
+return null in OpenJDK 8u352.
+
+Typically when a reference object is enqueued, it is expected that the
+reference object is cleared explicitly via the `clear` method to avoid
+memory leak because its referent is no longer referenced. In other
+words the `get` method is expected not to be called in common cases
+once the `enqueue`method is called. In the case when the `get` method
+from an enqueued reference object and existing code attempts to access
+members of the referent, `NullPointerException` may be thrown. Such
+code will need to be updated.
+
+JDK-8071507: (ref) Clear phantom reference as soft and weak references do
+=========================================================================
+This enhancement changes phantom references to be automatically
+cleared by the garbage collector as soft and weak references.
+
+An object becomes phantom reachable after it has been finalized. This
+change may cause the phantom reachable objects to be GC'ed earlier -
+previously the referent is kept alive until PhantomReference objects
+are GC'ed or cleared by the application. This potential behavioral
+change might only impact existing code that would depend on
+PhantomReference being enqueued rather than when the referent be freed
+from the heap.
+
+security-libs/javax.net.ssl:
+
+JDK-8282859: Enable TLSv1.3 by Default on JDK 8 for Client Roles
+================================================================
+The TLSv1.3 implementation is now enabled by default for client roles
+in 8u352. It has been enabled by default for server roles since 8u272.
+
+Note that TLS 1.3 is not directly compatible with previous
+versions. Enabling it on the client may introduce compatibility issues
+on either the server or the client side. Here are some more details on
+potential compatibility issues that you should be aware of:
+
+* TLS 1.3 uses a half-close policy, while TLS 1.2 and prior versions
+  use a duplex-close policy. For applications that depend on the
+  duplex-close policy, there may be compatibility issues when
+  upgrading to TLS 1.3.
+
+* The signature_algorithms_cert extension requires that pre-defined
+  signature algorithms are used for certificate authentication. In
+  practice, however, an application may use non-supported signature
+  algorithms.
+
+* The DSA signature algorithm is not supported in TLS 1.3. If a server
+  is configured to only use DSA certificates, it cannot upgrade to TLS
+  1.3.
+
+* The supported cipher suites for TLS 1.3 are not the same as TLS 1.2
+  and prior versions. If an application hard-codes cipher suites which
+  are no longer supported, it may not be able to use TLS 1.3 without
+  modifying the application code.
+
+* The TLS 1.3 session resumption and key update behaviors are
+  different from TLS 1.2 and prior versions. The compatibility should
+  be minimal, but it could be a risk if an application depends on the
+  handshake details of the TLS protocols.
+
+The TLS 1.3 protocol can be disabled by using the jdk.tls.client.protocols
+system property:
+
+java -Djdk.tls.client.protocols="TLSv1.2" ...
+
+Alternatively, an application can explicitly set the enabled protocols
+with the javax.net.ssl APIs e.g.
+
+sslSocket.setEnabledProtocols(new String[] {"TLSv1.2"});
+
+or:
+
+SSLParameters params = sslSocket.getSSLParameters();
+params.setProtocols(new String[] {"TLSv1.2"});
+slsSocket.setSSLParameters(params);
+
 New in release OpenJDK 8u345 (2022-08-01):
 ===========================================
 Live versions of these release notes can be found at:

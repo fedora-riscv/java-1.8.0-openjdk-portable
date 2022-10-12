@@ -317,7 +317,7 @@
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      3.15.0
 # Define current Git revision for the FIPS support patches
-%global fipsver 8e8bbf0ff74
+%global fipsver 6d1aade0648
 
 # Standard JPackage naming and versioning defines
 %global origin          openjdk
@@ -347,7 +347,7 @@
 # note, following three variables are sedded from update_sources if used correctly. Hardcode them rather there.
 %global shenandoah_project      openjdk
 %global shenandoah_repo         shenandoah-jdk8u
-%global openjdk_revision        jdk8u345-b01
+%global openjdk_revision        jdk8u352-b07
 %global shenandoah_revision     shenandoah-%{openjdk_revision}
 # Define old aarch64/jdk8u tree variables for compatibility
 %global project         %{shenandoah_project}
@@ -363,12 +363,12 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      1
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
 # - N%%{?extraver}{?dist} for GA releases
-%global is_ga           1
+%global is_ga           0
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
@@ -2878,6 +2878,12 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Wed Oct 12 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.352.b07-0.1.ea
+- Update to shenandoah-jdk8u352-b07 (EA)
+- Update release notes for shenandoah-8u352-b07.
+- Switch to EA mode for 8u352 pre-release builds.
+- Rebase FIPS patch against 8u352-b07
+
 * Tue Aug 30 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.345.b01-2
 - Switch to static builds, reducing system dependencies and making build more portable
 

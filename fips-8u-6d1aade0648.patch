@@ -11,7 +11,7 @@ index 151e5a109f8..a8761b500e0 100644
  LIB_SETUP_ON_WINDOWS
  
 diff --git a/common/autoconf/generated-configure.sh b/common/autoconf/generated-configure.sh
-index e77ce854dc5..ec6e9b27ca5 100644
+index 71fabf4dbb3..17f4f50673d 100644
 --- a/common/autoconf/generated-configure.sh
 +++ b/common/autoconf/generated-configure.sh
 @@ -651,6 +651,9 @@ LLVM_CONFIG
@@ -124,7 +124,7 @@ index e77ce854dc5..ec6e9b27ca5 100644
  #
  # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
  # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
-@@ -49290,6 +49351,157 @@ fi
+@@ -49304,6 +49365,157 @@ fi
    LIBS="$save_LIBS"
  
  
@@ -1532,7 +1532,7 @@ index ffee2c1603b..98119479823 100644
                          "FIPS mode: KeyStore must be " +
                          "from provider " + SunJSSE.cryptoProvider.getName());
 diff --git a/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java b/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
-index cd0e9e98df9..fba760187c0 100644
+index 820e10164fc..6fe2c29389f 100644
 --- a/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
 +++ b/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
 @@ -31,6 +31,7 @@ import java.security.*;
@@ -1627,8 +1627,8 @@ index cd0e9e98df9..fba760187c0 100644
 +                    };
 +                }
                  return new ProtocolVersion[]{
+                         ProtocolVersion.TLS13,
                          ProtocolVersion.TLS12,
-                         ProtocolVersion.TLS11,
 diff --git a/jdk/src/share/classes/sun/security/ssl/SunJSSE.java b/jdk/src/share/classes/sun/security/ssl/SunJSSE.java
 index 2845dc37938..52337a7b6cf 100644
 --- a/jdk/src/share/classes/sun/security/ssl/SunJSSE.java
@@ -1659,7 +1659,7 @@ index 2845dc37938..52337a7b6cf 100644
              "sun.security.ssl.SSLContextImpl$TLSContext");
          if (isfips == false) {
 diff --git a/jdk/src/share/lib/security/java.security-aix b/jdk/src/share/lib/security/java.security-aix
-index d3d64b3facd..bfe0c593adb 100644
+index 7a93d4e6b59..681a24b905d 100644
 --- a/jdk/src/share/lib/security/java.security-aix
 +++ b/jdk/src/share/lib/security/java.security-aix
 @@ -287,6 +287,13 @@ package.definition=sun.,\
@@ -1677,7 +1677,7 @@ index d3d64b3facd..bfe0c593adb 100644
  # Determines the default key and trust manager factory algorithms for
  # the javax.net.ssl package.
 diff --git a/jdk/src/share/lib/security/java.security-linux b/jdk/src/share/lib/security/java.security-linux
-index db610d4bfbb..9d1c8fe8a8e 100644
+index 145a84f94cf..789c19a8cba 100644
 --- a/jdk/src/share/lib/security/java.security-linux
 +++ b/jdk/src/share/lib/security/java.security-linux
 @@ -75,6 +75,14 @@ security.provider.7=com.sun.security.sasl.Provider
@@ -1722,7 +1722,7 @@ index db610d4bfbb..9d1c8fe8a8e 100644
  # Determines the default key and trust manager factory algorithms for
  # the javax.net.ssl package.
 diff --git a/jdk/src/share/lib/security/java.security-macosx b/jdk/src/share/lib/security/java.security-macosx
-index a919ba3d5cd..19047c61097 100644
+index 35fa140d7a5..d4da666af3b 100644
 --- a/jdk/src/share/lib/security/java.security-macosx
 +++ b/jdk/src/share/lib/security/java.security-macosx
 @@ -290,6 +290,13 @@ package.definition=sun.,\
@@ -1740,7 +1740,7 @@ index a919ba3d5cd..19047c61097 100644
  # Determines the default key and trust manager factory algorithms for
  # the javax.net.ssl package.
 diff --git a/jdk/src/share/lib/security/java.security-solaris b/jdk/src/share/lib/security/java.security-solaris
-index 86265ba5fb6..7eda556ae13 100644
+index f79ba37ddb9..300132384a1 100644
 --- a/jdk/src/share/lib/security/java.security-solaris
 +++ b/jdk/src/share/lib/security/java.security-solaris
 @@ -288,6 +288,13 @@ package.definition=sun.,\
@@ -1758,7 +1758,7 @@ index 86265ba5fb6..7eda556ae13 100644
  # Determines the default key and trust manager factory algorithms for
  # the javax.net.ssl package.
 diff --git a/jdk/src/share/lib/security/java.security-windows b/jdk/src/share/lib/security/java.security-windows
-index 9b4bda23cbe..dfa1a669aa9 100644
+index d70503ce95f..64db5a5cd1e 100644
 --- a/jdk/src/share/lib/security/java.security-windows
 +++ b/jdk/src/share/lib/security/java.security-windows
 @@ -290,6 +290,13 @@ package.definition=sun.,\
