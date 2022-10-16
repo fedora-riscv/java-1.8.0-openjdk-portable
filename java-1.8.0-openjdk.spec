@@ -363,7 +363,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1289,9 +1289,9 @@ Provides: jre%{?1} = %{epoch}:%{version}-%{release}
 Requires: ca-certificates
 # Require javapackages-filesystem for ownership of /usr/lib/jvm/ and macros
 Requires: javapackages-filesystem
-# Require zoneinfo data provided by tzdata-java subpackage.
-# 2022a required as of JDK-8283350 in 8u342
-Requires: tzdata-java >= 2022a
+# 2022d required as of JDK-8294357
+# Should be bumped to 2022e once available (JDK-8295173)
+Requires: tzdata-java >= 2022d
 # for support of kernel stream control
 # libsctp.so.1 is being `dlopen`ed on demand
 Requires: lksctp-tools%{?_isa}
@@ -1470,12 +1470,14 @@ Source16: CheckVendor.java
 # nss fips configuration file
 Source17: nss.fips.cfg.in
 
+# Ensure translations are available for new timezones
+Source18: TestTranslations.java
+
 Source20: repackReproduciblePolycies.sh
 
 # New versions of config files with aarch64 support. This is not upstream yet.
 Source100: config.guess
 Source101: config.sub
-
 
 ############################################
 #
@@ -1593,13 +1595,17 @@ Patch582: jdk8282231-x86_32-missing_call_effects.patch
 
 #############################################
 #
-# Patches appearing in 8u282
+# Patches appearing in 8u362
 #
 # This section includes patches which are present
 # in the listed OpenJDK 8u release and should be
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
+# JDK-8294357: (tz) Update Timezone Data to 2022d
+Patch2002: jdk8294357-tzdata2022d.patch
+# JDK-8295173: (tz) Update Timezone Data to 2022e
+Patch2003: jdk8295173-tzdata2022e.patch
 
 #############################################
 #
@@ -1669,8 +1675,9 @@ BuildRequires: java-%{buildjdkver}-openjdk-devel >= 1.7.0.151-2.6.11.3
 %ifarch %{zero_arches}
 BuildRequires: libffi-devel
 %endif
-# 2022a required as of JDK-8283350 in 8u342
-BuildRequires: tzdata-java >= 2022a
+# 2022d required as of JDK-8294357
+# Should be bumped to 2022e once available (JDK-8295173)
+BuildRequires: tzdata-java >= 2022d
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
@@ -2050,6 +2057,9 @@ pushd %{top_level_dir_name}
 %patch1001 -p1
 # nss.cfg PKCS11 support; must come last as it also alters java.security
 %patch1000 -p1
+# tzdata updates targetted for 8u362
+%patch2002 -p1
+%patch2003 -p1
 popd
 
 # RPM-only fixes
@@ -2369,10 +2379,13 @@ nm $JAVA_HOME/bin/%{alt_java_name} | grep set_speculation
 if ! nm $JAVA_HOME/bin/%{alt_java_name} | grep set_speculation ; then true ; else false; fi
 %endif
 
-
 # Check correct vendor values have been set
 $JAVA_HOME/bin/javac -d . %{SOURCE16}
 $JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" %{oj_vendor_url} %{oj_vendor_bug_url}
+
+# Check translations are available for new timezones
+$JAVA_HOME/bin/javac -d . %{SOURCE18}
+$JAVA_HOME/bin/java $(echo $(basename %{SOURCE18})|sed "s|\.java||") JRE
 
 # Check debug symbols are present and can identify code
 find "$JAVA_HOME" -iname '*.so' -print0 | while read -d $'\0' lib
@@ -2878,6 +2891,10 @@ cjc.mainProgram(args)
 %endif
 
 %changelog
+* Sun Oct 16 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.352.b07-0.2.ea
+- Update in-tree tzdata to 2022e with JDK-8294357 & JDK-8295173
+- Add test to ensure timezones can be translated
+
 * Wed Oct 12 2022 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.352.b07-0.1.ea
 - Update to shenandoah-jdk8u352-b07 (EA)
 - Update release notes for shenandoah-8u352-b07.
