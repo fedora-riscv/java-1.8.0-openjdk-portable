@@ -9,6 +9,16 @@ Live versions of these release notes can be found at:
   * https://bit.ly/openjdk8u352
   * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u352.txt
 
+* Security fixes
+  - JDK-8282252: Improve BigInteger/Decimal validation
+  - JDK-8285662: Better permission resolution
+  - JDK-8286511: Improve macro allocation
+  - JDK-8286519: Better memory handling
+  - JDK-8286526, CVE-2022-21619: Improve NTLM support
+  - JDK-8286533, CVE-2022-21626: Key X509 usages
+  - JDK-8286910, CVE-2022-21624: Improve JNDI lookups
+  - JDK-8286918, CVE-2022-21628: Better HttpServer service
+  - JDK-8288508: Enhance ECDSA usage
 * Other changes
   - JDK-7131823: bug in GIFImageReader
   - JDK-7186258: InetAddress$Cache should replace currentTimeMillis with nanoTime for more precise and accurate
@@ -21,6 +31,7 @@ Live versions of these release notes can be found at:
   - JDK-8136354: [TEST_BUG] Test  java/awt/image/RescaleOp/RescaleAlphaTest.java with Bad action for script
   - JDK-8139668: Generate README-build.html from markdown
   - JDK-8143847: Remove REF_CLEANER reference category
+  - JDK-8147862: Null check too late in sun.net.httpserver.ServerImpl
   - JDK-8150669: C1 intrinsic for Class.isPrimitive
   - JDK-8155742: [Windows] robot.keyPress(KeyEvent.VK_ALT_GRAPH) throws java.lang.IllegalArgumentException in windows
   - JDK-8173339: AArch64: Fix minimum stack size computations
@@ -96,6 +107,19 @@ are GC'ed or cleared by the application. This potential behavioral
 change might only impact existing code that would depend on
 PhantomReference being enqueued rather than when the referent be freed
 from the heap.
+
+core-libs/java.net:
+
+JDK-8286918: Better HttpServer service
+======================================
+The HttpServer can be optionally configured with a maximum connection
+limit by setting the jdk.httpserver.maxConnections system property. A
+value of 0 or a negative integer is ignored and considered to
+represent no connection limit. In the case of a positive integer
+value, any newly accepted connections will be first checked against
+the current count of established connections and, if the configured
+limit has been reached, then the newly accepted connection will be
+closed immediately.
 
 security-libs/javax.net.ssl:
 
