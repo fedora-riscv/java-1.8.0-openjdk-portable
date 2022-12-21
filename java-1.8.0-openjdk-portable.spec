@@ -29,6 +29,7 @@
 # Build with system libraries
 %bcond_without system_libs
 
+%global unpacked_licenses %{_datarootdir}/licenses
 %define  debug_package %{nil}
 
 # Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
@@ -1155,6 +1156,7 @@ fi
 # build cycles
 done
 
+mkdir -p $RPM_BUILD_ROOT%{unpacked_licenses}
 %check
 
 # We test debug first as it will give better diagnostics on a crash
@@ -1317,8 +1319,6 @@ for suffix in %{build_loop} ; do
     nameSuffix=`echo "$suffix"| sed s/-/./`
   fi
   mkdir -p $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
-  cp -af openjdk/{ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{_jvmdir}/%{jredir}
-  mkdir -p $RPM_BUILD_ROOT%{_jvmdir}
   mv ../../%{jreportablearchive -- "$nameSuffix"} $RPM_BUILD_ROOT%{_jvmdir}/
   mv ../../%{jreportablearchive -- "$nameSuffix"}.sha256sum $RPM_BUILD_ROOT%{_jvmdir}/
   mv ../../%{jdkportablearchive -- "$nameSuffix"} $RPM_BUILD_ROOT%{_jvmdir}/
@@ -1330,7 +1330,9 @@ for suffix in %{build_loop} ; do
       mv ../../%{jdkportablearchive -- "$dnameSuffix"} $RPM_BUILD_ROOT%{_jvmdir}/
       mv ../../%{jdkportablearchive -- "$dnameSuffix"}.sha256sum $RPM_BUILD_ROOT%{_jvmdir}/
   fi
-# To show sha in the build log
+  mkdir -p $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablearchive -- "%{normal_suffix}"}
+  cp -af openjdk/{ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablearchive -- "%{normal_suffix}"}
+# To show sha in the build log-
 for file in `ls $RPM_BUILD_ROOT%{_jvmdir}/*.sha256sum` ; do ls -l $file ; cat $file ; done
 done
 
@@ -1343,9 +1345,7 @@ done
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}
 %{_jvmdir}/%{jreportablearchive -- %%{nil}}.sha256sum
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 %else
 %files
 # placeholder
@@ -1357,44 +1357,34 @@ done
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}
 %{_jvmdir}/%{jdkportablearchive -- %%{nil}}.sha256sum
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 %endif
 
 %if %{include_debug_build}
 %files slowdebug
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 
 %files devel-slowdebug
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 %endif
 %if %{include_fastdebug_build}
 %files fastdebug
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 
 %files devel-fastdebug
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}.sha256sum
-%license %{_jvmdir}/%{jredir -- %{?1}}/ASSEMBLY_EXCEPTION
-%license %{_jvmdir}/%{jredir -- %{?1}}/LICENSE
-%license %{_jvmdir}/%{jredir -- %{?1}}/THIRD_PARTY_README
+%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
 %endif
 
 %changelog
-* Fri Nov 11 2022 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.352.b08-2
+* Fri Nov 11 2022 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.352.b08-1
  - new package
  - Related: rhbz#2141984
 
