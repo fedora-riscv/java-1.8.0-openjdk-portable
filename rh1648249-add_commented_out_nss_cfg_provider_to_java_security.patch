@@ -1,0 +1,12 @@
+diff --git a/jdk/src/share/lib/security/java.security-linux b/jdk/src/share/lib/security/java.security-linux
+index 9d1c8fe8a8e..a80a3c12abb 100644
+--- a/jdk/src/share/lib/security/java.security-linux
++++ b/jdk/src/share/lib/security/java.security-linux
+@@ -74,6 +74,7 @@ security.provider.6=sun.security.jgss.SunProvider
+ security.provider.7=com.sun.security.sasl.Provider
+ security.provider.8=org.jcp.xml.dsig.internal.dom.XMLDSigRI
+ security.provider.9=sun.security.smartcardio.SunPCSC
++#security.provider.10=sun.security.pkcs11.SunPKCS11 ${java.home}/lib/security/nss.cfg
+ 
+ #
+ # Security providers used when FIPS mode support is active

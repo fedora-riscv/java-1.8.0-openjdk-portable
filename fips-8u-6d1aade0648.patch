@@ -1,0 +1,2007 @@
+diff --git a/common/autoconf/configure.ac b/common/autoconf/configure.ac
+index 151e5a109f8..a8761b500e0 100644
+--- a/common/autoconf/configure.ac
++++ b/common/autoconf/configure.ac
+@@ -212,6 +212,7 @@ LIB_SETUP_FREETYPE
+ LIB_SETUP_ALSA
+ LIB_SETUP_FONTCONFIG
+ LIB_SETUP_MISC_LIBS
++LIB_SETUP_SYSCONF_LIBS
+ LIB_SETUP_STATIC_LINK_LIBSTDCPP
+ LIB_SETUP_ON_WINDOWS
+ 
+diff --git a/common/autoconf/generated-configure.sh b/common/autoconf/generated-configure.sh
+index 71fabf4dbb3..17f4f50673d 100644
+--- a/common/autoconf/generated-configure.sh
++++ b/common/autoconf/generated-configure.sh
+@@ -651,6 +651,9 @@ LLVM_CONFIG
+ LIBFFI_LIBS
+ LIBFFI_CFLAGS
+ STATIC_CXX_SETTING
++USE_SYSCONF_NSS
++NSS_LIBS
++NSS_CFLAGS
+ LIBDL
+ LIBM
+ LIBZIP_CAN_USE_MMAP
+@@ -1111,6 +1114,7 @@ with_fontconfig
+ with_fontconfig_include
+ with_giflib
+ with_zlib
++enable_sysconf_nss
+ with_stdc__lib
+ with_msvcr_dll
+ with_msvcp_dll
+@@ -1218,6 +1222,8 @@ FREETYPE_CFLAGS
+ FREETYPE_LIBS
+ ALSA_CFLAGS
+ ALSA_LIBS
++NSS_CFLAGS
++NSS_LIBS
+ LIBFFI_CFLAGS
+ LIBFFI_LIBS
+ CCACHE'
+@@ -1871,6 +1877,8 @@ Optional Features:
+                           disable bundling of the freetype library with the
+                           build result [enabled on Windows or when using
+                           --with-freetype, disabled otherwise]
++  --enable-sysconf-nss    build the System Configurator (libsysconf) using the
++                          system NSS library if available [disabled]
+   --enable-sjavac         use sjavac to do fast incremental compiles
+                           [disabled]
+   --disable-precompiled-headers
+@@ -2115,6 +2123,8 @@ Some influential environment variables:
+               linker flags for FREETYPE, overriding pkg-config
+   ALSA_CFLAGS C compiler flags for ALSA, overriding pkg-config
+   ALSA_LIBS   linker flags for ALSA, overriding pkg-config
++  NSS_CFLAGS  C compiler flags for NSS, overriding pkg-config
++  NSS_LIBS    linker flags for NSS, overriding pkg-config
+   LIBFFI_CFLAGS
+               C compiler flags for LIBFFI, overriding pkg-config
+   LIBFFI_LIBS linker flags for LIBFFI, overriding pkg-config
+@@ -2879,6 +2889,52 @@ $as_echo "$ac_res" >&6; }
+   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+ 
+ } # ac_fn_c_check_header_compile
++
++# ac_fn_c_try_link LINENO
++# -----------------------
++# Try to link conftest.$ac_ext, and return whether this succeeded.
++ac_fn_c_try_link ()
++{
++  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
++  rm -f conftest.$ac_objext conftest$ac_exeext
++  if { { ac_try="$ac_link"
++case "(($ac_try" in
++  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
++  *) ac_try_echo=$ac_try;;
++esac
++eval ac_try_echo="\"\$as_me:${as_lineno-$LINENO}: $ac_try_echo\""
++$as_echo "$ac_try_echo"; } >&5
++  (eval "$ac_link") 2>conftest.err
++  ac_status=$?
++  if test -s conftest.err; then
++    grep -v '^ *+' conftest.err >conftest.er1
++    cat conftest.er1 >&5
++    mv -f conftest.er1 conftest.err
++  fi
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; } && {
++	 test -z "$ac_c_werror_flag" ||
++	 test ! -s conftest.err
++       } && test -s conftest$ac_exeext && {
++	 test "$cross_compiling" = yes ||
++	 test -x conftest$ac_exeext
++       }; then :
++  ac_retval=0
++else
++  $as_echo "$as_me: failed program was:" >&5
++sed 's/^/| /' conftest.$ac_ext >&5
++
++	ac_retval=1
++fi
++  # Delete the IPA/IPO (Inter Procedural Analysis/Optimization) information
++  # created by the PGI compiler (conftest_ipa8_conftest.oo), as it would
++  # interfere with the next link command; also delete a directory that is
++  # left behind by Apple's compiler.  We do this before executing the actions.
++  rm -rf conftest.dSYM conftest_ipa8_conftest.oo
++  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
++  as_fn_set_status $ac_retval
++
++} # ac_fn_c_try_link
+ cat >config.log <<_ACEOF
+ This file contains any messages produced by compilers while
+ running configure, to aid debugging if configure makes a mistake.
+@@ -4049,6 +4105,11 @@ fi
+ 
+ 
+ 
++################################################################################
++# Setup system configuration libraries
++################################################################################
++
++
+ #
+ # Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+@@ -49304,6 +49365,157 @@ fi
+   LIBS="$save_LIBS"
+ 
+ 
++  ###############################################################################
++  #
++  # Check for the NSS library
++  #
++
++  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use the system NSS library with the System Configurator (libsysconf)" >&5
++$as_echo_n "checking whether to use the system NSS library with the System Configurator (libsysconf)... " >&6; }
++
++  # default is not available
++  DEFAULT_SYSCONF_NSS=no
++
++  # Check whether --enable-sysconf-nss was given.
++if test "${enable_sysconf_nss+set}" = set; then :
++  enableval=$enable_sysconf_nss;
++    case "${enableval}" in
++      yes)
++        sysconf_nss=yes
++        ;;
++      *)
++        sysconf_nss=no
++        ;;
++    esac
++
++else
++
++    sysconf_nss=${DEFAULT_SYSCONF_NSS}
++
++fi
++
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sysconf_nss" >&5
++$as_echo "$sysconf_nss" >&6; }
++
++  USE_SYSCONF_NSS=false
++  if test "x${sysconf_nss}" = "xyes"; then
++
++pkg_failed=no
++{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for NSS" >&5
++$as_echo_n "checking for NSS... " >&6; }
++
++if test -n "$NSS_CFLAGS"; then
++    pkg_cv_NSS_CFLAGS="$NSS_CFLAGS"
++ elif test -n "$PKG_CONFIG"; then
++    if test -n "$PKG_CONFIG" && \
++    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"nss >= 3.53\""; } >&5
++  ($PKG_CONFIG --exists --print-errors "nss >= 3.53") 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; then
++  pkg_cv_NSS_CFLAGS=`$PKG_CONFIG --cflags "nss >= 3.53" 2>/dev/null`
++else
++  pkg_failed=yes
++fi
++ else
++    pkg_failed=untried
++fi
++if test -n "$NSS_LIBS"; then
++    pkg_cv_NSS_LIBS="$NSS_LIBS"
++ elif test -n "$PKG_CONFIG"; then
++    if test -n "$PKG_CONFIG" && \
++    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"nss >= 3.53\""; } >&5
++  ($PKG_CONFIG --exists --print-errors "nss >= 3.53") 2>&5
++  ac_status=$?
++  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
++  test $ac_status = 0; }; then
++  pkg_cv_NSS_LIBS=`$PKG_CONFIG --libs "nss >= 3.53" 2>/dev/null`
++else
++  pkg_failed=yes
++fi
++ else
++    pkg_failed=untried
++fi
++
++
++
++if test $pkg_failed = yes; then
++
++if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
++        _pkg_short_errors_supported=yes
++else
++        _pkg_short_errors_supported=no
++fi
++        if test $_pkg_short_errors_supported = yes; then
++	        NSS_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "nss >= 3.53" 2>&1`
++        else
++	        NSS_PKG_ERRORS=`$PKG_CONFIG --print-errors "nss >= 3.53" 2>&1`
++        fi
++	# Put the nasty error message in config.log where it belongs
++	echo "$NSS_PKG_ERRORS" >&5
++
++	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++                NSS_FOUND=no
++elif test $pkg_failed = untried; then
++	NSS_FOUND=no
++else
++	NSS_CFLAGS=$pkg_cv_NSS_CFLAGS
++	NSS_LIBS=$pkg_cv_NSS_LIBS
++        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
++$as_echo "yes" >&6; }
++	NSS_FOUND=yes
++fi
++      if test "x${NSS_FOUND}" = "xyes"; then
++         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for system FIPS support in NSS" >&5
++$as_echo_n "checking for system FIPS support in NSS... " >&6; }
++         saved_libs="${LIBS}"
++         saved_cflags="${CFLAGS}"
++         CFLAGS="${CFLAGS} ${NSS_CFLAGS}"
++         LIBS="${LIBS} ${NSS_LIBS}"
++         ac_ext=c
++ac_cpp='$CPP $CPPFLAGS'
++ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
++ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
++ac_compiler_gnu=$ac_cv_c_compiler_gnu
++
++         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
++/* end confdefs.h.  */
++#include <nss3/pk11pub.h>
++int
++main ()
++{
++SECMOD_GetSystemFIPSEnabled()
++  ;
++  return 0;
++}
++_ACEOF
++if ac_fn_c_try_link "$LINENO"; then :
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
++$as_echo "yes" >&6; }
++else
++  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
++$as_echo "no" >&6; }
++                        as_fn_error $? "System NSS FIPS detection unavailable" "$LINENO" 5
++fi
++rm -f core conftest.err conftest.$ac_objext \
++    conftest$ac_exeext conftest.$ac_ext
++         ac_ext=cpp
++ac_cpp='$CXXCPP $CPPFLAGS'
++ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
++ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
++ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
++
++         CFLAGS="${saved_cflags}"
++         LIBS="${saved_libs}"
++         USE_SYSCONF_NSS=true
++      else
++                           as_fn_error $? "--enable-sysconf-nss specified, but NSS 3.53 or above not found." "$LINENO" 5
++      fi
++  fi
++
++
++
+   ###############################################################################
+   #
+   # statically link libstdc++ before C++ ABI is stablized on Linux unless
+diff --git a/common/autoconf/libraries.m4 b/common/autoconf/libraries.m4
+index 6efae578ea9..0080846255b 100644
+--- a/common/autoconf/libraries.m4
++++ b/common/autoconf/libraries.m4
+@@ -1067,3 +1067,63 @@ AC_DEFUN_ONCE([LIB_SETUP_ON_WINDOWS],
+     BASIC_DEPRECATED_ARG_WITH([dxsdk-include])
+   fi
+ ])
++
++################################################################################
++# Setup system configuration libraries
++################################################################################
++AC_DEFUN_ONCE([LIB_SETUP_SYSCONF_LIBS],
++[
++  ###############################################################################
++  #
++  # Check for the NSS library
++  #
++
++  AC_MSG_CHECKING([whether to use the system NSS library with the System Configurator (libsysconf)])
++
++  # default is not available
++  DEFAULT_SYSCONF_NSS=no
++
++  AC_ARG_ENABLE([sysconf-nss], [AS_HELP_STRING([--enable-sysconf-nss],
++     [build the System Configurator (libsysconf) using the system NSS library if available @<:@disabled@:>@])],
++  [
++    case "${enableval}" in
++      yes)
++        sysconf_nss=yes
++        ;;
++      *)
++        sysconf_nss=no
++        ;;
++    esac
++  ],
++  [
++    sysconf_nss=${DEFAULT_SYSCONF_NSS}
++  ])
++  AC_MSG_RESULT([$sysconf_nss])
++
++  USE_SYSCONF_NSS=false
++  if test "x${sysconf_nss}" = "xyes"; then
++      PKG_CHECK_MODULES(NSS, nss >= 3.53, [NSS_FOUND=yes], [NSS_FOUND=no])
++      if test "x${NSS_FOUND}" = "xyes"; then
++         AC_MSG_CHECKING([for system FIPS support in NSS])
++         saved_libs="${LIBS}"
++         saved_cflags="${CFLAGS}"
++         CFLAGS="${CFLAGS} ${NSS_CFLAGS}"
++         LIBS="${LIBS} ${NSS_LIBS}"
++         AC_LANG_PUSH([C])
++         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <nss3/pk11pub.h>]],
++                                         [[SECMOD_GetSystemFIPSEnabled()]])],
++                        [AC_MSG_RESULT([yes])],
++                        [AC_MSG_RESULT([no])
++                        AC_MSG_ERROR([System NSS FIPS detection unavailable])])
++         AC_LANG_POP([C])
++         CFLAGS="${saved_cflags}"
++         LIBS="${saved_libs}"
++         USE_SYSCONF_NSS=true
++      else
++         dnl NSS 3.53 is the one that introduces the SECMOD_GetSystemFIPSEnabled API
++         dnl in nss3/pk11pub.h.
++         AC_MSG_ERROR([--enable-sysconf-nss specified, but NSS 3.53 or above not found.])
++      fi
++  fi
++  AC_SUBST(USE_SYSCONF_NSS)
++])
+diff --git a/common/autoconf/spec.gmk.in b/common/autoconf/spec.gmk.in
+index 506cf617087..7241593b1a4 100644
+--- a/common/autoconf/spec.gmk.in
++++ b/common/autoconf/spec.gmk.in
+@@ -312,6 +312,10 @@ CUPS_CFLAGS:=@CUPS_CFLAGS@
+ ALSA_LIBS:=@ALSA_LIBS@
+ ALSA_CFLAGS:=@ALSA_CFLAGS@
+ 
++USE_SYSCONF_NSS:=@USE_SYSCONF_NSS@
++NSS_LIBS:=@NSS_LIBS@
++NSS_CFLAGS:=@NSS_CFLAGS@
++
+ PACKAGE_PATH=@PACKAGE_PATH@
+ 
+ # Source file for cacerts
+diff --git a/common/bin/compare_exceptions.sh.incl b/common/bin/compare_exceptions.sh.incl
+index 3b79a526f56..d2a0e39b206 100644
+--- a/common/bin/compare_exceptions.sh.incl
++++ b/common/bin/compare_exceptions.sh.incl
+@@ -280,6 +280,7 @@ ACCEPTED_SMALL_SIZE_DIFF="
+ ./jre/lib/i386/libsplashscreen.so
+ ./jre/lib/i386/libsunec.so
+ ./jre/lib/i386/libsunwjdga.so
++./jre/lib/i386/libsystemconf.so
+ ./jre/lib/i386/libt2k.so
+ ./jre/lib/i386/libunpack.so
+ ./jre/lib/i386/libverify.so
+@@ -433,6 +434,7 @@ ACCEPTED_SMALL_SIZE_DIFF="
+ ./jre/lib/amd64/libsplashscreen.so
+ ./jre/lib/amd64/libsunec.so
+ ./jre/lib/amd64/libsunwjdga.so
++//jre/lib/amd64/libsystemconf.so
+ ./jre/lib/amd64/libt2k.so
+ ./jre/lib/amd64/libunpack.so
+ ./jre/lib/amd64/libverify.so
+@@ -587,6 +589,7 @@ ACCEPTED_SMALL_SIZE_DIFF="
+ ./jre/lib/sparc/libsplashscreen.so
+ ./jre/lib/sparc/libsunec.so
+ ./jre/lib/sparc/libsunwjdga.so
++./jre/lib/sparc/libsystemconf.so
+ ./jre/lib/sparc/libt2k.so
+ ./jre/lib/sparc/libunpack.so
+ ./jre/lib/sparc/libverify.so
+@@ -741,6 +744,7 @@ ACCEPTED_SMALL_SIZE_DIFF="
+ ./jre/lib/sparcv9/libsplashscreen.so
+ ./jre/lib/sparcv9/libsunec.so
+ ./jre/lib/sparcv9/libsunwjdga.so
++./jre/lib/sparcv9/libsystemconf.so
+ ./jre/lib/sparcv9/libt2k.so
+ ./jre/lib/sparcv9/libunpack.so
+ ./jre/lib/sparcv9/libverify.so
+diff --git a/common/nb_native/nbproject/configurations.xml b/common/nb_native/nbproject/configurations.xml
+index d2beed0b93a..3b6aef98d9a 100644
+--- a/common/nb_native/nbproject/configurations.xml
++++ b/common/nb_native/nbproject/configurations.xml
+@@ -53,6 +53,9 @@
+                   <in>jvmtiEnterTrace.cpp</in>
+                 </df>
+               </df>
++              <df name="libsystemconf">
++                <in>systemconf.c</in>
++              </df>
+             </df>
+           </df>
+           <df name="jdk">
+@@ -12772,6 +12775,11 @@
+             tool="0"
+             flavor2="0">
+       </item>
++      <item path="../../jdk/src/solaris/native/java/security/systemconf.c"
++            ex="false"
++            tool="0"
++            flavor2="0">
++      </item>
+       <item path="../../jdk/src/share/native/java/util/TimeZone.c"
+             ex="false"
+             tool="0"
+diff --git a/jdk/make/lib/SecurityLibraries.gmk b/jdk/make/lib/SecurityLibraries.gmk
+index b0b85d80448..47a41d7518d 100644
+--- a/jdk/make/lib/SecurityLibraries.gmk
++++ b/jdk/make/lib/SecurityLibraries.gmk
+@@ -289,3 +289,34 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
+ 
+   endif
+ endif
++
++################################################################################
++# Create the systemconf library
++
++LIBSYSTEMCONF_CFLAGS :=
++LIBSYSTEMCONF_CXXFLAGS :=
++
++ifeq ($(USE_SYSCONF_NSS), true)
++  LIBSYSTEMCONF_CFLAGS += $(NSS_CFLAGS) -DSYSCONF_NSS
++  LIBSYSTEMCONF_CXXFLAGS += $(NSS_CFLAGS) -DSYSCONF_NSS
++endif
++
++ifeq ($(OPENJDK_BUILD_OS), linux)
++  $(eval $(call SetupNativeCompilation,BUILD_LIBSYSTEMCONF, \
++      LIBRARY := systemconf, \
++      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
++      SRC := $(JDK_TOPDIR)/src/$(OPENJDK_TARGET_OS_API_DIR)/native/java/security, \
++      LANG := C, \
++      OPTIMIZATION := LOW, \
++      CFLAGS := $(CFLAGS_JDKLIB) $(LIBSYSTEMCONF_CFLAGS), \
++      CXXFLAGS := $(CXXFLAGS_JDKLIB) $(LIBSYSTEMCONF_CXXFLAGS), \
++      MAPFILE := $(JDK_TOPDIR)/make/mapfiles/libsystemconf/mapfile-vers, \
++      LDFLAGS := $(LDFLAGS_JDKLIB) \
++          $(call SET_SHARED_LIBRARY_ORIGIN), \
++      LDFLAGS_SUFFIX := $(LIBDL) $(NSS_LIBS), \
++      OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libsystemconf, \
++      DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
++
++  BUILD_LIBRARIES += $(BUILD_LIBSYSTEMCONF)
++endif
++
+diff --git a/jdk/make/mapfiles/libsystemconf/mapfile-vers b/jdk/make/mapfiles/libsystemconf/mapfile-vers
+new file mode 100644
+index 00000000000..a65ceb3b78c
+--- /dev/null
++++ b/jdk/make/mapfiles/libsystemconf/mapfile-vers
+@@ -0,0 +1,35 @@
++#
++# Copyright (c) 2021, Red Hat, Inc.
++# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++#
++# This code is free software; you can redistribute it and/or modify it
++# under the terms of the GNU General Public License version 2 only, as
++# published by the Free Software Foundation.  Oracle designates this
++# particular file as subject to the "Classpath" exception as provided
++# by Oracle in the LICENSE file that accompanied this code.
++#
++# This code is distributed in the hope that it will be useful, but WITHOUT
++# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++# version 2 for more details (a copy is included in the LICENSE file that
++# accompanied this code).
++#
++# You should have received a copy of the GNU General Public License version
++# 2 along with this work; if not, write to the Free Software Foundation,
++# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++#
++# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++# or visit www.oracle.com if you need additional information or have any
++# questions.
++#
++
++# Define public interface.
++
++SUNWprivate_1.1 {
++	global:
++		DEF_JNI_OnLoad;
++		DEF_JNI_OnUnLoad;
++		Java_java_security_SystemConfigurator_getSystemFIPSEnabled;
++	local:
++		*;
++};
+diff --git a/jdk/src/share/classes/java/security/Security.java b/jdk/src/share/classes/java/security/Security.java
+index 0db09da7061..813b907db3e 100644
+--- a/jdk/src/share/classes/java/security/Security.java
++++ b/jdk/src/share/classes/java/security/Security.java
+@@ -30,6 +30,8 @@ import java.util.*;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.io.*;
+ import java.net.URL;
++import sun.misc.SharedSecrets;
++import sun.misc.JavaSecuritySystemConfiguratorAccess;
+ import sun.security.util.Debug;
+ import sun.security.util.PropertyExpander;
+ 
+@@ -43,11 +45,19 @@ import sun.security.jca.*;
+  * implementation-specific location, which is typically the properties file
+  * {@code lib/security/java.security} in the Java installation directory.
+  *
++ * <p>Additional default values of security properties are read from a
++ * system-specific location, if available.</p>
++ *
+  * @author Benjamin Renaud
+  */
+ 
+ public final class Security {
+ 
++    private static final String SYS_PROP_SWITCH =
++        "java.security.disableSystemPropertiesFile";
++    private static final String SEC_PROP_SWITCH =
++        "security.useSystemPropertiesFile";
++
+     /* Are we debugging? -- for developers */
+     private static final Debug sdebug =
+                         Debug.getInstance("properties");
+@@ -62,6 +72,19 @@ public final class Security {
+     }
+ 
+     static {
++        // Initialise here as used by code with system properties disabled
++        SharedSecrets.setJavaSecuritySystemConfiguratorAccess(
++            new JavaSecuritySystemConfiguratorAccess() {
++                @Override
++                public boolean isSystemFipsEnabled() {
++                    return SystemConfigurator.isSystemFipsEnabled();
++                }
++                @Override
++                public boolean isPlainKeySupportEnabled() {
++                    return SystemConfigurator.isPlainKeySupportEnabled();
++                }
++            });
++
+         // doPrivileged here because there are multiple
+         // things in initialize that might require privs.
+         // (the FileInputStream call and the File.exists call,
+@@ -78,6 +101,7 @@ public final class Security {
+         props = new Properties();
+         boolean loadedProps = false;
+         boolean overrideAll = false;
++        boolean systemSecPropsEnabled = false;
+ 
+         // first load the system properties file
+         // to determine the value of security.overridePropertiesFile
+@@ -93,6 +117,7 @@ public final class Security {
+                 if (sdebug != null) {
+                     sdebug.println("reading security properties file: " +
+                                 propFile);
++                    sdebug.println(props.toString());
+                 }
+             } catch (IOException e) {
+                 if (sdebug != null) {
+@@ -187,6 +212,61 @@ public final class Security {
+             }
+         }
+ 
++        boolean sysUseProps = Boolean.valueOf(System.getProperty(SYS_PROP_SWITCH, "false"));
++        boolean secUseProps = Boolean.valueOf(props.getProperty(SEC_PROP_SWITCH));
++        if (sdebug != null) {
++            sdebug.println(SYS_PROP_SWITCH + "=" + sysUseProps);
++            sdebug.println(SEC_PROP_SWITCH + "=" + secUseProps);
++        }
++        if (!sysUseProps && secUseProps) {
++            systemSecPropsEnabled = SystemConfigurator.configureSysProps(props);
++            if (!systemSecPropsEnabled) {
++                if (sdebug != null) {
++                    sdebug.println("WARNING: System security properties could not be loaded.");
++                }
++            }
++        } else {
++            if (sdebug != null) {
++                sdebug.println("System security property support disabled by user.");
++            }
++        }
++
++        // FIPS support depends on the contents of java.security so
++        // ensure it has loaded first
++        if (loadedProps && systemSecPropsEnabled) {
++            boolean shouldEnable;
++            String sysProp = System.getProperty("com.redhat.fips");
++            if (sysProp == null) {
++                shouldEnable = true;
++                if (sdebug != null) {
++                    sdebug.println("com.redhat.fips unset, using default value of true");
++                }
++            } else {
++                shouldEnable = Boolean.valueOf(sysProp);
++                if (sdebug != null) {
++                    sdebug.println("com.redhat.fips set, using its value " + shouldEnable);
++                }
++             }
++            if (shouldEnable) {
++                boolean fipsEnabled = SystemConfigurator.configureFIPS(props);
++                if (sdebug != null) {
++                    if (fipsEnabled) {
++                        sdebug.println("FIPS mode support configured and enabled.");
++                    } else {
++                        sdebug.println("FIPS mode support disabled.");
++                    }
++                }
++            } else {
++                if (sdebug != null ) {
++                    sdebug.println("FIPS mode support disabled by user.");
++                }
++            }
++        } else {
++            if (sdebug != null) {
++                sdebug.println("WARNING: FIPS mode support can not be enabled without " +
++                               "system security properties being enabled.");
++            }
++        }
+     }
+ 
+     /*
+diff --git a/jdk/src/share/classes/java/security/SystemConfigurator.java b/jdk/src/share/classes/java/security/SystemConfigurator.java
+new file mode 100644
+index 00000000000..a24a0445db2
+--- /dev/null
++++ b/jdk/src/share/classes/java/security/SystemConfigurator.java
+@@ -0,0 +1,248 @@
++/*
++ * Copyright (c) 2019, 2021, Red Hat, Inc.
++ *
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package java.security;
++
++import java.io.BufferedInputStream;
++import java.io.FileInputStream;
++import java.io.IOException;
++
++import java.util.Iterator;
++import java.util.Map.Entry;
++import java.util.Properties;
++
++import sun.security.util.Debug;
++
++/**
++ * Internal class to align OpenJDK with global crypto-policies.
++ * Called from java.security.Security class initialization,
++ * during startup.
++ *
++ */
++
++final class SystemConfigurator {
++
++    private static final Debug sdebug =
++            Debug.getInstance("properties");
++
++    private static final String CRYPTO_POLICIES_BASE_DIR =
++            "/etc/crypto-policies";
++
++    private static final String CRYPTO_POLICIES_JAVA_CONFIG =
++            CRYPTO_POLICIES_BASE_DIR + "/back-ends/java.config";
++
++    private static boolean systemFipsEnabled = false;
++    private static boolean plainKeySupportEnabled = false;
++
++    private static final String SYSTEMCONF_NATIVE_LIB = "systemconf";
++
++    private static native boolean getSystemFIPSEnabled()
++            throws IOException;
++
++    static {
++        AccessController.doPrivileged(new PrivilegedAction<Void>() {
++            public Void run() {
++                System.loadLibrary(SYSTEMCONF_NATIVE_LIB);
++                return null;
++            }
++        });
++    }
++
++    /*
++     * Invoked when java.security.Security class is initialized, if
++     * java.security.disableSystemPropertiesFile property is not set and
++     * security.useSystemPropertiesFile is true.
++     */
++    static boolean configureSysProps(Properties props) {
++        boolean systemSecPropsLoaded = false;
++
++        try (BufferedInputStream bis =
++                new BufferedInputStream(
++                        new FileInputStream(CRYPTO_POLICIES_JAVA_CONFIG))) {
++            props.load(bis);
++            systemSecPropsLoaded = true;
++            if (sdebug != null) {
++                sdebug.println("reading system security properties file " +
++                        CRYPTO_POLICIES_JAVA_CONFIG);
++                sdebug.println(props.toString());
++            }
++        } catch (IOException e) {
++            if (sdebug != null) {
++                sdebug.println("unable to load security properties from " +
++                        CRYPTO_POLICIES_JAVA_CONFIG);
++                e.printStackTrace();
++            }
++        }
++        return systemSecPropsLoaded;
++    }
++
++    /*
++     * Invoked at the end of java.security.Security initialisation
++     * if java.security properties have been loaded
++     */
++    static boolean configureFIPS(Properties props) {
++        boolean loadedProps = false;
++
++        try {
++            if (enableFips()) {
++                if (sdebug != null) { sdebug.println("FIPS mode detected"); }
++                // Remove all security providers
++                Iterator<Entry<Object, Object>> i = props.entrySet().iterator();
++                while (i.hasNext()) {
++                    Entry<Object, Object> e = i.next();
++                    if (((String) e.getKey()).startsWith("security.provider")) {
++                        if (sdebug != null) { sdebug.println("Removing provider: " + e); }
++                        i.remove();
++                    }
++                }
++                // Add FIPS security providers
++                String fipsProviderValue = null;
++                for (int n = 1;
++                     (fipsProviderValue = (String) props.get("fips.provider." + n)) != null; n++) {
++                    String fipsProviderKey = "security.provider." + n;
++                    if (sdebug != null) {
++                        sdebug.println("Adding provider " + n + ": " +
++                                fipsProviderKey + "=" + fipsProviderValue);
++                    }
++                    props.put(fipsProviderKey, fipsProviderValue);
++                }
++                // Add other security properties
++                String keystoreTypeValue = (String) props.get("fips.keystore.type");
++                if (keystoreTypeValue != null) {
++                    String nonFipsKeystoreType = props.getProperty("keystore.type");
++                    props.put("keystore.type", keystoreTypeValue);
++                    if (keystoreTypeValue.equals("PKCS11")) {
++                        // If keystore.type is PKCS11, javax.net.ssl.keyStore
++                        // must be "NONE". See JDK-8238264.
++                        System.setProperty("javax.net.ssl.keyStore", "NONE");
++                    }
++                    if (System.getProperty("javax.net.ssl.trustStoreType") == null) {
++                        // If no trustStoreType has been set, use the
++                        // previous keystore.type under FIPS mode. In
++                        // a default configuration, the Trust Store will
++                        // be 'cacerts' (JKS type).
++                        System.setProperty("javax.net.ssl.trustStoreType",
++                                nonFipsKeystoreType);
++                    }
++                    if (sdebug != null) {
++                        sdebug.println("FIPS mode default keystore.type = " +
++                                keystoreTypeValue);
++                        sdebug.println("FIPS mode javax.net.ssl.keyStore = " +
++                                System.getProperty("javax.net.ssl.keyStore", ""));
++                        sdebug.println("FIPS mode javax.net.ssl.trustStoreType = " +
++                                System.getProperty("javax.net.ssl.trustStoreType", ""));
++                    }
++                }
++                loadedProps = true;
++                systemFipsEnabled = true;
++                String plainKeySupport = System.getProperty("com.redhat.fips.plainKeySupport",
++                                                            "true");
++                plainKeySupportEnabled = !"false".equals(plainKeySupport);
++                if (sdebug != null) {
++                    if (plainKeySupportEnabled) {
++                        sdebug.println("FIPS support enabled with plain key support");
++                    } else {
++                        sdebug.println("FIPS support enabled without plain key support");
++                    }
++                }
++            } else {
++                if (sdebug != null) { sdebug.println("FIPS mode not detected"); }
++            }
++        } catch (Exception e) {
++            if (sdebug != null) {
++                sdebug.println("unable to load FIPS configuration");
++                e.printStackTrace();
++            }
++        }
++        return loadedProps;
++    }
++
++    /**
++     * Returns whether or not global system FIPS alignment is enabled.
++     *
++     * Value is always 'false' before java.security.Security class is
++     * initialized.
++     *
++     * Call from out of this package through SharedSecrets:
++     *   SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
++     *           .isSystemFipsEnabled();
++     *
++     * @return  a boolean value indicating whether or not global
++     *          system FIPS alignment is enabled.
++     */
++    static boolean isSystemFipsEnabled() {
++        return systemFipsEnabled;
++    }
++
++    /**
++     * Returns {@code true} if system FIPS alignment is enabled
++     * and plain key support is allowed.  Plain key support is
++     * enabled by default but can be disabled with
++     * {@code -Dcom.redhat.fips.plainKeySupport=false}.
++     *
++     * @return a boolean indicating whether plain key support
++     *         should be enabled.
++     */
++    static boolean isPlainKeySupportEnabled() {
++        return plainKeySupportEnabled;
++    }
++
++    /**
++     * Determines whether FIPS mode should be enabled.
++     *
++     * OpenJDK FIPS mode will be enabled only if the system is in
++     * FIPS mode.
++     *
++     * Calls to this method only occur if the system property
++     * com.redhat.fips is not set to false.
++     *
++     * There are 2 possible ways in which OpenJDK detects that the system
++     * is in FIPS mode: 1) if the NSS SECMOD_GetSystemFIPSEnabled API is
++     * available at OpenJDK's built-time, it is called; 2) otherwise, the
++     * /proc/sys/crypto/fips_enabled file is read.
++     *
++     * @return true if the system is in FIPS mode
++     */
++    private static boolean enableFips() throws IOException {
++        if (sdebug != null) {
++            sdebug.println("Calling getSystemFIPSEnabled (libsystemconf)...");
++        }
++        try {
++            boolean fipsEnabled = getSystemFIPSEnabled();
++            if (sdebug != null) {
++                sdebug.println("Call to getSystemFIPSEnabled (libsystemconf) returned: "
++                               + fipsEnabled);
++            }
++            return fipsEnabled;
++        } catch (IOException e) {
++            if (sdebug != null) {
++                sdebug.println("Call to getSystemFIPSEnabled (libsystemconf) failed:");
++                sdebug.println(e.getMessage());
++            }
++            throw e;
++        }
++    }
++}
+diff --git a/jdk/src/share/classes/sun/misc/JavaSecuritySystemConfiguratorAccess.java b/jdk/src/share/classes/sun/misc/JavaSecuritySystemConfiguratorAccess.java
+new file mode 100644
+index 00000000000..5c30a8b29c7
+--- /dev/null
++++ b/jdk/src/share/classes/sun/misc/JavaSecuritySystemConfiguratorAccess.java
+@@ -0,0 +1,31 @@
++/*
++ * Copyright (c) 2020, Red Hat, Inc.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.misc;
++
++public interface JavaSecuritySystemConfiguratorAccess {
++    boolean isSystemFipsEnabled();
++    boolean isPlainKeySupportEnabled();
++}
+diff --git a/jdk/src/share/classes/sun/misc/SharedSecrets.java b/jdk/src/share/classes/sun/misc/SharedSecrets.java
+index f065a2c685d..0dafe6f59cf 100644
+--- a/jdk/src/share/classes/sun/misc/SharedSecrets.java
++++ b/jdk/src/share/classes/sun/misc/SharedSecrets.java
+@@ -31,6 +31,7 @@ import java.io.Console;
+ import java.io.FileDescriptor;
+ import java.io.ObjectInputStream;
+ import java.security.ProtectionDomain;
++import java.security.Security;
+ import java.security.Signature;
+ 
+ import java.security.AccessController;
+@@ -63,6 +64,7 @@ public class SharedSecrets {
+     private static JavaObjectInputStreamReadString javaObjectInputStreamReadString;
+     private static JavaObjectInputStreamAccess javaObjectInputStreamAccess;
+     private static JavaSecuritySignatureAccess javaSecuritySignatureAccess;
++    private static JavaSecuritySystemConfiguratorAccess javaSecuritySystemConfiguratorAccess;
+ 
+     public static JavaUtilJarAccess javaUtilJarAccess() {
+         if (javaUtilJarAccess == null) {
+@@ -248,4 +250,15 @@ public class SharedSecrets {
+         }
+         return javaxCryptoSealedObjectAccess;
+     }
++
++    public static void setJavaSecuritySystemConfiguratorAccess(JavaSecuritySystemConfiguratorAccess jssca) {
++        javaSecuritySystemConfiguratorAccess = jssca;
++    }
++
++    public static JavaSecuritySystemConfiguratorAccess getJavaSecuritySystemConfiguratorAccess() {
++        if (javaSecuritySystemConfiguratorAccess == null) {
++            unsafe.ensureClassInitialized(Security.class);
++        }
++        return javaSecuritySystemConfiguratorAccess;
++    }
+ }
+diff --git a/jdk/src/share/classes/sun/security/pkcs11/FIPSKeyImporter.java b/jdk/src/share/classes/sun/security/pkcs11/FIPSKeyImporter.java
+new file mode 100644
+index 00000000000..14d19450390
+--- /dev/null
++++ b/jdk/src/share/classes/sun/security/pkcs11/FIPSKeyImporter.java
+@@ -0,0 +1,290 @@
++/*
++ * Copyright (c) 2021, Red Hat, Inc.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++package sun.security.pkcs11;
++
++import java.math.BigInteger;
++import java.security.KeyFactory;
++import java.security.Provider;
++import java.security.Security;
++import java.util.HashMap;
++import java.util.Map;
++import java.util.concurrent.locks.ReentrantLock;
++
++import javax.crypto.Cipher;
++import javax.crypto.spec.DHPrivateKeySpec;
++import javax.crypto.spec.IvParameterSpec;
++
++import sun.security.jca.JCAUtil;
++import sun.security.pkcs11.TemplateManager;
++import sun.security.pkcs11.wrapper.CK_ATTRIBUTE;
++import sun.security.pkcs11.wrapper.CK_MECHANISM;
++import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
++import sun.security.pkcs11.wrapper.PKCS11Exception;
++import sun.security.rsa.RSAUtil.KeyType;
++import sun.security.util.Debug;
++import sun.security.util.ECUtil;
++
++final class FIPSKeyImporter {
++
++    private static final Debug debug =
++            Debug.getInstance("sunpkcs11");
++
++    private static P11Key importerKey = null;
++    private static final ReentrantLock importerKeyLock = new ReentrantLock();
++    private static CK_MECHANISM importerKeyMechanism = null;
++    private static Cipher importerCipher = null;
++
++    private static Provider sunECProvider = null;
++    private static final ReentrantLock sunECProviderLock = new ReentrantLock();
++
++    private static KeyFactory DHKF = null;
++    private static final ReentrantLock DHKFLock = new ReentrantLock();
++
++    static Long importKey(SunPKCS11 sunPKCS11, long hSession, CK_ATTRIBUTE[] attributes)
++            throws PKCS11Exception {
++        long keyID = -1;
++        Token token = sunPKCS11.getToken();
++        if (debug != null) {
++            debug.println("Private or Secret key will be imported in" +
++                    " system FIPS mode.");
++        }
++        if (importerKey == null) {
++            importerKeyLock.lock();
++            try {
++                if (importerKey == null) {
++                    if (importerKeyMechanism == null) {
++                        // Importer Key creation has not been tried yet. Try it.
++                        createImporterKey(token);
++                    }
++                    if (importerKey == null || importerCipher == null) {
++                        if (debug != null) {
++                            debug.println("Importer Key could not be" +
++                                    " generated.");
++                        }
++                        throw new PKCS11Exception(CKR_GENERAL_ERROR);
++                    }
++                    if (debug != null) {
++                        debug.println("Importer Key successfully" +
++                                " generated.");
++                    }
++                }
++            } finally {
++                importerKeyLock.unlock();
++            }
++        }
++        long importerKeyID = importerKey.getKeyID();
++        try {
++            byte[] keyBytes = null;
++            byte[] encKeyBytes = null;
++            long keyClass = 0L;
++            long keyType = 0L;
++            Map<Long, CK_ATTRIBUTE> attrsMap = new HashMap<>();
++            for (CK_ATTRIBUTE attr : attributes) {
++                if (attr.type == CKA_CLASS) {
++                    keyClass = attr.getLong();
++                } else if (attr.type == CKA_KEY_TYPE) {
++                    keyType = attr.getLong();
++                }
++                attrsMap.put(attr.type, attr);
++            }
++            BigInteger v = null;
++            if (keyClass == CKO_PRIVATE_KEY) {
++                if (keyType == CKK_RSA) {
++                    if (debug != null) {
++                        debug.println("Importing an RSA private key...");
++                    }
++                    keyBytes = sun.security.rsa.RSAPrivateCrtKeyImpl.newKey(
++                            KeyType.RSA,
++                            null,
++                            ((v = attrsMap.get(CKA_MODULUS).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PUBLIC_EXPONENT).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PRIVATE_EXPONENT).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PRIME_1).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PRIME_2).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_EXPONENT_1).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_EXPONENT_2).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_COEFFICIENT).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO
++                            ).getEncoded();
++                } else if (keyType == CKK_DSA) {
++                    if (debug != null) {
++                        debug.println("Importing a DSA private key...");
++                    }
++                    keyBytes = new sun.security.provider.DSAPrivateKey(
++                            ((v = attrsMap.get(CKA_VALUE).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PRIME).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_SUBPRIME).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_BASE).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO
++                            ).getEncoded();
++                    if (token.config.getNssNetscapeDbWorkaround() &&
++                            attrsMap.get(CKA_NETSCAPE_DB) == null) {
++                        attrsMap.put(CKA_NETSCAPE_DB,
++                                new CK_ATTRIBUTE(CKA_NETSCAPE_DB, BigInteger.ZERO));
++                    }
++                } else if (keyType == CKK_EC) {
++                    if (debug != null) {
++                        debug.println("Importing an EC private key...");
++                    }
++                    if (sunECProvider == null) {
++                        sunECProviderLock.lock();
++                        try {
++                            if (sunECProvider == null) {
++                                sunECProvider = Security.getProvider("SunEC");
++                            }
++                        } finally {
++                            sunECProviderLock.unlock();
++                        }
++                    }
++                    keyBytes = P11ECUtil.generateECPrivateKey(
++                            ((v = attrsMap.get(CKA_VALUE).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ECUtil.getECParameterSpec(sunECProvider,
++                                    attrsMap.get(CKA_EC_PARAMS).getByteArray()))
++                            .getEncoded();
++                    if (token.config.getNssNetscapeDbWorkaround() &&
++                            attrsMap.get(CKA_NETSCAPE_DB) == null) {
++                        attrsMap.put(CKA_NETSCAPE_DB,
++                                new CK_ATTRIBUTE(CKA_NETSCAPE_DB, BigInteger.ZERO));
++                    }
++                } else if (keyType == CKK_DH) {
++                    if (debug != null) {
++                        debug.println("Importing a Diffie-Hellman private key...");
++                    }
++                    if (DHKF == null) {
++                        DHKFLock.lock();
++                        try {
++                            if (DHKF == null) {
++                                DHKF = KeyFactory.getInstance(
++                                        "DH", P11Util.getSunJceProvider());
++                            }
++                        } finally {
++                            DHKFLock.unlock();
++                        }
++                    }
++                    DHPrivateKeySpec spec = new DHPrivateKeySpec
++                            (((v = attrsMap.get(CKA_VALUE).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_PRIME).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO,
++                            ((v = attrsMap.get(CKA_BASE).getBigInteger()) != null)
++                                    ? v : BigInteger.ZERO);
++                    keyBytes = DHKF.generatePrivate(spec).getEncoded();
++                    if (token.config.getNssNetscapeDbWorkaround() &&
++                            attrsMap.get(CKA_NETSCAPE_DB) == null) {
++                        attrsMap.put(CKA_NETSCAPE_DB,
++                                new CK_ATTRIBUTE(CKA_NETSCAPE_DB, BigInteger.ZERO));
++                    }
++                } else {
++                    if (debug != null) {
++                        debug.println("Unrecognized private key type.");
++                    }
++                    throw new PKCS11Exception(CKR_GENERAL_ERROR);
++                }
++            } else if (keyClass == CKO_SECRET_KEY) {
++                if (debug != null) {
++                    debug.println("Importing a secret key...");
++                }
++                keyBytes = attrsMap.get(CKA_VALUE).getByteArray();
++            }
++            if (keyBytes == null || keyBytes.length == 0) {
++                if (debug != null) {
++                    debug.println("Private or secret key plain bytes could" +
++                            " not be obtained. Import failed.");
++                }
++                throw new PKCS11Exception(CKR_GENERAL_ERROR);
++            }
++            importerCipher.init(Cipher.ENCRYPT_MODE, importerKey,
++                    new IvParameterSpec((byte[])importerKeyMechanism.pParameter),
++                    null);
++            attributes = new CK_ATTRIBUTE[attrsMap.size()];
++            attrsMap.values().toArray(attributes);
++            encKeyBytes = importerCipher.doFinal(keyBytes);
++            attributes = token.getAttributes(TemplateManager.O_IMPORT,
++                    keyClass, keyType, attributes);
++            keyID = token.p11.C_UnwrapKey(hSession,
++                    importerKeyMechanism, importerKeyID, encKeyBytes, attributes);
++            if (debug != null) {
++                debug.println("Imported key ID: " + keyID);
++            }
++        } catch (Throwable t) {
++            throw new PKCS11Exception(CKR_GENERAL_ERROR);
++        } finally {
++            importerKey.releaseKeyID();
++        }
++        return Long.valueOf(keyID);
++    }
++
++    private static void createImporterKey(Token token) {
++        if (debug != null) {
++            debug.println("Generating Importer Key...");
++        }
++        byte[] iv = new byte[16];
++        JCAUtil.getSecureRandom().nextBytes(iv);
++        importerKeyMechanism = new CK_MECHANISM(CKM_AES_CBC_PAD, iv);
++        try {
++            CK_ATTRIBUTE[] attributes = token.getAttributes(TemplateManager.O_GENERATE,
++                            CKO_SECRET_KEY, CKK_AES, new CK_ATTRIBUTE[] {
++                                    new CK_ATTRIBUTE(CKA_CLASS, CKO_SECRET_KEY),
++                                    new CK_ATTRIBUTE(CKA_VALUE_LEN, 256 >> 3)});
++            Session s = null;
++            try {
++                s = token.getObjSession();
++                long keyID = token.p11.C_GenerateKey(
++                        s.id(), new CK_MECHANISM(CKM_AES_KEY_GEN),
++                        attributes);
++                if (debug != null) {
++                    debug.println("Importer Key ID: " + keyID);
++                }
++                importerKey = (P11Key)P11Key.secretKey(s, keyID, "AES",
++                        256 >> 3, null);
++            } catch (PKCS11Exception e) {
++                // best effort
++            } finally {
++                token.releaseSession(s);
++            }
++            if (importerKey != null) {
++                importerCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
++            }
++        } catch (Throwable t) {
++            // best effort
++            importerKey = null;
++            importerCipher = null;
++            // importerKeyMechanism value is kept initialized to indicate that
++            // Importer Key creation has been tried and failed.
++        }
++    }
++}
+diff --git a/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java b/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
+index fedcd7743ef..f9d70863bd1 100644
+--- a/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
++++ b/jdk/src/share/classes/sun/security/pkcs11/SunPKCS11.java
+@@ -26,6 +26,9 @@
+ package sun.security.pkcs11;
+ 
+ import java.io.*;
++import java.lang.invoke.MethodHandle;
++import java.lang.invoke.MethodHandles;
++import java.lang.invoke.MethodType;
+ import java.util.*;
+ 
+ import java.security.*;
+@@ -42,6 +45,8 @@ import javax.security.auth.callback.ConfirmationCallback;
+ import javax.security.auth.callback.PasswordCallback;
+ import javax.security.auth.callback.TextOutputCallback;
+ 
++import sun.misc.SharedSecrets;
++
+ import sun.security.util.Debug;
+ import sun.security.util.ResourcesMgr;
+ 
+@@ -58,6 +63,29 @@ import static sun.security.pkcs11.wrapper.PKCS11Constants.*;
+  */
+ public final class SunPKCS11 extends AuthProvider {
+ 
++    private static final boolean systemFipsEnabled = SharedSecrets
++            .getJavaSecuritySystemConfiguratorAccess().isSystemFipsEnabled();
++
++    private static final boolean plainKeySupportEnabled = SharedSecrets
++            .getJavaSecuritySystemConfiguratorAccess().isPlainKeySupportEnabled();
++
++    private static final MethodHandle fipsImportKey;
++    static {
++        MethodHandle fipsImportKeyTmp = null;
++        if (plainKeySupportEnabled) {
++            try {
++                fipsImportKeyTmp = MethodHandles.lookup().findStatic(
++                        FIPSKeyImporter.class, "importKey",
++                        MethodType.methodType(Long.class, SunPKCS11.class,
++                        long.class, CK_ATTRIBUTE[].class));
++            } catch (Throwable t) {
++                throw new SecurityException("FIPS key importer initialization" +
++                        " failed", t);
++            }
++        }
++        fipsImportKey = fipsImportKeyTmp;
++    }
++
+     private static final long serialVersionUID = -1354835039035306505L;
+ 
+     static final Debug debug = Debug.getInstance("sunpkcs11");
+@@ -309,10 +337,15 @@ public final class SunPKCS11 extends AuthProvider {
+             // request multithreaded access first
+             initArgs.flags = CKF_OS_LOCKING_OK;
+             PKCS11 tmpPKCS11;
++            MethodHandle fipsKeyImporter = null;
++            if (plainKeySupportEnabled) {
++                fipsKeyImporter = MethodHandles.insertArguments(
++                        fipsImportKey, 0, this);
++            }
+             try {
+                 tmpPKCS11 = PKCS11.getInstance(
+                     library, functionList, initArgs,
+-                    config.getOmitInitialize());
++                    config.getOmitInitialize(), fipsKeyImporter);
+             } catch (PKCS11Exception e) {
+                 if (debug != null) {
+                     debug.println("Multi-threaded initialization failed: " + e);
+@@ -328,7 +361,7 @@ public final class SunPKCS11 extends AuthProvider {
+                     initArgs.flags = 0;
+                 }
+                 tmpPKCS11 = PKCS11.getInstance(library,
+-                    functionList, initArgs, config.getOmitInitialize());
++                    functionList, initArgs, config.getOmitInitialize(), fipsKeyImporter);
+             }
+             p11 = tmpPKCS11;
+ 
+@@ -368,6 +401,24 @@ public final class SunPKCS11 extends AuthProvider {
+             if (nssModule != null) {
+                 nssModule.setProvider(this);
+             }
++            if (systemFipsEnabled) {
++                // The NSS Software Token in FIPS 140-2 mode requires a user
++                // login for most operations. See sftk_fipsCheck. The NSS DB
++                // (/etc/pki/nssdb) PIN is empty.
++                Session session = null;
++                try {
++                    session = token.getOpSession();
++                    p11.C_Login(session.id(), CKU_USER, new char[] {});
++                } catch (PKCS11Exception p11e) {
++                    if (debug != null) {
++                        debug.println("Error during token login: " +
++                                p11e.getMessage());
++                    }
++                    throw p11e;
++                } finally {
++                    token.releaseSession(session);
++                }
++            }
+         } catch (Exception e) {
+             if (config.getHandleStartupErrors() == Config.ERR_IGNORE_ALL) {
+                 throw new UnsupportedOperationException
+diff --git a/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11.java b/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11.java
+index 2e42d1d9fb0..1b7eed1c656 100644
+--- a/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11.java
++++ b/jdk/src/share/classes/sun/security/pkcs11/wrapper/PKCS11.java
+@@ -49,6 +49,7 @@ package sun.security.pkcs11.wrapper;
+ 
+ import java.io.File;
+ import java.io.IOException;
++import java.lang.invoke.MethodHandle;
+ import java.util.*;
+ 
+ import java.security.AccessController;
+@@ -145,18 +146,41 @@ public class PKCS11 {
+         this.pkcs11ModulePath = pkcs11ModulePath;
+     }
+ 
++    /*
++     * Compatibility wrapper to allow this method to work as before
++     * when FIPS mode support is not active.
++     */
++    public static synchronized PKCS11 getInstance(String pkcs11ModulePath,
++           String functionList, CK_C_INITIALIZE_ARGS pInitArgs,
++           boolean omitInitialize) throws IOException, PKCS11Exception {
++        return getInstance(pkcs11ModulePath, functionList,
++                           pInitArgs, omitInitialize, null);
++    }
++
+     public static synchronized PKCS11 getInstance(String pkcs11ModulePath,
+             String functionList, CK_C_INITIALIZE_ARGS pInitArgs,
+-            boolean omitInitialize) throws IOException, PKCS11Exception {
++            boolean omitInitialize, MethodHandle fipsKeyImporter)
++                    throws IOException, PKCS11Exception {
+         // we may only call C_Initialize once per native .so/.dll
+         // so keep a cache using the (non-canonicalized!) path
+         PKCS11 pkcs11 = moduleMap.get(pkcs11ModulePath);
+         if (pkcs11 == null) {
++            boolean nssFipsMode = fipsKeyImporter != null;
+             if ((pInitArgs != null)
+                     && ((pInitArgs.flags & CKF_OS_LOCKING_OK) != 0)) {
+-                pkcs11 = new PKCS11(pkcs11ModulePath, functionList);
++                if (nssFipsMode) {
++                    pkcs11 = new FIPSPKCS11(pkcs11ModulePath, functionList,
++                            fipsKeyImporter);
++                } else {
++                    pkcs11 = new PKCS11(pkcs11ModulePath, functionList);
++                }
+             } else {
+-                pkcs11 = new SynchronizedPKCS11(pkcs11ModulePath, functionList);
++                if (nssFipsMode) {
++                    pkcs11 = new SynchronizedFIPSPKCS11(pkcs11ModulePath,
++                            functionList, fipsKeyImporter);
++                } else {
++                    pkcs11 = new SynchronizedPKCS11(pkcs11ModulePath, functionList);
++                }
+             }
+             if (omitInitialize == false) {
+                 try {
+@@ -1905,4 +1929,69 @@ static class SynchronizedPKCS11 extends PKCS11 {
+         super.C_GenerateRandom(hSession, randomData);
+     }
+ }
++
++// PKCS11 subclass that allows using plain private or secret keys in
++// FIPS-configured NSS Software Tokens. Only used when System FIPS
++// is enabled.
++static class FIPSPKCS11 extends PKCS11 {
++    private MethodHandle fipsKeyImporter;
++    FIPSPKCS11(String pkcs11ModulePath, String functionListName,
++            MethodHandle fipsKeyImporter) throws IOException {
++        super(pkcs11ModulePath, functionListName);
++        this.fipsKeyImporter = fipsKeyImporter;
++    }
++
++    public synchronized long C_CreateObject(long hSession,
++            CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
++        // Creating sensitive key objects from plain key material in a
++        // FIPS-configured NSS Software Token is not allowed. We apply
++        // a key-unwrapping scheme to achieve so.
++        if (FIPSPKCS11Helper.isSensitiveObject(pTemplate)) {
++            try {
++                return ((Long)fipsKeyImporter.invoke(hSession, pTemplate))
++                        .longValue();
++            } catch (Throwable t) {
++                throw new PKCS11Exception(CKR_GENERAL_ERROR);
++            }
++        }
++        return super.C_CreateObject(hSession, pTemplate);
++    }
++}
++
++// FIPSPKCS11 synchronized counterpart.
++static class SynchronizedFIPSPKCS11 extends SynchronizedPKCS11 {
++    private MethodHandle fipsKeyImporter;
++    SynchronizedFIPSPKCS11(String pkcs11ModulePath, String functionListName,
++            MethodHandle fipsKeyImporter) throws IOException {
++        super(pkcs11ModulePath, functionListName);
++        this.fipsKeyImporter = fipsKeyImporter;
++    }
++
++    public synchronized long C_CreateObject(long hSession,
++            CK_ATTRIBUTE[] pTemplate) throws PKCS11Exception {
++        // See FIPSPKCS11::C_CreateObject.
++        if (FIPSPKCS11Helper.isSensitiveObject(pTemplate)) {
++            try {
++                return ((Long)fipsKeyImporter.invoke(hSession, pTemplate))
++                        .longValue();
++            } catch (Throwable t) {
++                throw new PKCS11Exception(CKR_GENERAL_ERROR);
++            }
++        }
++        return super.C_CreateObject(hSession, pTemplate);
++    }
++}
++
++private static class FIPSPKCS11Helper {
++    static boolean isSensitiveObject(CK_ATTRIBUTE[] pTemplate) {
++        for (CK_ATTRIBUTE attr : pTemplate) {
++            if (attr.type == CKA_CLASS &&
++                    (attr.getLong() == CKO_PRIVATE_KEY ||
++                    attr.getLong() == CKO_SECRET_KEY)) {
++                return true;
++            }
++        }
++        return false;
++    }
++}
+ }
+diff --git a/jdk/src/share/classes/sun/security/ssl/KeyManagerFactoryImpl.java b/jdk/src/share/classes/sun/security/ssl/KeyManagerFactoryImpl.java
+index ffee2c1603b..98119479823 100644
+--- a/jdk/src/share/classes/sun/security/ssl/KeyManagerFactoryImpl.java
++++ b/jdk/src/share/classes/sun/security/ssl/KeyManagerFactoryImpl.java
+@@ -33,8 +33,13 @@ import java.security.KeyStore.*;
+ 
+ import javax.net.ssl.*;
+ 
++import sun.misc.SharedSecrets;
++
+ abstract class KeyManagerFactoryImpl extends KeyManagerFactorySpi {
+ 
++    private static final boolean plainKeySupportEnabled = SharedSecrets
++            .getJavaSecuritySystemConfiguratorAccess().isPlainKeySupportEnabled();
++
+     X509ExtendedKeyManager keyManager;
+     boolean isInitialized;
+ 
+@@ -62,7 +67,8 @@ abstract class KeyManagerFactoryImpl extends KeyManagerFactorySpi {
+                 KeyStoreException, NoSuchAlgorithmException,
+                 UnrecoverableKeyException {
+             if ((ks != null) && SunJSSE.isFIPS()) {
+-                if (ks.getProvider() != SunJSSE.cryptoProvider) {
++                if (ks.getProvider() != SunJSSE.cryptoProvider &&
++                        !plainKeySupportEnabled) {
+                     throw new KeyStoreException("FIPS mode: KeyStore must be "
+                         + "from provider " + SunJSSE.cryptoProvider.getName());
+                 }
+@@ -91,8 +97,8 @@ abstract class KeyManagerFactoryImpl extends KeyManagerFactorySpi {
+                 keyManager = new X509KeyManagerImpl(
+                         Collections.<Builder>emptyList());
+             } else {
+-                if (SunJSSE.isFIPS() &&
+-                        (ks.getProvider() != SunJSSE.cryptoProvider)) {
++                if (SunJSSE.isFIPS() && (ks.getProvider() != SunJSSE.cryptoProvider)
++                        && !plainKeySupportEnabled) {
+                     throw new KeyStoreException(
+                         "FIPS mode: KeyStore must be " +
+                         "from provider " + SunJSSE.cryptoProvider.getName());
+diff --git a/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java b/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
+index 820e10164fc..6fe2c29389f 100644
+--- a/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
++++ b/jdk/src/share/classes/sun/security/ssl/SSLContextImpl.java
+@@ -31,6 +31,7 @@ import java.security.*;
+ import java.security.cert.*;
+ import java.util.*;
+ import javax.net.ssl.*;
++import sun.misc.SharedSecrets;
+ import sun.security.action.GetPropertyAction;
+ import sun.security.provider.certpath.AlgorithmChecker;
+ import sun.security.validator.Validator;
+@@ -539,20 +540,38 @@ public abstract class SSLContextImpl extends SSLContextSpi {
+ 
+         static {
+             if (SunJSSE.isFIPS()) {
+-                supportedProtocols = Arrays.asList(
+-                    ProtocolVersion.TLS13,
+-                    ProtocolVersion.TLS12,
+-                    ProtocolVersion.TLS11,
+-                    ProtocolVersion.TLS10
+-                );
++                if (SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
++                        .isSystemFipsEnabled()) {
++                    // RH1860986: TLSv1.3 key derivation not supported with
++                    // the Security Providers available in system FIPS mode.
++                    supportedProtocols = Arrays.asList(
++                        ProtocolVersion.TLS12,
++                        ProtocolVersion.TLS11,
++                        ProtocolVersion.TLS10
++                    );
+ 
+-                serverDefaultProtocols = getAvailableProtocols(
+-                        new ProtocolVersion[] {
+-                    ProtocolVersion.TLS13,
+-                    ProtocolVersion.TLS12,
+-                    ProtocolVersion.TLS11,
+-                    ProtocolVersion.TLS10
+-                });
++                    serverDefaultProtocols = getAvailableProtocols(
++                            new ProtocolVersion[] {
++                        ProtocolVersion.TLS12,
++                        ProtocolVersion.TLS11,
++                        ProtocolVersion.TLS10
++                    });
++                } else {
++                    supportedProtocols = Arrays.asList(
++                        ProtocolVersion.TLS13,
++                        ProtocolVersion.TLS12,
++                        ProtocolVersion.TLS11,
++                        ProtocolVersion.TLS10
++                    );
++
++                    serverDefaultProtocols = getAvailableProtocols(
++                            new ProtocolVersion[] {
++                        ProtocolVersion.TLS13,
++                        ProtocolVersion.TLS12,
++                        ProtocolVersion.TLS11,
++                        ProtocolVersion.TLS10
++                    });
++                }
+             } else {
+                 supportedProtocols = Arrays.asList(
+                     ProtocolVersion.TLS13,
+@@ -612,6 +631,16 @@ public abstract class SSLContextImpl extends SSLContextSpi {
+ 
+         static ProtocolVersion[] getSupportedProtocols() {
+             if (SunJSSE.isFIPS()) {
++                if (SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
++                        .isSystemFipsEnabled()) {
++                    // RH1860986: TLSv1.3 key derivation not supported with
++                    // the Security Providers available in system FIPS mode.
++                    return new ProtocolVersion[] {
++                            ProtocolVersion.TLS12,
++                            ProtocolVersion.TLS11,
++                            ProtocolVersion.TLS10
++                    };
++                }
+                 return new ProtocolVersion[] {
+                         ProtocolVersion.TLS13,
+                         ProtocolVersion.TLS12,
+@@ -939,6 +968,16 @@ public abstract class SSLContextImpl extends SSLContextSpi {
+ 
+         static ProtocolVersion[] getProtocols() {
+             if (SunJSSE.isFIPS()) {
++                if (SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
++                        .isSystemFipsEnabled()) {
++                    // RH1860986: TLSv1.3 key derivation not supported with
++                    // the Security Providers available in system FIPS mode.
++                    return new ProtocolVersion[] {
++                            ProtocolVersion.TLS12,
++                            ProtocolVersion.TLS11,
++                            ProtocolVersion.TLS10
++                    };
++                }
+                 return new ProtocolVersion[]{
+                         ProtocolVersion.TLS13,
+                         ProtocolVersion.TLS12,
+diff --git a/jdk/src/share/classes/sun/security/ssl/SunJSSE.java b/jdk/src/share/classes/sun/security/ssl/SunJSSE.java
+index 2845dc37938..52337a7b6cf 100644
+--- a/jdk/src/share/classes/sun/security/ssl/SunJSSE.java
++++ b/jdk/src/share/classes/sun/security/ssl/SunJSSE.java
+@@ -30,6 +30,8 @@ import static sun.security.util.SecurityConstants.PROVIDER_VER;
+ 
+ import java.security.*;
+ 
++import sun.misc.SharedSecrets;
++
+ /**
+  * The JSSE provider.
+  *
+@@ -215,8 +217,13 @@ public abstract class SunJSSE extends java.security.Provider {
+             "sun.security.ssl.SSLContextImpl$TLS11Context");
+         put("SSLContext.TLSv1.2",
+             "sun.security.ssl.SSLContextImpl$TLS12Context");
+-        put("SSLContext.TLSv1.3",
+-            "sun.security.ssl.SSLContextImpl$TLS13Context");
++        if (!SharedSecrets.getJavaSecuritySystemConfiguratorAccess()
++                .isSystemFipsEnabled()) {
++            // RH1860986: TLSv1.3 key derivation not supported with
++            // the Security Providers available in system FIPS mode.
++            put("SSLContext.TLSv1.3",
++                "sun.security.ssl.SSLContextImpl$TLS13Context");
++        }
+         put("SSLContext.TLS",
+             "sun.security.ssl.SSLContextImpl$TLSContext");
+         if (isfips == false) {
+diff --git a/jdk/src/share/lib/security/java.security-aix b/jdk/src/share/lib/security/java.security-aix
+index 7a93d4e6b59..681a24b905d 100644
+--- a/jdk/src/share/lib/security/java.security-aix
++++ b/jdk/src/share/lib/security/java.security-aix
+@@ -287,6 +287,13 @@ package.definition=sun.,\
+ #
+ security.overridePropertiesFile=true
+ 
++#
++# Determines whether this properties file will be appended to
++# using the system properties file stored at
++# /etc/crypto-policies/back-ends/java.config
++#
++security.useSystemPropertiesFile=false
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-linux b/jdk/src/share/lib/security/java.security-linux
+index 145a84f94cf..789c19a8cba 100644
+--- a/jdk/src/share/lib/security/java.security-linux
++++ b/jdk/src/share/lib/security/java.security-linux
+@@ -75,6 +75,14 @@ security.provider.7=com.sun.security.sasl.Provider
+ security.provider.8=org.jcp.xml.dsig.internal.dom.XMLDSigRI
+ security.provider.9=sun.security.smartcardio.SunPCSC
+ 
++#
++# Security providers used when FIPS mode support is active
++#
++fips.provider.1=sun.security.pkcs11.SunPKCS11 ${java.home}/lib/security/nss.fips.cfg
++fips.provider.2=sun.security.provider.Sun
++fips.provider.3=sun.security.ec.SunEC
++fips.provider.4=com.sun.net.ssl.internal.ssl.Provider SunPKCS11-NSS-FIPS
++
+ #
+ # Sun Provider SecureRandom seed source.
+ #
+@@ -170,6 +178,11 @@ policy.ignoreIdentityScope=false
+ #
+ keystore.type=jks
+ 
++#
++# Default keystore type used when global crypto-policies are set to FIPS.
++#
++fips.keystore.type=PKCS11
++
+ #
+ # Controls compatibility mode for the JKS keystore type.
+ #
+@@ -287,6 +300,13 @@ package.definition=sun.,\
+ #
+ security.overridePropertiesFile=true
+ 
++#
++# Determines whether this properties file will be appended to
++# using the system properties file stored at
++# /etc/crypto-policies/back-ends/java.config
++#
++security.useSystemPropertiesFile=false
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-macosx b/jdk/src/share/lib/security/java.security-macosx
+index 35fa140d7a5..d4da666af3b 100644
+--- a/jdk/src/share/lib/security/java.security-macosx
++++ b/jdk/src/share/lib/security/java.security-macosx
+@@ -290,6 +290,13 @@ package.definition=sun.,\
+ #
+ security.overridePropertiesFile=true
+ 
++#
++# Determines whether this properties file will be appended to
++# using the system properties file stored at
++# /etc/crypto-policies/back-ends/java.config
++#
++security.useSystemPropertiesFile=false
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-solaris b/jdk/src/share/lib/security/java.security-solaris
+index f79ba37ddb9..300132384a1 100644
+--- a/jdk/src/share/lib/security/java.security-solaris
++++ b/jdk/src/share/lib/security/java.security-solaris
+@@ -288,6 +288,13 @@ package.definition=sun.,\
+ #
+ security.overridePropertiesFile=true
+ 
++#
++# Determines whether this properties file will be appended to
++# using the system properties file stored at
++# /etc/crypto-policies/back-ends/java.config
++#
++security.useSystemPropertiesFile=false
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-windows b/jdk/src/share/lib/security/java.security-windows
+index d70503ce95f..64db5a5cd1e 100644
+--- a/jdk/src/share/lib/security/java.security-windows
++++ b/jdk/src/share/lib/security/java.security-windows
+@@ -290,6 +290,13 @@ package.definition=sun.,\
+ #
+ security.overridePropertiesFile=true
+ 
++#
++# Determines whether this properties file will be appended to
++# using the system properties file stored at
++# /etc/crypto-policies/back-ends/java.config
++#
++security.useSystemPropertiesFile=false
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/solaris/native/java/security/systemconf.c b/jdk/src/solaris/native/java/security/systemconf.c
+new file mode 100644
+index 00000000000..8dcb7d9073f
+--- /dev/null
++++ b/jdk/src/solaris/native/java/security/systemconf.c
+@@ -0,0 +1,224 @@
++/*
++ * Copyright (c) 2021, Red Hat, Inc.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.  Oracle designates this
++ * particular file as subject to the "Classpath" exception as provided
++ * by Oracle in the LICENSE file that accompanied this code.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++#include <jni.h>
++#include <jni_util.h>
++#include "jvm_md.h"
++#include <stdio.h>
++
++#ifdef SYSCONF_NSS
++#include <nss3/pk11pub.h>
++#else
++#include <dlfcn.h>
++#endif //SYSCONF_NSS
++
++#include "java_security_SystemConfigurator.h"
++
++#define MSG_MAX_SIZE 256
++#define FIPS_ENABLED_PATH "/proc/sys/crypto/fips_enabled"
++
++typedef int (SECMOD_GET_SYSTEM_FIPS_ENABLED_TYPE)(void);
++
++static SECMOD_GET_SYSTEM_FIPS_ENABLED_TYPE *getSystemFIPSEnabled;
++static jmethodID debugPrintlnMethodID = NULL;
++static jobject debugObj = NULL;
++
++static void dbgPrint(JNIEnv *env, const char* msg)
++{
++    jstring jMsg;
++    if (debugObj != NULL) {
++        jMsg = (*env)->NewStringUTF(env, msg);
++        CHECK_NULL(jMsg);
++        (*env)->CallVoidMethod(env, debugObj, debugPrintlnMethodID, jMsg);
++    }
++}
++
++static void throwIOException(JNIEnv *env, const char *msg)
++{
++    jclass cls = (*env)->FindClass(env, "java/io/IOException");
++    if (cls != 0)
++        (*env)->ThrowNew(env, cls, msg);
++}
++
++static void handle_msg(JNIEnv *env, const char* msg, int msg_bytes)
++{
++  if (msg_bytes > 0 && msg_bytes < MSG_MAX_SIZE) {
++    dbgPrint(env, msg);
++  } else {
++    dbgPrint(env, "systemconf: cannot render message");
++  }
++}
++
++// Only used when NSS is not linked at build time
++#ifndef SYSCONF_NSS
++
++static void *nss_handle;
++
++static jboolean loadNSS(JNIEnv *env)
++{
++  char msg[MSG_MAX_SIZE];
++  int msg_bytes;
++  const char* errmsg;
++
++  nss_handle = dlopen(JNI_LIB_NAME("nss3"), RTLD_LAZY);
++  if (nss_handle == NULL) {
++    errmsg = dlerror();
++    msg_bytes = snprintf(msg, MSG_MAX_SIZE, "loadNSS: dlopen: %s\n",
++                         errmsg);
++    handle_msg(env, msg, msg_bytes);
++    return JNI_FALSE;
++  }
++  dlerror(); /* Clear errors */
++  getSystemFIPSEnabled = (SECMOD_GET_SYSTEM_FIPS_ENABLED_TYPE*)dlsym(nss_handle, "SECMOD_GetSystemFIPSEnabled");
++  if ((errmsg = dlerror()) != NULL) {
++    msg_bytes = snprintf(msg, MSG_MAX_SIZE, "loadNSS: dlsym: %s\n",
++                         errmsg);
++    handle_msg(env, msg, msg_bytes);
++    return JNI_FALSE;
++  }
++  return JNI_TRUE;
++}
++
++static void closeNSS(JNIEnv *env)
++{
++  char msg[MSG_MAX_SIZE];
++  int msg_bytes;
++  const char* errmsg;
++
++  if (dlclose(nss_handle) != 0) {
++    errmsg = dlerror();
++    msg_bytes = snprintf(msg, MSG_MAX_SIZE, "closeNSS: dlclose: %s\n",
++                         errmsg);
++    handle_msg(env, msg, msg_bytes);
++  }
++}
++
++#endif
++
++/*
++ * Class:     java_security_SystemConfigurator
++ * Method:    JNI_OnLoad
++ */
++JNIEXPORT jint JNICALL DEF_JNI_OnLoad(JavaVM *vm, void *reserved)
++{
++    JNIEnv *env;
++    jclass sysConfCls, debugCls;
++    jfieldID sdebugFld;
++
++    if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_2) != JNI_OK) {
++        return JNI_EVERSION; /* JNI version not supported */
++    }
++
++    sysConfCls = (*env)->FindClass(env,"java/security/SystemConfigurator");
++    if (sysConfCls == NULL) {
++        printf("libsystemconf: SystemConfigurator class not found\n");
++        return JNI_ERR;
++    }
++    sdebugFld = (*env)->GetStaticFieldID(env, sysConfCls,
++            "sdebug", "Lsun/security/util/Debug;");
++    if (sdebugFld == NULL) {
++        printf("libsystemconf: SystemConfigurator::sdebug field not found\n");
++        return JNI_ERR;
++    }
++    debugObj = (*env)->GetStaticObjectField(env, sysConfCls, sdebugFld);
++    if (debugObj != NULL) {
++        debugCls = (*env)->FindClass(env,"sun/security/util/Debug");
++        if (debugCls == NULL) {
++            printf("libsystemconf: Debug class not found\n");
++            return JNI_ERR;
++        }
++        debugPrintlnMethodID = (*env)->GetMethodID(env, debugCls,
++                "println", "(Ljava/lang/String;)V");
++        if (debugPrintlnMethodID == NULL) {
++            printf("libsystemconf: Debug::println(String) method not found\n");
++            return JNI_ERR;
++        }
++        debugObj = (*env)->NewGlobalRef(env, debugObj);
++    }
++
++#ifdef SYSCONF_NSS
++    getSystemFIPSEnabled = *SECMOD_GetSystemFIPSEnabled;
++#else
++    if (loadNSS(env) == JNI_FALSE) {
++      dbgPrint(env, "libsystemconf: Failed to load NSS library.");
++    }
++#endif
++
++    return (*env)->GetVersion(env);
++}
++
++/*
++ * Class:     java_security_SystemConfigurator
++ * Method:    JNI_OnUnload
++ */
++JNIEXPORT void JNICALL DEF_JNI_OnUnload(JavaVM *vm, void *reserved)
++{
++    JNIEnv *env;
++
++    if (debugObj != NULL) {
++        if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_2) != JNI_OK) {
++            return; /* Should not happen */
++        }
++#ifndef SYSCONF_NSS
++        closeNSS(env);
++#endif
++        (*env)->DeleteGlobalRef(env, debugObj);
++    }
++}
++
++JNIEXPORT jboolean JNICALL Java_java_security_SystemConfigurator_getSystemFIPSEnabled
++  (JNIEnv *env, jclass cls)
++{
++    int fips_enabled;
++    char msg[MSG_MAX_SIZE];
++    int msg_bytes;
++
++    if (getSystemFIPSEnabled != NULL) {
++      dbgPrint(env, "getSystemFIPSEnabled: calling SECMOD_GetSystemFIPSEnabled");
++      fips_enabled = (*getSystemFIPSEnabled)();
++      msg_bytes = snprintf(msg, MSG_MAX_SIZE, "getSystemFIPSEnabled:"   \
++                           " SECMOD_GetSystemFIPSEnabled returned 0x%x", fips_enabled);
++      handle_msg(env, msg, msg_bytes);
++      return (fips_enabled == 1 ? JNI_TRUE : JNI_FALSE);
++    } else {
++      FILE *fe;
++
++      dbgPrint(env, "getSystemFIPSEnabled: reading " FIPS_ENABLED_PATH);
++      if ((fe = fopen(FIPS_ENABLED_PATH, "r")) == NULL) {
++        throwIOException(env, "Cannot open " FIPS_ENABLED_PATH);
++        return JNI_FALSE;
++      }
++      fips_enabled = fgetc(fe);
++      fclose(fe);
++      if (fips_enabled == EOF) {
++        throwIOException(env, "Cannot read " FIPS_ENABLED_PATH);
++        return JNI_FALSE;
++      }
++      msg_bytes = snprintf(msg, MSG_MAX_SIZE, "getSystemFIPSEnabled:"   \
++                           " read character is '%c'", fips_enabled);
++      handle_msg(env, msg, msg_bytes);
++      return (fips_enabled == '1' ? JNI_TRUE : JNI_FALSE);
++    }
++}

@@ -1,0 +1,12 @@
+diff --git openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Main.java openjdk/jdk/src/share/classes/sun/security/tools/keytool/Main.java
+--- openjdk.orig/jdk/src/share/classes/sun/security/tools/keytool/Main.java
++++ openjdk/jdk/src/share/classes/sun/security/tools/keytool/Main.java
+@@ -1004,7 +1004,7 @@
+             }
+         } else if (command == GENKEYPAIR) {
+             if (keyAlgName == null) {
+-                keyAlgName = "DSA";
++                keyAlgName = "RSA";
+             }
+             doGenKeyPair(alias, dname, keyAlgName, keysize, sigAlgName);
+             kssave = true;

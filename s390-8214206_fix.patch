@@ -1,0 +1,46 @@
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahUtils.cpp openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahUtils.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahUtils.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahUtils.cpp
+@@ -150,5 +150,5 @@
+     return value;
+   }
+ 
+-  return (size_t)1 << (log2_intptr(value) + 1);
++  return (size_t)1 << (log2_intptr((uintptr_t) value) + 1);
+ }
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahNumberSeq.cpp
+@@ -135,7 +135,7 @@
+ void BinaryMagnitudeSeq::add(size_t val) {
+   Atomic::add(val, &_sum);
+ 
+-  int mag = log2_intptr(val) + 1;
++  int mag = log2_intptr((uintptr_t)val) + 1;
+ 
+   // Defensively saturate for product bits:
+   if (mag < 0) {
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.cpp openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.cpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.cpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.cpp
+@@ -659,7 +659,7 @@
+ }
+ 
+ size_t ShenandoahHeap::soft_max_capacity() const {
+-  size_t v = OrderAccess::load_acquire((volatile size_t*)&_soft_max_size);
++  size_t v = OrderAccess::load_acquire((volatile jlong*)&_soft_max_size);
+   assert(min_capacity() <= v && v <= max_capacity(),
+          err_msg("Should be in bounds: " SIZE_FORMAT " <= " SIZE_FORMAT " <= " SIZE_FORMAT,
+                  min_capacity(), v, max_capacity()));
+diff --git openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.hpp openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.hpp
+--- openjdk.orig/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.hpp
++++ openjdk/hotspot/src/share/vm/gc_implementation/shenandoah/shenandoahHeap.hpp
+@@ -155,7 +155,7 @@
+ private:
+            size_t _initial_size;
+            size_t _minimum_size;
+-  volatile size_t _soft_max_size;
++  volatile jlong  _soft_max_size;
+   shenandoah_padding(0);
+   volatile jlong  _used;
+   volatile size_t _committed;
