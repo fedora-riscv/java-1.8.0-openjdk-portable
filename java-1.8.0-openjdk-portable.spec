@@ -423,7 +423,13 @@
 %global tapsetdir %{tapsetdirttapset}/%{stapinstall}
 %endif
 
-# Prevent brp-java-repack-jars from being run.
+# x86 is no longer supported
+%if 0%{?java_arches:1}
+ExclusiveArch:  %{java_arches}
+%else
+ExcludeArch: %{ix86}
+%endif
+
 %global __jar_repack 0
 
 # portables have grown out of its component, moving back to java-x-vendor
@@ -1384,6 +1390,9 @@ done
 %endif
 
 %changelog
+* Fri Feb 03 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.352.b08-1.1
+- fixing build for f37 and above - exclude of ix86 archs
+
 * Thu Jan 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.352.b08-1.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
 
