@@ -30,7 +30,7 @@ import java.util.TimeZone;
 
 public class TestTranslations {
 
-    private static Map<Locale,String[]> KYIV;
+    private static Map<Locale,String[]> KYIV, CIUDAD_JUAREZ;
 
     static {
         Map<Locale,String[]> map = new HashMap<Locale,String[]>();
@@ -44,6 +44,18 @@ public class TestTranslations {
                                                "Osteurop\u00e4ische Sommerzeit", "OESZ", "OESZ",
                                                "Osteurop\u00e4ische Zeit", "OEZ", "OEZ"});
         KYIV = Collections.unmodifiableMap(map);
+
+        map = new HashMap<Locale,String[]>();
+        map.put(Locale.US, new String[] { "Mountain Standard Time", "MST", "MST",
+                                          "Mountain Daylight Time", "MDT", "MDT",
+                                          "Mountain Time", "MT", "MT"});
+        map.put(Locale.FRANCE, new String[] { "Heure normale des Rocheuses", "UTC\u221207:00", "MST",
+                                              "Heure avanc\u00e9e des Rocheuses", "UTC\u221206:00", "MDT",
+                                              "Rocheuses", "UTC\u221207:00", "MT"});
+        map.put(Locale.GERMANY, new String[] { "Rocky Mountains Normalzeit", "GMT-07:00", "MST",
+                                               "Rocky Mountains Sommerzeit", "GMT-06:00", "MDT",
+                                               "Zeitzone Mountain", "GMT-07:00", "MT"});
+        CIUDAD_JUAREZ = Collections.unmodifiableMap(map);
     }
 
 
@@ -53,7 +65,6 @@ public class TestTranslations {
             System.exit(1);
         }
 
-        String localeProvider = args[0];
         System.out.println("Checking sanity of full zone string set...");
         boolean invalid = Arrays.stream(Locale.getAvailableLocales())
             .peek(l -> System.out.println("Locale: " + l))
@@ -68,9 +79,18 @@ public class TestTranslations {
             System.exit(2);
         }
 
-        for (Locale l : KYIV.keySet()) {
-            String[] expected = KYIV.get(l);
-            for (String id : new String[] { "Europe/Kiev", "Europe/Kyiv", "Europe/Uzhgorod", "Europe/Zaporozhye" }) {
+        String localeProvider = args[0];
+        testZone(localeProvider, KYIV,
+                 new String[] { "Europe/Kiev", "Europe/Kyiv", "Europe/Uzhgorod", "Europe/Zaporozhye" });
+        testZone(localeProvider, CIUDAD_JUAREZ,
+                 new String[] { "America/Cambridge_Bay", "America/Ciudad_Juarez" });
+    }
+
+    private static void testZone(String localeProvider, Map<Locale,String[]> exp, String[] ids) {
+        for (Locale l : exp.keySet()) {
+            String[] expected = exp.get(l);
+            System.out.printf("Expected values for %s are %s\n", l, Arrays.toString(expected));
+            for (String id : ids) {
                 String expectedShortStd = null;
                 String expectedShortDST = null;
                 String expectedShortGen = null;

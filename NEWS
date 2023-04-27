@@ -3,6 +3,382 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u372 (2023-04-18):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u372
+
+* CVEs
+  - CVE-2023-21930
+  - CVE-2023-21937
+  - CVE-2023-21938
+  - CVE-2023-21939
+  - CVE-2023-21954
+  - CVE-2023-21967
+  - CVE-2023-21968
+* Security fixes
+  - JDK-8287404: Improve ping times
+  - JDK-8288436: Improve Xalan supports
+  - JDK-8294474: Better AES support
+  - JDK-8295304: Runtime support improvements
+  - JDK-8296496, JDK-8292652: Overzealous check in sizecalc.h prevents large memory allocation
+  - JDK-8296676, JDK-8296622: Improve String platform support
+  - JDK-8296684: Improve String platform support
+  - JDK-8296692: Improve String platform support
+  - JDK-8296700: Improve String platform support
+  - JDK-8296832: Improve Swing platform support
+  - JDK-8297371: Improve UTF8 representation redux
+  - JDK-8298191: Enhance object reclamation process
+  - JDK-8298310: Enhance TLS session negotiation
+  - JDK-8298667: Improved path handling
+  - JDK-8299129: Enhance NameService lookups
+* New features
+  - JDK-8230305: Cgroups v2: Container awareness
+* Other changes
+  - JDK-6734341: REGTEST fails: SelectionAutoscrollTest.html
+  - JDK-6829250: Reg test: java/awt/Toolkit/ScreenInsetsTest/ScreenInsetsTest.java fails in Windows
+  - JDK-7001973: java/awt/Graphics2D/CopyAreaOOB.java fails
+  - JDK-7124238: [macosx] Font in BasicHTML document is bigger than it should be
+  - JDK-7124381: DragSourceListener.dragDropEnd() never been called on completion of dnd operation
+  - JDK-8039888: [TEST_BUG] keyboard garbage after javax/swing/plaf/windows/WindowsRootPaneUI/WrongAltProcessing/WrongAltProcessing.java
+  - JDK-8042098: [TESTBUG] Test sun/java2d/AcceleratedXORModeTest.java fails on Windows
+  - JDK-8065422: Trailing dot in hostname causes TLS handshake to fail with SNI disabled
+  - JDK-8072770: [TESTBUG] Some Introspector tests fail with a Java heap bigger than 4GB
+  - JDK-8075964: Test java/awt/Mouse/TitleBarDoubleClick/TitleBarDoubleClick.html fails intermittently with timeout error
+  - JDK-8137101: [TEST_BUG] javax/swing/plaf/basic/BasicHTML/4251579/bug4251579.java failure due to timing
+  - JDK-8142540: [TEST_BUG] Test sun/awt/dnd/8024061/bug8024061.java fails on ubuntu
+  - JDK-8156579: Two JavaBeans tests failed
+  - JDK-8156581: Cleanup of ProblemList.txt
+  - JDK-8159135: [PIT] javax/swing/JMenuItem/8152981/MenuItemIconTest.java always fail
+  - JDK-8177560: @headful key can be removed from the tests for JavaSound
+  - JDK-8196196: Headful tests should not be run in headless mode
+  - JDK-8196467: javax/swing/JInternalFrame/Test6325652.java fails
+  - JDK-8197408: Bad pointer comparison and small cleanup in os_linux.cpp
+  - JDK-8203485: [freetype] text rotated on 180 degrees is too narrow
+  - JDK-8205959: Do not restart close if errno is EINTR
+  - JDK-8216366: Add rationale to PER_CPU_SHARES define
+  - JDK-8226236: win32: gc/metaspace/TestCapacityUntilGCWrapAround.java fails
+  - JDK-8228585: jdk/internal/platform/cgroup/TestCgroupMetrics.java - NumberFormatException because of large long values (memory limit_in_bytes)
+  - JDK-8229182: [TESTBUG] runtime/containers/docker/TestMemoryAwareness.java test fails on SLES12
+  - JDK-8229202: Docker reporting causes secondary crashes in error handling
+  - JDK-8231111: Cgroups v2: Rework Metrics in java.base so as to recognize unified hierarchy
+  - JDK-8232207: Linux os::available_memory re-reads cgroup configuration on every invocation
+  - JDK-8233570: [TESTBUG] HTMLEditorKit test bug5043626.java is failing on macos
+  - JDK-8234484: Add ability to configure third port for remote JMX
+  - JDK-8237479: 8230305 causes slowdebug build failure
+  - JDK-8239559: Cgroups: Incorrect detection logic on some systems
+  - JDK-8239785: Cgroups: Incorrect detection logic on old systems in hotspot
+  - JDK-8239827: The test OpenByUNCPathNameTest.java should be changed to be manual
+  - JDK-8240189: [TESTBUG] Some cgroup tests are failing after JDK-8231111
+  - JDK-8241087: Build failure with VS 2019 (16.5.0) due to C2039 and C2873
+  - JDK-8242468: VS2019 build missing vcruntime140_1.dll
+  - JDK-8243543: jtreg test security/infra/java/security/cert/CertPathValidator/certification/BuypassCA.java fails
+  - JDK-8244500: jtreg test error in test/hotspot/jtreg/containers/docker/TestMemoryAwareness.java
+  - JDK-8245543: Cgroups: Incorrect detection logic on some systems (still reproducible)
+  - JDK-8245654: Add Certigna Root CA
+  - JDK-8247676: vcruntime140_1.dll is not needed on 32-bit Windows
+  - JDK-8248899: security/infra/java/security/cert/CertPathValidator/certification/QuoVadisCA.java fails, Certificate has been revoked
+  - JDK-8252359: HotSpot Not Identifying it is Running in a Container
+  - JDK-8252957: Wrong comment in CgroupV1Subsystem::cpu_quota
+  - JDK-8253435: Cgroup: 'stomping of _mount_path' crash if manually mounted cpusets exist
+  - JDK-8253714: [cgroups v2] Soft memory limit incorrectly using memory.high
+  - JDK-8253727: [cgroups v2] Memory and swap limits reported incorrectly
+  - JDK-8253797: [cgroups v2] Account for the fact that swap accounting is disabled on some systems
+  - JDK-8253939: [TESTBUG] Increase coverage of the cgroups detection code
+  - JDK-8254001: [Metrics] Enhance parsing of cgroup interface files for version detection
+  - JDK-8254717: isAssignableFrom checks in KeyFactorySpi.engineGetKeySpec appear to be backwards
+  - JDK-8254997: Remove unimplemented OSContainer::read_memory_limit_in_bytes
+  - JDK-8257620: Do not use objc_msgSend_stret to get macOS version
+  - JDK-8262379: Add regression test for JDK-8257746
+  - JDK-8263404: RsaPrivateKeySpec is always recognized as RSAPrivateCrtKeySpec in RSAKeyFactory.engineGetKeySpec
+  - JDK-8266391: Replace use of reflection in jdk.internal.platform.Metrics
+  - JDK-8270317: Large Allocation in CipherSuite
+  - JDK-8275535: Retrying a failed authentication on multiple LDAP servers can lead to users blocked
+  - JDK-8275650: Problemlist java/io/File/createTempFile/SpecialTempFile.java for Windows 11
+  - JDK-8275713: TestDockerMemoryMetrics test fails on recent runc
+  - JDK-8278951: containers/cgroup/PlainRead.java fails on Ubuntu 21.10
+  - JDK-8280048: Missing comma in copyright header
+  - JDK-8282398: EndingDotHostname.java test fails because SSL cert expired
+  - JDK-8282511: Use fixed certificate validation date in SSLExampleCert template
+  - JDK-8282947: JFR: Dump on shutdown live-locks in some conditions
+  - JDK-8283277: ISO 4217 Amendment 171 Update
+  - JDK-8283606: Tests may fail with zh locale on MacOS
+  - JDK-8284102: [TESTBUG] [11u] Retroactively add regression test for JDK-8272124
+  - JDK-8284690: [macos] VoiceOver : Getting java.lang.IllegalArgumentException: Invalid location on Editable JComboBox
+  - JDK-8284756: [11u] Remove unused isUseContainerSupport in CgroupV1Subsystem
+  - JDK-8284977: MetricsTesterCgroupV2.getLongValueEntryFromFile fails when named value doesn't exist
+  - JDK-8286624: Regression Test CoordinateTruncationBug.java fails on OL8.3
+  - JDK-8287107: CgroupSubsystemFactory.setCgroupV2Path asserts with freezer controller
+  - JDK-8287109: Distrust.java failed with CertificateExpiredException
+  - JDK-8287463: JFR: Disable TestDevNull.java on Windows
+  - JDK-8287741: Fix of JDK-8287107 (unused cgv1 freezer controller) was incomplete
+  - JDK-8289549: ISO 4217 Amendment 172 Update
+  - JDK-8289695: [TESTBUG] TestMemoryAwareness.java fails on cgroups v2 and crun
+  - JDK-8291570: [TESTBUG] Part of JDK-8250984 absent from 11u
+  - JDK-8292083: Detected container memory limit may exceed physical machine memory
+  - JDK-8292541: [Metrics] Reported memory limit may exceed physical machine memory
+  - JDK-8293472: Incorrect container resource limit detection if manual cgroup fs mounts present
+  - JDK-8293540: [Metrics] Incorrectly detected resource limits with additional cgroup fs mounts
+  - JDK-8293767: AWT test TestSinhalaChar.java has old SCCS markings
+  - JDK-8294307: ISO 4217 Amendment 173 Update
+  - JDK-8294767: 8u contains two copies of test/../FileUtils.java, one uses JDK9+ features
+  - JDK-8295322: Tests for JDK-8271459 were not backported to 11u
+  - JDK-8295952: Problemlist existing compiler/rtm tests also on x86
+  - JDK-8295982: Failure in sun/security/tools/keytool/WeakAlg.java - ks: The process cannot access the file because it is being used by another process
+  - JDK-8296239: ISO 4217 Amendment 174 Update
+  - JDK-8296480: java/security/cert/pkix/policyChanges/TestPolicy.java is failing
+  - JDK-8296485: BuildEEBasicConstraints.java test fails with SunCertPathBuilderException
+  - JDK-8296632: Write a test to verify the content change of TextArea sends TextEvent
+  - JDK-8296957: One more cast in SAFE_SIZE_NEW_ARRAY2
+  - JDK-8297329: [8u] hotspot needs to recognise VS2019
+  - JDK-8297739: Bump update version of OpenJDK: 8u372
+  - JDK-8297996: [8u] generated images are broken due to renaming of MSVC runtime DLL's
+  - JDK-8298027: Remove SCCS id's from awt jtreg tests
+  - JDK-8298307: Enable hotspot/tier1 for 32-bit builds in GHA for 8u
+  - JDK-8299439: java/text/Format/NumberFormat/CurrencyFormat.java fails for hr_HR
+  - JDK-8299445: EndingDotHostname.java fails because of compilation errors
+  - JDK-8299483: ProblemList java/text/Format/NumberFormat/CurrencyFormat.java
+  - JDK-8299548: Fix hotspot/test/runtime/Metaspace/MaxMetaspaceSizeTest.java in 8u
+  - JDK-8299804: Fix non-portable code in hotspot shell tests in 8u
+  - JDK-8300014: Some backports placed the tests in the wrong location
+  - JDK-8300119: CgroupMetrics.getTotalMemorySize0() can report invalid results on 32 bit systems
+  - JDK-8301122: [8u] Fix unreliable vs2010 download link
+  - JDK-8301143: [TESTBUG] jfr/event/sampling/TestNative was backported to JDK8u without proper native wrapper
+  - JDK-8301246: NPE in FcFontManager.getDefaultPlatformFont() on Linux without installed fontconfig
+  - JDK-8301332: [8u] Fix writing of test files after the cgroups v2 backport
+  - JDK-8301550: [8u] Enable additional linux build testing in GitHub
+  - JDK-8301620: [8u] some shell tests are passed but have unexpected operator errors
+  - JDK-8301760: Fix possible leak in SpNegoContext dispose
+  - JDK-8303408: [AIX] Broken jdk8u build after JDK-8266391
+  - JDK-8303828: [Solaris] Broken jdk8u build after JDK-8266391
+  - JDK-8304053: Revert os specific stubs for SystemMetrics
+  - JDK-8305113: (tz) Update Timezone Data to 2023c
+
+Notes on individual issues:
+===========================
+
+hotspot:
+core-libs:
+
+JDK-8305562: Cgroups v2: Container awareness
+============================================
+The HotSpot runtime code as well as the core libraries code in the JDK
+has been updated in order to detect a cgroup v2 host system when
+running OpenJDK within a Linux container.
+
+Since the 8u202 release of OpenJDK, the container detection code
+recognized cgroup v1 (legacy) host Linux systems. With 8u372 and later
+releases, both versions of the underlying cgroups pseudo filesystem
+will be detected and corresponding container limits applied to the
+OpenJDK runtime.
+
+Without this enhancement, OpenJDK would not apply container resource
+limits when running on a cgroup v2 Linux host system, but would use
+the underlying hosts' resource limits instead.
+
+client-libs/javax.swing:
+
+JDK-8296832: Improve Swing platform support
+===========================================
+Earlier OpenJDK releases would always render HTML object tags embedded in
+Swing HTML components. With this release, rendering only occurs when the
+new system property "swing.html.object" is set to true. By default, it
+is set to false.
+
+core-svc/javax.management:
+
+JDK-8234484: Added Ability to Configure Third Port for Remote JMX
+=================================================================
+A local access port can now be configured for JMX connections by
+setting the property `com.sun.management.jmxremote.local.port`. This
+local port was previously selected at random, which could lead to port
+collisions. The property works in the same way as the existing
+properties for configuring the remote access port
+(`com.sun.management.jmxremote.port`) and the RMI port
+(`com.sun.management.jmxremote.rmi.port`)
+
+security-libs/java.security:
+
+JDK-8245654: Added Certigna(Dhimyotis) Root CA Certificate
+==========================================================
+The following root certificate has been added to the cacerts truststore:
+
+Name: Certigna (Dhimyotis)
+Alias Name: certignarootca
+Distinguished Name: CN=Certigna, O=Dhimyotis, C=FR
+
+New in release OpenJDK 8u362 (2023-01-17):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u362
+  * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u362.html
+
+* CVEs
+  - CVE-2023-21830
+  - CVE-2023-21843
+* Security fixes
+  - JDK-8285021: Improve CORBA communication
+  - JDK-8286496: Improve Thread labels
+  - JDK-8288516: Enhance font creation
+  - JDK-8289350: Better media supports
+  - JDK-8293554: Enhanced DH Key Exchanges
+  - JDK-8293598: Enhance InetAddress address handling
+  - JDK-8293717: Objective view of ObjectView
+  - JDK-8293734: Improve BMP image handling
+  - JDK-8293742: Better Banking of Sounds
+  - JDK-8295687: Better BMP bounds
+* Other changes
+  - JDK-6885993: Named Thread: introduce print() and print_on(outputStream* st) methods
+  - JDK-7124218: [TEST_BUG] [macosx] Space should select cell in the JTable
+  - JDK-8054066: com/sun/jdi/DoubleAgentTest.java fails with timeout
+  - JDK-8067941: [TESTBUG] Fix tests for OS with 64K page size.
+  - JDK-8071530: Update OS detection code to reflect Windows 10 version change
+  - JDK-8073464: GC workers do not have thread names
+  - JDK-8079255: [TEST_BUG] [macosx] Test closed/java/awt/Robot/RobotWheelTest/RobotWheelTest fails for Mac only
+  - JDK-8129827: [TEST_BUG] Test java/awt/Robot/RobotWheelTest/RobotWheelTest.java fails
+  - JDK-8148005: One byte may be corrupted by get_datetime_string()
+  - JDK-8159599: [TEST_BUG] java/awt/Modal/ModalInternalFrameTest/ModalInternalFrameTest.java
+  - JDK-8159720: Failure of C2 compilation with tiered prevents some C1 compilations
+  - JDK-8195607: sun/security/pkcs11/Secmod/TestNssDbSqlite.java failed with "NSS initialization failed" on NSS 3.34.1
+  - JDK-8197859: VS2017 Complains about UINTPTR_MAX definition in globalDefinitions_VisCPP.hpp
+  - JDK-8206456: [TESTBUG] docker jtreg tests fail on systems without cpuset.effective_cpus / cpuset.effective_mems
+  - JDK-8221529: [TESTBUG] Docker tests use old/deprecated image on AArch64
+  - JDK-8224506: [TESTBUG] TestDockerMemoryMetrics.java fails with exitValue = 137
+  - JDK-8233551: [TESTBUG] SelectEditTableCell.java fails on MacOS
+  - JDK-8241086: Test runtime/NMT/HugeArenaTracking.java is failing on 32bit Windows
+  - JDK-8253702: BigSur version number reported as 10.16, should be 11.nn
+  - JDK-8255559: Leak File Descriptors Because of ResolverLocalFilesystem#engineResolveURI()
+  - JDK-8265527: tools/javac/diags/CheckExamples.java fails after JDK-8078024 8u backport
+  - JDK-8269039: Disable SHA-1 Signed JARs
+  - JDK-8269850: Most JDK releases report macOS version 12 as 10.16 instead of 12.0
+  - JDK-8270344: Session resumption errors
+  - JDK-8271459: C2: Missing NegativeArraySizeException when creating StringBuilder with negative capacity
+  - JDK-8273176: handle latest VS2019 in abstract_vm_version
+  - JDK-8274563: jfr/event/oldobject/TestClassLoaderLeak.java fails when GC cycles are not happening
+  - JDK-8274840: Update OS detection code to recognize Windows 11
+  - JDK-8275887: jarsigner prints invalid digest/signature algorithm warnings if keysize is weak/disabled
+  - JDK-8280890: Cannot use '-Djava.system.class.loader' with class loader in signed JAR
+  - JDK-8283277: ISO 4217 Amendment 171 Update
+  - JDK-8283903: GetContainerCpuLoad does not return the correct result in share mode
+  - JDK-8284389: Improve stability of GHA Pre-submit testing by caching cygwin installer
+  - JDK-8284622: Update versions of some Github Actions used in JDK workflow
+  - JDK-8286582: Build fails on macos aarch64 when using --with-zlib=bundled
+  - JDK-8288928: Incorrect GPL header in pnglibconf.h (backport of JDK-8185041)
+  - JDK-8289549: ISO 4217 Amendment 172 Update
+  - JDK-8292762: Remove .jcheck directories from jdk8u subcomponents
+  - JDK-8293181: Bump update version of OpenJDK: 8u362
+  - JDK-8293461: Add a test for JDK-8290832
+  - JDK-8293828: JFR: jfr/event/oldobject/TestClassLoaderLeak.java still fails when GC cycles are not happening
+  - JDK-8294307: ISO 4217 Amendment 173 Update
+  - JDK-8294357: (tz) Update Timezone Data to 2022d
+  - JDK-8294863: Enable partial tier1 testing in GHA for JDK8
+  - JDK-8295164: JDK 8 jdi tests should not use tasklist command on Windows
+  - JDK-8295173: (tz) Update Timezone Data to 2022e
+  - JDK-8295288: Some vm_flags tests associate with a wrong BugID
+  - JDK-8295714: GHA ::set-output is deprecated and will be removed
+  - JDK-8295723: security/infra/wycheproof/RunWycheproof.java fails with Assertion Error
+  - JDK-8295915: Problemlist compiler/rtm failures specific to 8u
+  - JDK-8295950: Enable langtools/tier1 in GHA for 8u
+  - JDK-8296108: (tz) Update Timezone Data to 2022f
+  - JDK-8296239: ISO 4217 Amendment 174 Update
+  - JDK-8296555: Enable hotspot/tier1 for 64-bit builds in GHA for 8u
+  - JDK-8296715: CLDR v42 update for tzdata 2022f
+  - JDK-8296959: Fix hotspot shell tests of 8u on multilib systems
+  - JDK-8297141: Fix hotspot/test/runtime/SharedArchiveFile/DefaultUseWithClient.java for 8u
+  - JDK-8297804: (tz) Update Timezone Data to 2022g
+  - JDK-8299439: java/text/Format/NumberFormat/CurrencyFormat.java fails for hr_HR
+  - JDK-8299483: ProblemList java/text/Format/NumberFormat/CurrencyFormat.java
+  - JDK-8300178: JDK-8286496 causes build failure on older GCC
+  - JDK-8300225: JDK-8288516 causes build failure on Windows + VS2010
+
+Notes on individual issues:
+===========================
+
+client-libs/javax.imageio:
+
+JDK-8295687: Better BMP bounds
+==============================
+Loading a linked ICC profile within a BMP image is now disabled by
+default. To re-enable it, set the new system property
+`sun.imageio.bmp.enabledLinkedProfiles` to `true`.  This new property
+replaces the old property,
+`sun.imageio.plugins.bmp.disableLinkedProfiles`.
+
+client-libs/javax.sound:
+
+JDK-8293742: Better Banking of Sounds
+=====================================
+Previously, the SoundbankReader implementation,
+`com.sun.media.sound.JARSoundbankReader`, would download a JAR
+soundbank from a URL.  This behaviour is now disabled by default. To
+re-enable it, set the new system property `jdk.sound.jarsoundbank` to
+`true`.
+
+hotspot/runtime:
+
+JDK-8274840: Release Now Recognises Windows 11
+==============================================
+This release now correctly sets the `os.name` property to `Windows
+11`, as would be expected.
+
+other-libs/corba:idl:
+
+JDK-8285021: Improve CORBA communication
+========================================
+The JDK's CORBA implementation now refuses by default to deserialize
+objects, unless they have the "IOR:" prefix.  The previous behaviour
+can be re-enabled by setting the new property
+`com.sun.CORBA.ORBAllowDeserializeObject` to `true`.
+
+security-libs/java.security:
+
+JDK-8269039: Disabled SHA-1 Signed JARs
+=======================================
+JARs signed with SHA-1 algorithms are now restricted by default and
+treated as if they were unsigned. This applies to the algorithms used
+to digest, sign, and optionally timestamp the JAR. It also applies to
+the signature and digest algorithms of the certificates in the
+certificate chain of the code signer and the Timestamp Authority, and
+any CRLs or OCSP responses that are used to verify if those
+certificates have been revoked. These restrictions also apply to
+signed JCE providers.
+
+To reduce the compatibility risk for JARs that have been previously
+timestamped, there is one exception to this policy:
+
+- Any JAR signed with SHA-1 algorithms and timestamped prior to
+  January 01, 2019 will not be restricted.
+
+This exception may be removed in a future JDK release. To determine if
+your signed JARs are affected by this change, run:
+
+$ jarsigner -verify -verbose -certs`
+
+on the signed JAR, and look for instances of "SHA1" or "SHA-1" and
+"disabled" and a warning that the JAR will be treated as unsigned in
+the output.
+
+For example:
+
+   Signed by "CN="Signer""
+   Digest algorithm: SHA-1 (disabled)
+   Signature algorithm: SHA1withRSA (disabled), 2048-bit key
+
+   WARNING: The jar will be treated as unsigned, because it is signed with a weak algorithm that is now disabled by the security property:
+
+   jdk.jar.disabledAlgorithms=MD2, MD5, RSA keySize < 1024, DSA keySize < 1024, SHA1 denyAfter 2019-01-01
+
+JARs affected by these new restrictions should be replaced or
+re-signed with stronger algorithms.
+
+Users can, *at their own risk*, remove these restrictions by modifying
+the `java.security` configuration file (or override it by using the
+`java.security.properties` system property) and removing "SHA1 usage
+SignedJAR & denyAfter 2019-01-01" from the
+`jdk.certpath.disabledAlgorithms` security property and "SHA1
+denyAfter 2019-01-01" from the `jdk.jar.disabledAlgorithms` security
+property.
+
 New in release OpenJDK 8u352 (2022-10-18):
 ===========================================
 Live versions of these release notes can be found at:
@@ -121,6 +497,19 @@ the current count of established connections and, if the configured
 limit has been reached, then the newly accepted connection will be
 closed immediately.
 
+core-libs/java.net:
+
+JDK-8286918: Better HttpServer service
+======================================
+The HttpServer can be optionally configured with a maximum connection
+limit by setting the jdk.httpserver.maxConnections system property. A
+value of 0 or a negative integer is ignored and considered to
+represent no connection limit. In the case of a positive integer
+value, any newly accepted connections will be first checked against
+the current count of established connections and, if the configured
+limit has been reached, then the newly accepted connection will be
+closed immediately.
+
 security-libs/javax.net.ssl:
 
 JDK-8282859: Enable TLSv1.3 by Default on JDK 8 for Client Roles
@@ -171,7 +560,7 @@ or:
 
 SSLParameters params = sslSocket.getSSLParameters();
 params.setProtocols(new String[] {"TLSv1.2"});
-slsSocket.setSSLParameters(params);
+sslSocket.setSSLParameters(params);
 
 New in release OpenJDK 8u345 (2022-08-01):
 ===========================================
@@ -382,7 +771,7 @@ Live versions of these release notes can be found at:
 New in release OpenJDK 8u322 (2022-01-18):
 ===========================================
 Live versions of these release notes can be found at:
-  * https://bitly.com/openjdk8u322
+  * https://bit.ly/openjdk8u322
   * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u322.txt
 
 * Security fixes
