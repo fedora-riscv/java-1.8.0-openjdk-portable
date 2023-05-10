@@ -95,7 +95,7 @@
 # Set of architectures with a Just-In-Time (JIT) compiler
 %global jit_arches      %{aarch64} %{ix86} %{power64} sparcv9 sparc64 x86_64
 # Set of architectures which use the Zero assembler port (!jit_arches)
-%global zero_arches %{arm} ppc s390 s390x
+%global zero_arches %{arm} ppc s390 s390x riscv64
 # Set of architectures which run a full bootstrap cycle
 %global bootstrap_arches %{jit_arches} %{zero_arches}
 # Set of architectures which support SystemTap tapsets
@@ -257,6 +257,11 @@
 %global archinstall sparcv9
 %global stapinstall %{_target_cpu}
 %endif
+# riscv64
+%ifarch riscv64
+%global archinstall riscv64
+%global stapinstall %{nil}
+%endif
 # Need to support noarch for srpm build
 %ifarch noarch
 %global archinstall %{nil}
@@ -342,7 +347,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # priority must be 7 digits in total; up to openjdk 1.8
 %if %is_system_jdk
 %global priority        1800%{updatever}
@@ -449,7 +454,7 @@ ExcludeArch: %{ix86}
 
 Name:    java-%{javaver}-%{origin}-portable
 Version: %{javaver}.%{updatever}.b06
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}.1
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -624,6 +629,10 @@ Patch103: pr3593-s390_use_z_format_specifier_for_size_t_arguments_as_size_t_not_
 Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac_os_x.patch
 # S390 ambiguous log2_intptr calls
 Patch107: s390-8214206_fix.patch
+
+# Add support for RISC-V (riscv64)
+Patch130: java-1.8.0-riscv-1.patch
+
 
 #############################################
 #
@@ -924,6 +933,9 @@ sh %{SOURCE12}
 
 # AArch64 fixes
 
+# RISC-V (riscv64) fixes
+%patch -P130
+
 # x86 fixes
 %patch -P105
 
@@ -976,6 +988,11 @@ sed -e "s:@NSS_LIBDIR@:%{NSS_LIBDIR}:g" %{SOURCE17} > nss.fips.cfg
 #Commented because NA to portable
 #sed -i -e "s:^security.systemCACerts=.*:security.systemCACerts=%{cacerts_file}:" %{security_file}
 
+%ifarch riscv64
+find %{top_level_dir_name} -name 'config.guess' -exec cp -f /usr/lib/rpm/%{_vendor}/config.guess {} \;
+find %{top_level_dir_name} -name 'config.sub' -exec cp -f /usr/lib/rpm/%{_vendor}/config.sub {} \;
+%endif
+
 %build
 
 # How many CPU's do we have?
@@ -986,7 +1003,7 @@ export NUM_PROC=${NUM_PROC:-1}
 [ ${NUM_PROC} -gt %{?_smp_ncpus_max} ] && export NUM_PROC=%{?_smp_ncpus_max}
 %endif
 
-%ifarch s390x sparc64 alpha %{power64} %{aarch64}
+%ifarch s390x sparc64 alpha %{power64} %{aarch64} riscv64
 export ARCH_DATA_MODEL=64
 %endif
 %ifarch alpha
@@ -1420,6 +1437,7 @@ do
   fi
 done
 
+%ifnarch riscv64
 # Make sure gdb can do a backtrace based on line numbers on libjvm.so
 # javaCalls.cpp:58 should map to:
 # http://hg.openjdk.java.net/jdk8u/jdk8u/hotspot/file/ff3b27e6bcc2/src/share/vm/runtime/javaCalls.cpp#l58
@@ -1439,6 +1457,7 @@ run -version
 EOF
 %ifarch %{gdb_arches}
 grep 'JavaCallWrapper::JavaCallWrapper' gdb.out
+%endif
 %endif
 
 # Check src.zip has all sources. See RHBZ#1130490
@@ -1571,6 +1590,9 @@ done
 %endif
 
 %changelog
+* Sun Mar 03 2024 Liu Yang <Yang.Liu.sn@gmail.com> - 1:1.8.0.402.b06-2
+- Add riscv64 support.
+
 * Tue Feb 27 2024 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.402.b06-1.1
 - Rebuilt for java-21-openjdk as system jdk
 
