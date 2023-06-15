@@ -323,7 +323,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -985,7 +985,6 @@ function buildjdk() {
 %ifarch %{zero_arches}
     --with-jvm-variants=zero \
 %endif
-    --with-cacerts-file=`readlink -f %{_sysconfdir}/pki/java/cacerts`  \
     --with-native-debug-symbols=$debug_symbols \
     --with-milestone=%{milestone} \
     --with-update-version=%{updatever} \
@@ -1388,6 +1387,10 @@ done
 %endif
 
 %changelog
+* Thu Jun 17 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-3
+- no longer using system cacerts during build
+- they are already mv-ed as .upstream in rpms
+ 
 * Sat Jun 17 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-2
 - Redeclared ForFiles release sections as %%nil no longer works with %%1
 - RPM 4.19 no longer accept our double percentaged %%{nil} passed to %%{1}
