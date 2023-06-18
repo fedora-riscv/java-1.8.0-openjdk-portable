@@ -323,7 +323,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -374,6 +374,11 @@
 %define jdkportablearchive()  %{expand:%{jdkportablenameimpl -- %%{1}}.tar.xz}
 %define jreportablename()     %{expand:%{jreportablenameimpl -- %%{1}}}
 %define jdkportablename()     %{expand:%{jdkportablenameimpl -- %%{1}}}
+
+# RPM 4.19 no longer accept our double percentaged %%{nil} passed to %%{1}
+# so we have to pass in "" but evaluate it, otherwise files record will include it
+%define jreportablearchiveForFiles()  %(echo %{jreportablearchive -- ""})
+%define jdkportablearchiveForFiles()  %(echo %{jdkportablearchive -- ""})
 
 #################################################################
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
@@ -1340,11 +1345,11 @@ done
 %if %{include_normal_build}
 %files
 # main package builds always
-%{_jvmdir}/%{jreportablearchive -- %%{nil}}
+%{_jvmdir}/%{jreportablearchiveForFiles}
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}
-%{_jvmdir}/%{jreportablearchive -- %%{nil}}.sha256sum
+%{_jvmdir}/%{jreportablearchiveForFiles}.sha256sum
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 %else
 %files
 # placeholder
@@ -1352,37 +1357,42 @@ done
 
 %if %{include_normal_build}
 %files devel
-%{_jvmdir}/%{jdkportablearchive -- %%{nil}}
+%{_jvmdir}/%{jdkportablearchiveForFiles}
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}
-%{_jvmdir}/%{jdkportablearchive -- %%{nil}}.sha256sum
+%{_jvmdir}/%{jdkportablearchiveForFiles}.sha256sum
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 %endif
 
 %if %{include_debug_build}
 %files slowdebug
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 
 %files devel-slowdebug
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 %endif
 %if %{include_fastdebug_build}
 %files fastdebug
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 
 %files devel-fastdebug
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchive -- %%{nil}}
+%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
 %endif
 
 %changelog
+* Sat Jun 17 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-2
+- Redeclared ForFiles release sections as %%nil no longer works with %%1
+- RPM 4.19 no longer accept our double percentaged %%{nil} passed to %%{1}
+- so we have to pass in "" but evaluate it, otherwise files record will include it
+
 * Tue Apr 18 2023 Andrew Hughes <gnu.andrew@redhat.com> - 1:1.8.0.372.b07-1
 - Update to shenandoah-jdk8u372-b07 (GA)
 - Update release notes for shenandoah-8u372-b07.
