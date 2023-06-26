@@ -323,7 +323,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -366,19 +366,24 @@
 %if (0%{?rhel} > 0 && 0%{?rhel} < 8)
 %define jreportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.jre.;g" | sed "s;openjdkportable;el;g")
 %define jdkportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.jdk.;g" | sed "s;openjdkportable;el;g")
+%define jdkportablesourcesnameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.sources.;g" | sed "s;openjdkportable;el;g" | sed "s;.%{_arch};.noarch;g")
 %else
 %define jreportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.jre;g" | sed "s;openjdkportable;el;g")
 %define jdkportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.jdk;g" | sed "s;openjdkportable;el;g")
+%define jdkportablesourcesnameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.sources;g" | sed "s;openjdkportable;el;g" | sed "s;.%{_arch};.noarch;g")
 %endif
 %define jreportablearchive()  %{expand:%{jreportablenameimpl -- %%{1}}.tar.xz}
 %define jdkportablearchive()  %{expand:%{jdkportablenameimpl -- %%{1}}.tar.xz}
+%define jdkportablesourcesarchive()  %{expand:%{jdkportablesourcesnameimpl -- %%{1}}.tar.xz}
 %define jreportablename()     %{expand:%{jreportablenameimpl -- %%{1}}}
 %define jdkportablename()     %{expand:%{jdkportablenameimpl -- %%{1}}}
+%define jdkportablesourcesname()     %{expand:%{jdkportablesourcesnameimpl -- %%{1}}}
 
 # RPM 4.19 no longer accept our double percentaged %%{nil} passed to %%{1}
 # so we have to pass in "" but evaluate it, otherwise files record will include it
 %define jreportablearchiveForFiles()  %(echo %{jreportablearchive -- ""})
 %define jdkportablearchiveForFiles()  %(echo %{jdkportablearchive -- ""})
+%define jdkportablesourcesarchiveForFiles()  %(echo %{jdkportablesourcesarchive -- ""})
 
 #################################################################
 # fix for https://bugzilla.redhat.com/show_bug.cgi?id=1111349
@@ -780,6 +785,11 @@ The %{origin_nice} %{majorver} development tools - portable edition
 %{fastdebug_warning}
 %endif
 
+%package sources
+Summary: %{origin_nice} %{majorver} full patched sources of portable JDK
+
+%description sources
+The %{origin_nice} %{majorver} full patched sources of portable JDK to build, attach to debuggers or for debuginfo
 %prep
 if [ %{include_normal_build} -eq 0 -o  %{include_normal_build} -eq 1 ] ; then
   echo "include_normal_build is %{include_normal_build}"
@@ -1109,6 +1119,9 @@ function installjdk() {
   cat ${imagepath}/images/%{jreimage}/release
 }
 
+tar -cJf  ../%{jdkportablesourcesarchive -- ""} --transform "s|^|%{jdkportablesourcesname -- ""}/|" openjdk nss*
+sha256sum ../%{jdkportablesourcesarchive -- ""} > ../%{jdkportablesourcesarchive -- ""}.sha256sum
+
 %if %{build_hotspot_first}
   # Build a fresh libjvm.so first and use it to bootstrap
   cp -LR --preserve=mode,timestamps %{bootjdk} newboot
@@ -1148,7 +1161,7 @@ fi
 if ${run_bootstrap} ; then
   buildjdk ${bootbuilddir} ${systemjdk} "%{bootstrap_targets}" ${debugbuild}
   installjdk ${bootbuilddir} ${bootinstalldir}
-  buildjdk ${builddir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild}
+  buildjdk ${builddir} $(pwd)/${bootinstalldir}/images/%{jdkimage} "${maketargets}" ${debugbuild} ${link_opt}
   installjdk ${builddir} ${installdir}
   %{!?with_artifacts:rm -rf ${bootinstalldir}}
 else
@@ -1315,6 +1328,10 @@ done
 %install
 rm -rf $RPM_BUILD_ROOT
 
+mkdir -p $RPM_BUILD_ROOT%{_jvmdir}
+mv ../%{jdkportablesourcesarchive -- ""} $RPM_BUILD_ROOT%{_jvmdir}/
+mv ../%{jdkportablesourcesarchive -- ""}.sha256sum $RPM_BUILD_ROOT%{_jvmdir}/
+
 for suffix in %{build_loop} ; do
   if [ "x$suffix" == "x" ] ; then
     nameSuffix=""
@@ -1333,8 +1350,8 @@ for suffix in %{build_loop} ; do
       mv ../../%{jdkportablearchive -- "$dnameSuffix"} $RPM_BUILD_ROOT%{_jvmdir}/
       mv ../../%{jdkportablearchive -- "$dnameSuffix"}.sha256sum $RPM_BUILD_ROOT%{_jvmdir}/
   fi
-  mkdir -p $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablearchive -- "%{normal_suffix}"}
-  cp -af openjdk/{ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablearchive -- "%{normal_suffix}"}
+  mkdir -p $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablesourcesarchive -- "%{normal_suffix}"}
+  cp -af openjdk/{ASSEMBLY_EXCEPTION,LICENSE,THIRD_PARTY_README} $RPM_BUILD_ROOT%{unpacked_licenses}/%{jdkportablesourcesarchive -- "%{normal_suffix}"}
 # To show sha in the build log-
 for file in `ls $RPM_BUILD_ROOT%{_jvmdir}/*.sha256sum` ; do ls -l $file ; cat $file ; done
 done
@@ -1348,7 +1365,7 @@ done
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}
 %{_jvmdir}/%{jreportablearchiveForFiles}.sha256sum
 %{_jvmdir}/%{jreportablearchive -- .debuginfo}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 %else
 %files
 # placeholder
@@ -1360,33 +1377,41 @@ done
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}
 %{_jvmdir}/%{jdkportablearchiveForFiles}.sha256sum
 %{_jvmdir}/%{jdkportablearchive -- .debuginfo}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 %endif
 
 %if %{include_debug_build}
 %files slowdebug
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}
 %{_jvmdir}/%{jreportablearchive -- .slowdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %files devel-slowdebug
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}
 %{_jvmdir}/%{jdkportablearchive -- .slowdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 %endif
 %if %{include_fastdebug_build}
 %files fastdebug
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}
 %{_jvmdir}/%{jreportablearchive -- .fastdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %files devel-fastdebug
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}
 %{_jvmdir}/%{jdkportablearchive -- .fastdebug}.sha256sum
-%license %{unpacked_licenses}/%{jdkportablearchiveForFiles}
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 %endif
 
+%files sources
+%{_jvmdir}/%{jdkportablesourcesarchiveForFiles}
+%{_jvmdir}/%{jdkportablesourcesarchiveForFiles}.sha256sum
+%license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
+
 %changelog
+* Sun Jun 18 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-4
+- adding the sources subpkg for purposes of repack
+
 * Thu Jun 17 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-3
 - no longer using system cacerts during build
 - they are already mv-ed as .upstream in rpms
