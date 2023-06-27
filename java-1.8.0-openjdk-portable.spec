@@ -722,7 +722,7 @@ BuildRequires: libXtst-devel
 # Requirement for setting up nss.cfg and nss.fips.cfg
 BuildRequires: nss-devel
 # Requirement for system security property test
-#BuildRequires: crypto-policies
+BuildRequires: crypto-policies
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
 BuildRequires: zip
@@ -1430,6 +1430,10 @@ done
 * Tue Jun 27 2023 Kalev Lember <klember@redhat.com> - 1:1.8.0.372.b07-7
 - Simplify portable archive name macros
 
+* Tue Jun 27 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-7
+- additional changes for the sake of single build repack:
+- Uncommented Buildrequires crypto policies so we are aligned with ojdk11 portables
+
 * Mon Jun 26 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-6
 - adding javadocs.zip to the devel/jdk subpackage 
 
@@ -1439,7 +1443,7 @@ done
 * Sun Jun 18 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-4
 - adding the sources subpkg for purposes of repack
 
-* Thu Jun 17 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-3
+* Thu Jun 15 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-3
 - no longer using system cacerts during build
 - they are already mv-ed as .upstream in rpms
  
