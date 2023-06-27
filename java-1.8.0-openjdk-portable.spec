@@ -279,6 +279,14 @@
 %global security_file %{top_level_dir_name}/jdk/src/share/lib/security/java.security-%{_target_os}
 %global cacerts_file /etc/pki/java/cacerts
 
+%if 0%{?rhel} && !0%{?epel}
+  %global lts_designator "LTS"
+  %global lts_designator_zip -%{lts_designator}
+%else
+ %global lts_designator ""
+ %global lts_designator_zip ""
+%endif
+
 # Define vendor information used by OpenJDK
 %global oj_vendor Red Hat, Inc.
 %global oj_vendor_url "https://www.redhat.com/"
@@ -323,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      5
+%global rpmrelease      6
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -332,6 +340,8 @@
 %if %{is_ga}
 %global milestone          fcs
 %global milestone_version  %{nil}
+%global ea_designator ""
+%global ea_designator_zip ""
 %global extraver %{nil}
 %global eaprefix %{nil}
 %else
@@ -1151,6 +1161,14 @@ fi
 pushd $(pwd)/${installdir}/images
   mv %{jreimage} %{jreportablename -- "$nameSuffix"}
   mv %{jdkimage} %{jdkportablename -- "$nameSuffix"}
+  # javadoc is done only for release sdkimage
+  if ! echo $suffix | grep -q "debug" ; then
+    # Install Javadoc documentation
+    #cp -a docs %{jdkimage}  # not sure if the plaintext javadoc is for some use
+    built_doc_archive=jdk-%{javaver}_%{updatever}%{ea_designator_zip}-%{buildver}%{lts_designator_zip}-docs.zip
+    # mkdir -p `pwd`/%{jdkimage}
+    cp -a  ../bundles/${built_doc_archive} %{jdkportablename -- "$nameSuffix"}/javadocs.zip || ls -l ../bundles/
+  fi
 
 
     tar -cJf ../../../../../%{jreportablearchive -- "$nameSuffix"}  --exclude='**.debuginfo' %{jreportablename -- "$nameSuffix"} 
@@ -1414,6 +1432,9 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Mon Jun 26 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-6
+- adding javadocs.zip to the devel/jdk subpackage 
+
 * Mon Jun 26 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-5
 - moving the creation of tar archives to after the build and installation phase to save some resources 
 
