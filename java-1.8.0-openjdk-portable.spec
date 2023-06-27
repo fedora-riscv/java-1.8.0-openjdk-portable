@@ -323,7 +323,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      4
+%global rpmrelease      5
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1092,26 +1092,6 @@ function installjdk() {
       echo "Hardened java binary recommended for launching untrusted code from the Web e.g. javaws" > "$dir"/man/man1/%{alt_java_name}.1
       cat "$dir"/man/man1/java.1 >> "$dir"/man/man1/%{alt_java_name}.1
     done
-    mv %{jreimage} %{jreportablename -- "$nameSuffix"}
-    tar -cJf ../../../../../%{jreportablearchive -- "$nameSuffix"}  --exclude='**.debuginfo' %{jreportablename -- "$nameSuffix"} 
-    sha256sum ../../../../../%{jreportablearchive -- "$nameSuffix"} > ../../../../../%{jreportablearchive -- "$nameSuffix"}.sha256sum
-    if [ "x$suffix" == "x" ] ; then
-      dnameSuffix="$nameSuffix".debuginfo
-      tar -cJf ../../../../../%{jreportablearchive -- "$dnameSuffix"} $(find %{jreportablename -- "$nameSuffix"}/ -name \*.debuginfo)
-      sha256sum ../../../../../%{jreportablearchive -- "$dnameSuffix"} > ../../../../../%{jreportablearchive -- "$dnameSuffix"}.sha256sum
-    fi
-    mv %{jreportablename -- "$nameSuffix"} %{jreimage}
-    mv %{jdkimage} %{jdkportablename -- "$nameSuffix"}
-    srcs=$(find %{jdkportablename -- "$nameSuffix"} | grep -v /demo/ | grep /src.zip$)
-    test `echo "$srcs" | wc -l` -eq 1
-    tar -cJf ../../../../../%{jdkportablearchive -- "$nameSuffix"}  --exclude='**.debuginfo' %{jdkportablename -- "$nameSuffix"}
-    sha256sum ../../../../../%{jdkportablearchive -- "$nameSuffix"} > ../../../../../%{jdkportablearchive -- "$nameSuffix"}.sha256sum
-    if [ "x$suffix" == "x" ] ; then
-      dnameSuffix="$nameSuffix".debuginfo
-      tar -cJf ../../../../../%{jdkportablearchive -- "$dnameSuffix"} $(find %{jdkportablename -- "$nameSuffix"}/ -name \*.debuginfo)
-      sha256sum ../../../../../%{jdkportablearchive -- "$dnameSuffix"} > ../../../../../%{jdkportablearchive -- "$dnameSuffix"}.sha256sum
-    fi
-    mv %{jdkportablename -- "$nameSuffix"} %{jdkimage}
   popd #images
 
   # Print release information
@@ -1168,6 +1148,31 @@ else
   buildjdk ${builddir} ${systemjdk} "${maketargets}" ${debugbuild}
   installjdk ${builddir} ${installdir}
 fi
+pushd $(pwd)/${installdir}/images
+  mv %{jreimage} %{jreportablename -- "$nameSuffix"}
+  mv %{jdkimage} %{jdkportablename -- "$nameSuffix"}
+
+
+    tar -cJf ../../../../../%{jreportablearchive -- "$nameSuffix"}  --exclude='**.debuginfo' %{jreportablename -- "$nameSuffix"} 
+    sha256sum ../../../../../%{jreportablearchive -- "$nameSuffix"} > ../../../../../%{jreportablearchive -- "$nameSuffix"}.sha256sum
+    if [ "x$suffix" == "x" ] ; then
+      dnameSuffix="$nameSuffix".debuginfo
+      tar -cJf ../../../../../%{jreportablearchive -- "$dnameSuffix"} $(find %{jreportablename -- "$nameSuffix"}/ -name \*.debuginfo)
+      sha256sum ../../../../../%{jreportablearchive -- "$dnameSuffix"} > ../../../../../%{jreportablearchive -- "$dnameSuffix"}.sha256sum
+    fi
+
+    srcs=$(find %{jdkportablename -- "$nameSuffix"} | grep -v /demo/ | grep /src.zip$)
+    test `echo "$srcs" | wc -l` -eq 1
+    tar -cJf ../../../../../%{jdkportablearchive -- "$nameSuffix"}  --exclude='**.debuginfo' %{jdkportablename -- "$nameSuffix"}
+    sha256sum ../../../../../%{jdkportablearchive -- "$nameSuffix"} > ../../../../../%{jdkportablearchive -- "$nameSuffix"}.sha256sum
+    if [ "x$suffix" == "x" ] ; then
+      dnameSuffix="$nameSuffix".debuginfo
+      tar -cJf ../../../../../%{jdkportablearchive -- "$dnameSuffix"} $(find %{jdkportablename -- "$nameSuffix"}/ -name \*.debuginfo)
+      sha256sum ../../../../../%{jdkportablearchive -- "$dnameSuffix"} > ../../../../../%{jdkportablearchive -- "$dnameSuffix"}.sha256sum
+    fi
+    mv %{jdkportablename -- "$nameSuffix"} %{jdkimage}
+    mv %{jreportablename -- "$nameSuffix"} %{jreimage}
+  popd #images
 
 # build cycles
 done
@@ -1409,6 +1414,9 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Mon Jun 26 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-5
+- moving the creation of tar archives to after the build and installation phase to save some resources 
+
 * Sun Jun 18 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-4
 - adding the sources subpkg for purposes of repack
 
