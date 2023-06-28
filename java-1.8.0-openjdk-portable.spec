@@ -331,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      6
+%global rpmrelease      7
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -373,15 +373,10 @@
 %define uniquejavadocdir()    %{expand:%{fullversion}%{?1}}
 # main id and dir of this jdk
 %define uniquesuffix()        %{expand:%{fullversion}.%{_arch}%{?1}}
-%if (0%{?rhel} > 0 && 0%{?rhel} < 8)
-%define jreportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.jre.;g" | sed "s;openjdkportable;el;g")
-%define jdkportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.jdk.;g" | sed "s;openjdkportable;el;g")
-%define jdkportablesourcesnameimpl() %(echo %{uniquesuffix ""} | sed "s;el7\\(_[0-9]\\)*;portable%{1}.sources.;g" | sed "s;openjdkportable;el;g" | sed "s;.%{_arch};.noarch;g")
-%else
-%define jreportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.jre;g" | sed "s;openjdkportable;el;g")
-%define jdkportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.jdk;g" | sed "s;openjdkportable;el;g")
-%define jdkportablesourcesnameimpl() %(echo %{uniquesuffix ""} | sed "s;fc\\([0-9]\\)*;\\0.portable%{1}.sources;g" | sed "s;openjdkportable;el;g" | sed "s;.%{_arch};.noarch;g")
-%endif
+%define jreportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;%{version}-%{release};\\0.portable%{1}.jre;g" | sed "s;openjdkportable;el;g")
+%define jdkportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;%{version}-%{release};\\0.portable%{1}.jdk;g" | sed "s;openjdkportable;el;g")
+%define jdkportablesourcesnameimpl() %(echo %{uniquesuffix ""} | sed "s;%{version}-%{release};\\0.portable%{1}.sources;g" | sed "s;openjdkportable;el;g" | sed "s;.%{_arch};.noarch;g")
+%define staticlibsportablenameimpl() %(echo %{uniquesuffix ""} | sed "s;%{version}-%{release};\\0.portable%{1}.static-libs;g" | sed "s;openjdkportable;el;g")
 %define jreportablearchive()  %{expand:%{jreportablenameimpl -- %%{1}}.tar.xz}
 %define jdkportablearchive()  %{expand:%{jdkportablenameimpl -- %%{1}}.tar.xz}
 %define jdkportablesourcesarchive()  %{expand:%{jdkportablesourcesnameimpl -- %%{1}}.tar.xz}
@@ -1432,6 +1427,9 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Tue Jun 27 2023 Kalev Lember <klember@redhat.com> - 1:1.8.0.372.b07-7
+- Simplify portable archive name macros
+
 * Mon Jun 26 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-6
 - adding javadocs.zip to the devel/jdk subpackage 
 
