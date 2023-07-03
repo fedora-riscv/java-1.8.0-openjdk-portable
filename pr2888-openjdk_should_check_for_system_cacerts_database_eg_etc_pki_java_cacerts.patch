@@ -61,3 +61,88 @@ diff --git openjdk.orig/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.ja
          if (!file.exists()) {
              return null;
          }
+diff --git a/jdk/src/share/lib/security/java.security b/jdk/src/share/lib/security/java.security
+index 681a24b905d..ecb8bc43a6c 100644
+--- a/jdk/src/share/lib/security/java.security-aix
++++ b/jdk/src/share/lib/security/java.security-aix
+@@ -288,6 +288,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-linux b/jdk/src/share/lib/security/java.security-linux
+index 789c19a8cba..2546fdec9b2 100644
+--- a/jdk/src/share/lib/security/java.security-linux
++++ b/jdk/src/share/lib/security/java.security-linux
+@@ -302,6 +302,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-macosx b/jdk/src/share/lib/security/java.security-macosx
+index d4da666af3b..1a20027c02b 100644
+--- a/jdk/src/share/lib/security/java.security-macosx
++++ b/jdk/src/share/lib/security/java.security-macosx
+@@ -291,6 +291,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-solaris b/jdk/src/share/lib/security/java.security-solaris
+index 300132384a1..6299e0a3c7b 100644
+--- a/jdk/src/share/lib/security/java.security-solaris
++++ b/jdk/src/share/lib/security/java.security-solaris
+@@ -289,6 +289,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-windows b/jdk/src/share/lib/security/java.security-windows
+index 64db5a5cd1e..823994f3466 100644
+--- a/jdk/src/share/lib/security/java.security-windows
++++ b/jdk/src/share/lib/security/java.security-windows
+@@ -291,6 +291,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
