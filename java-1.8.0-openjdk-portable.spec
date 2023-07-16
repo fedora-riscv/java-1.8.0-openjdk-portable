@@ -289,7 +289,7 @@
 
 # Define vendor information used by OpenJDK
 %global oj_vendor Red Hat, Inc.
-%global oj_vendor_url "https://www.redhat.com/"
+%global oj_vendor_url https://www.redhat.com/
 # Define what url should JVM offer in case of a crash report
 # order may be important, epel may have rhel declared
 %if 0%{?epel}
@@ -331,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      8
+%global rpmrelease      9
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1219,7 +1219,7 @@ $JAVA_HOME/bin/java ${SEC_DEBUG} -Djava.security.disableSystemPropertiesFile=tru
 
 # Check correct vendor values have been set
 $JAVA_HOME/bin/javac -d . %{SOURCE16}
-$JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" %{oj_vendor_url} %{oj_vendor_bug_url}
+$JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" "%{oj_vendor_url}" "%{oj_vendor_bug_url}"
 
 # Check java launcher has no SSB mitigation
 if ! nm $JAVA_HOME/bin/java | grep set_speculation ; then true ; else false; fi
@@ -1428,6 +1428,9 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Sun Jul 16 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-9
+- Fix quotes around vendor information strings
+
 * Mon Jul 03 2023 Jiri Andrlik <jandrlik@redhat.com> - 1:1.8.0.372.b07-8
 - align patch539(cacerts) with ojdk8 portables on rhel
 - fixing changelog warning
