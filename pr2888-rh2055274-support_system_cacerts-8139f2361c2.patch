@@ -1,0 +1,193 @@
+diff --git a/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java b/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
+index e7b4763db53..0005e56f528 100644
+--- a/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
++++ b/jdk/src/share/classes/sun/security/ssl/TrustStoreManager.java
+@@ -31,6 +31,7 @@ import java.security.*;
+ import java.security.cert.*;
+ import java.util.*;
+ import sun.security.action.*;
++import sun.security.tools.KeyStoreUtil;
+ import sun.security.validator.TrustStoreUtil;
+ 
+ /**
+@@ -68,7 +69,7 @@ final class TrustStoreManager {
+      * The preference of the default trusted KeyStore is:
+      *    javax.net.ssl.trustStore
+      *    jssecacerts
+-     *    cacerts
++     *    cacerts (system and local)
+      */
+     private static final class TrustStoreDescriptor {
+         private static final String fileSep = File.separator;
+@@ -76,7 +77,8 @@ final class TrustStoreManager {
+                 GetPropertyAction.privilegedGetProperty("java.home") +
+                 fileSep + "lib" + fileSep + "security";
+         private static final String defaultStore =
+-                defaultStorePath + fileSep + "cacerts";
++                AccessController.doPrivileged((PrivilegedAction<String>) () ->
++                        KeyStoreUtil.getCacertsKeyStorePath());
+         private static final String jsseDefaultStore =
+                 defaultStorePath + fileSep + "jssecacerts";
+ 
+@@ -139,6 +141,10 @@ final class TrustStoreManager {
+                     String storePropPassword = System.getProperty(
+                             "javax.net.ssl.trustStorePassword", "");
+ 
++                    if (SSLLogger.isOn && SSLLogger.isOn("trustmanager")) {
++                        SSLLogger.fine("Default store: " + defaultStore);
++                    }
++
+                     String temporaryName = "";
+                     File temporaryFile = null;
+                     long temporaryTime = 0L;
+@@ -160,7 +166,7 @@ final class TrustStoreManager {
+                                     SSLLogger.isOn("trustmanager")) {
+                                 SSLLogger.fine(
+                                         "Inaccessible trust store: " +
+-                                        storePropName);
++                                        fileName);
+                             }
+                         }
+                     } else {
+diff --git a/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java b/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
+index fcc77786da1..3a4388964cc 100644
+--- a/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
++++ b/jdk/src/share/classes/sun/security/tools/KeyStoreUtil.java
+@@ -41,6 +41,8 @@ import java.text.Collator;
+ import java.util.Locale;
+ import java.util.ResourceBundle;
+ 
++import sun.security.util.SecurityProperties;
++
+ /**
+  * <p> This class provides several utilities to <code>KeyStore</code>.
+  *
+@@ -54,6 +56,8 @@ public class KeyStoreUtil {
+ 
+     private static final String JKS = "jks";
+ 
++    private static final String SYSTEM_CA_CERTS_PROP = "security.systemCACerts";
++
+     /**
+      * Returns true if the certificate is self-signed, false otherwise.
+      */
+@@ -96,16 +100,30 @@ public class KeyStoreUtil {
+         }
+     }
+ 
++    /**
++     * Returns the path to the cacerts DB
++     */
++    public static String getCacertsKeyStorePath()
++    {
++        // Check system DB first, preferring system property over security one
++        String systemDB = SecurityProperties
++                .privilegedGetOverridable(SYSTEM_CA_CERTS_PROP);
++        if (systemDB != null && !"".equals(systemDB) &&
++                (new File(systemDB)).isFile()) {
++            return systemDB;
++        }
++        String sep = File.separator;
++        return System.getProperty("java.home") + sep
++                + "lib" + sep + "security" + sep + "cacerts";
++    }
++
+     /**
+      * Returns the keystore with the configured CA certificates.
+      */
+     public static KeyStore getCacertsKeyStore()
+         throws Exception
+     {
+-        String sep = File.separator;
+-        File file = new File(System.getProperty("java.home") + sep
+-                             + "lib" + sep + "security" + sep
+-                             + "cacerts");
++        File file = new File(getCacertsKeyStorePath());
+         if (!file.exists()) {
+             return null;
+         }
+diff --git a/jdk/src/share/lib/security/java.security-aix b/jdk/src/share/lib/security/java.security-aix
+index 681a24b905d..ecb8bc43a6c 100644
+--- a/jdk/src/share/lib/security/java.security-aix
++++ b/jdk/src/share/lib/security/java.security-aix
+@@ -294,6 +294,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-linux b/jdk/src/share/lib/security/java.security-linux
+index 789c19a8cba..2546fdec9b2 100644
+--- a/jdk/src/share/lib/security/java.security-linux
++++ b/jdk/src/share/lib/security/java.security-linux
+@@ -307,6 +307,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-macosx b/jdk/src/share/lib/security/java.security-macosx
+index d4da666af3b..1a20027c02b 100644
+--- a/jdk/src/share/lib/security/java.security-macosx
++++ b/jdk/src/share/lib/security/java.security-macosx
+@@ -297,6 +297,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-solaris b/jdk/src/share/lib/security/java.security-solaris
+index 300132384a1..6299e0a3c7b 100644
+--- a/jdk/src/share/lib/security/java.security-solaris
++++ b/jdk/src/share/lib/security/java.security-solaris
+@@ -295,6 +295,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.
+diff --git a/jdk/src/share/lib/security/java.security-windows b/jdk/src/share/lib/security/java.security-windows
+index 64db5a5cd1e..823994f3466 100644
+--- a/jdk/src/share/lib/security/java.security-windows
++++ b/jdk/src/share/lib/security/java.security-windows
+@@ -297,6 +297,12 @@ security.overridePropertiesFile=true
+ #
+ security.useSystemPropertiesFile=false
+ 
++#
++# Specifies the system certificate store
++# This property may be disabled using an empty value
++#
++security.systemCACerts=${java.home}/lib/security/cacerts
++
+ #
+ # Determines the default key and trust manager factory algorithms for
+ # the javax.net.ssl package.

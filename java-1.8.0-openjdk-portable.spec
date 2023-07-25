@@ -331,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      9
+%global rpmrelease      10
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -597,7 +597,12 @@ Patch523: pr2974-rh1337583-add_systemlineendings_option_to_keytool_and_use_line_
 Patch528: pr3083-rh1346460-for_ssl_debug_return_null_instead_of_exception_when_theres_no_ecc_provider.patch
 # PR2888: OpenJDK should check for system cacerts database (e.g. /etc/pki/java/cacerts)
 # PR3575, RH1567204: System cacerts database handling should not affect jssecacerts
-Patch539: pr2888-openjdk_should_check_for_system_cacerts_database_eg_etc_pki_java_cacerts.patch
+# RH2055274: Revert default keystore to JAVA_HOME/jre/lib/security/cacerts in portable builds
+# Must be applied after the FIPS patch as it also changes java.security
+# Patch is generated from the cacerts tree at https://github.com/rh-openjdk/jdk8u/tree/cacerts
+# as follows: git diff fips > pr2888-rh2055274-support_system_cacerts-$(git show -s --format=%h HEAD).patch
+Patch539: pr2888-rh2055274-support_system_cacerts-%{cacertsver}.patch
+Patch541: rh1684077-openjdk_should_depend_on_pcsc-lite-libs_instead_of_pcsc-lite-devel.patch
 # enable build of speculative store bypass hardened alt-java
 Patch600: rh1750419-redhat_alt_java.patch
 # JDK-8218811: replace open by os::open in hotspot coding
@@ -876,6 +881,7 @@ cp %{SOURCE101} %{top_level_dir_name}/common/autoconf/build-aux/
 %patch111
 %patch112
 %patch581
+%patch541
 %patch582
 
 pushd %{top_level_dir_name}
@@ -1428,6 +1434,10 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Tue Jul 25 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-10
+- Align patch539(cacerts) with ojdk8 portables on rhel
+- Add missing patch541 rh1684077-openjdk_should_depend_on_pcsc-lite-libs_instead_of_pcsc-lite-devel.patch
+
 * Thu Jul 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.372.b07-9.1
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
 
