@@ -331,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      10
+%global rpmrelease      11
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -652,6 +652,8 @@ Patch202: jdk8035341-allow_using_system_installed_libpng.patch
 # 8042159: Allow using a system-installed lcms2
 Patch203: jdk8042159-allow_using_system_installed_lcms2-root.patch
 Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
+# JDK-8186464, RH1433262: ZipFile cannot read some InfoZip ZIP64 zip files
+Patch12: jdk8186464-rh1433262-zip64_failure.patch
 # JDK-8257794: Zero: assert(istate->_stack_limit == istate->_thread->last_Java_sp() + 1) failed: wrong on Linux/x86_32
 Patch581: jdk8257794-remove_broken_assert.patch
 # JDK-8282231: x86-32: runtime call to SharedRuntime::ldiv corrupts registers
@@ -882,6 +884,7 @@ cp %{SOURCE101} %{top_level_dir_name}/common/autoconf/build-aux/
 %patch112
 %patch581
 %patch541
+%patch12
 %patch582
 
 pushd %{top_level_dir_name}
@@ -1434,6 +1437,9 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Tue Aug 01 2023 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.372.b07-11
+- returned and applied patch12 jdk8186464-rh1433262-zip64_failure.patch
+
 * Tue Jul 25 2023 Jayashree Huttanagoudar <jhuttana@redhat.com> - 1:1.8.0.372.b07-10
 - Align patch539(cacerts) with ojdk8 portables on rhel
 - Add missing patch541 rh1684077-openjdk_should_depend_on_pcsc-lite-libs_instead_of_pcsc-lite-devel.patch
