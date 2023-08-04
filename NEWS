@@ -3,6 +3,125 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u382 (2023-07-18):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u382
+
+* CVEs
+  - CVE-2023-22045
+  - CVE-2023-22049
+* Security fixes
+  - JDK-8298676: Enhanced Look and Feel
+  - JDK-8300596: Enhance Jar Signature validation
+  - JDK-8304468: Better array usages
+  - JDK-8305312: Enhanced path handling
+* Other changes
+  - JDK-8072678: Wrong exception messages in java.awt.color.ICC_ColorSpace
+  - JDK-8151460: Metaspace counters can have inconsistent values
+  - JDK-8152432: Implement setting jtreg @requires properties vm.flavor, vm.bits, vm.compMode
+  - JDK-8185736: missing default exception handler in calls to rethrow_Stub
+  - JDK-8186801: Add regression test to test mapping based charsets (generated at build time)
+  - JDK-8215105: java/awt/Robot/HiDPIScreenCapture/ScreenCaptureTest.java: Wrong Pixel Color
+  - JDK-8241311: Move some charset mapping tests from closed to open
+  - JDK-8263059: security/infra/java/security/cert/CertPathValidator/certification/ComodoCA.java fails due to revoked cert
+  - JDK-8268558: [TESTBUG] Case 2 in TestP11KeyFactoryGetRSAKeySpec is skipped
+  - JDK-8271199: Mutual TLS handshake fails signing client certificate with custom sensitive PKCS11 key
+  - JDK-8276841: Add support for Visual Studio 2022
+  - JDK-8277881: Missing SessionID in TLS1.3 resumption in compatibility mode
+  - JDK-8278851: Correct signer logic for jars signed with multiple digest algorithms
+  - JDK-8282345: handle latest VS2022 in abstract_vm_version
+  - JDK-8282600: SSLSocketImpl should not use user_canceled workaround when not necessary
+  - JDK-8285515: (dc) DatagramChannel.disconnect fails with "Invalid argument" on macOS 12.4
+  - JDK-8289301: P11Cipher should not throw out of bounds exception during padding
+  - JDK-8293232: Fix race condition in pkcs11 SessionManager
+  - JDK-8293815: P11PSSSignature.engineUpdate should not print debug messages during normal operation
+  - JDK-8295530: Update Zlib Data Compression Library to Version 1.2.13
+  - JDK-8298108: Add a regression test for JDK-8297684
+  - JDK-8298271: java/security/SignedJar/spi-calendar-provider/TestSPISigned.java failing on Windows
+  - JDK-8301119: Support for GB18030-2022
+  - JDK-8301400: Allow additional characters for GB18030-2022 support
+  - JDK-8302791: Add specific ClassLoader object to Proxy IllegalArgumentException message
+  - JDK-8303028: Update system property for Java SE specification maintenance version
+  - JDK-8303462: Bump update version of OpenJDK: 8u382
+  - JDK-8304760: Add 2 Microsoft TLS roots
+  - JDK-8305165: [8u] ServiceThread::nmethods_do is not called to keep nmethods from being zombied while in the queue
+  - JDK-8305681: Allow additional characters for GB18030-2022 (Level 2) support
+  - JDK-8305975: Add TWCA Global Root CA
+  - JDK-8307134: Add GTS root CAs
+  - JDK-8307310: Backport the tests for JDK-8058969 and JDK-8039271 to the OpenJDK8
+  - JDK-8307531: [aarch64] JDK8 single-step debugging is extremely slow
+  - JDK-8310947: gb18030-2000 not selectable with LANG=zh_CN.GB18030 after JDK-8301119
+
+Notes on individual issues:
+===========================
+
+core-libs/java.lang:
+
+JDK-8305681: Allow additional characters for GB18030-2022 (Level 2) support
+===========================================================================
+In order to support "Implementation Level 2" of the GB18030-2022
+standard, the JDK must be able to use characters from the CJK Unified
+Ideographs Extension E block of Unicode 8.0.  The addition of these
+characters forms Maintenance Release 5 of the Java SE 8 specification,
+which is implemented in this release of OpenJDK via the addition of a
+new UnicodeBlock instance,
+Character.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E.
+
+core-libs/java.util.jar:
+
+8300596: Enhance Jar Signature validation
+=========================================
+A System property "jdk.jar.maxSignatureFileSize" is introduced to
+configure the maximum number of bytes allowed for the
+signature-related files in a JAR file during verification. The default
+value is 8000000 bytes (8 MB).
+
+security-libs/java.security:
+
+JDK-8307134: Added 4 GTS Root CA Certificates
+=============================================
+The following root certificates have been added to the cacerts
+truststore:
+
+Name: Google Trust Services LLC
+Alias Name: gtsrootcar1
+Distinguished Name: CN=GTS Root R1, O=Google Trust Services LLC, C=US
+
+Name: Google Trust Services LLC
+Alias Name: gtsrootcar2
+Distinguished Name: CN=GTS Root R2, O=Google Trust Services LLC, C=US
+
+Name: Google Trust Services LLC
+Alias Name: gtsrootcar3
+Distinguished Name: CN=GTS Root R3, O=Google Trust Services LLC, C=US
+
+Name: Google Trust Services LLC
+Alias Name: gtsrootcar4
+Distinguished Name: CN=GTS Root R4, O=Google Trust Services LLC, C=US
+
+JDK-8304760: Added Microsoft Corporation's 2 TLS Root CA Certificates
+=====================================================================
+The following root certificates has been added to the cacerts
+truststore:
+
+Name: Microsoft Corporation
+Alias Name: microsoftecc2017
+Distinguished Name: CN=Microsoft ECC Root Certificate Authority 2017, O=Microsoft Corporation, C=US
+
+Name: Microsoft Corporation
+Alias Name: microsoftrsa2017
+Distinguished Name: CN=Microsoft RSA Root Certificate Authority 2017, O=Microsoft Corporation, C=US
+
+JDK-8305975: Added TWCA Root CA Certificate
+===========================================
+The following root certificate has been added to the cacerts
+truststore:
+
+Name: TWCA
+Alias Name: twcaglobalrootca
+Distinguished Name: CN=TWCA Global Root CA, OU=Root CA, O=TAIWAN-CA, C=TW
+
 New in release OpenJDK 8u372 (2023-04-18):
 ===========================================
 Live versions of these release notes can be found at:
@@ -497,19 +616,6 @@ the current count of established connections and, if the configured
 limit has been reached, then the newly accepted connection will be
 closed immediately.
 
-core-libs/java.net:
-
-JDK-8286918: Better HttpServer service
-======================================
-The HttpServer can be optionally configured with a maximum connection
-limit by setting the jdk.httpserver.maxConnections system property. A
-value of 0 or a negative integer is ignored and considered to
-represent no connection limit. In the case of a positive integer
-value, any newly accepted connections will be first checked against
-the current count of established connections and, if the configured
-limit has been reached, then the newly accepted connection will be
-closed immediately.
-
 security-libs/javax.net.ssl:
 
 JDK-8282859: Enable TLSv1.3 by Default on JDK 8 for Client Roles
@@ -591,7 +697,7 @@ versions of OpenJDK 8.  As a result, we have reverted this change in
 New in release OpenJDK 8u342 (2022-07-19):
 ===========================================
 Live versions of these release notes can be found at:
-  * https://bitly.com/openjdk8u342
+  * https://bit.ly/openjdk8u342
   * https://builds.shipilev.net/backports-monitor/release-notes-openjdk8u342.txt
 
 * Security fixes
@@ -704,7 +810,7 @@ system property `jdk.io.File.enableADS` should be set to `false` (case
 ignored). This might be preferable, for example, if Windows special
 device paths such as `NUL:` are *not* used.
 
-New in release OpenJDK 8u332 (2022-04-19):
+New in release OpenJDK 8u332 (2022-04-22):
 ===========================================
 Live versions of these release notes can be found at:
   * https://bitly.com/openjdk8u332
@@ -2415,3 +2521,4 @@ will be ignored if it is specified in the `mechanisms` argument of
 `Sasl.createSaslClient` or the `mechanism` argument of
 `Sasl.createSaslServer`. The default value for this security property
 is empty, which means that no mechanisms are disabled out-of-the-box.
+
