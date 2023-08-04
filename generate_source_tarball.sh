@@ -22,13 +22,6 @@
 SCRIPT_DIR=$(dirname $0)
 JCONSOLE_JS_PATCH_DEFAULT=${SCRIPT_DIR}/jconsole-plugin.patch
 
-if [ ! "x$PR3822" = "x" ] ; then
-  if [ ! -f "$PR3822" ] ; then
-    echo "You have specified PR3822 as $PR3822 but it does not exist. Exiting"
-    exit 1
-  fi
-fi
-
 if [ "x${JCONSOLE_JS_PATCH}" != "x" ] ; then
     if [ ! -f "${JCONSOLE_JS_PATCH}" ] ; then
         echo "You have specified the jconsole.js patch as ${JCONSOLE_JS_PATCH} but it does not exist. Exiting.";
@@ -54,7 +47,6 @@ if [ "x$1" = "xhelp" ] ; then
     echo "COMPRESSION - the compression type to use (optional; defaults to ${COMPRESSION_DEFAULT})"
     echo "FILE_NAME_ROOT - name of the archive, minus extensions (optional; defaults to PROJECT_NAME-REPO_NAME-VERSION)"
     echo "REPO_ROOT - the location of the Git repository to archive (optional; defaults to OPENJDK_URL/PROJECT_NAME/REPO_NAME)"
-    echo "PR3822 - the path to the PR3822 patch to apply (optional; downloaded if unavailable)"
     echo "JCONSOLE_JS_PATCH - the path to a patch to fix non-availiability of jconsole.js (optional; defaults to ${JCONSOLE_JS_PATCH_DEFAULT})"
     echo "BOOT_JDK - the bootstrap JDK to satisfy the configure run"
     exit 1;
@@ -139,7 +131,6 @@ echo -e "\tOPENJDK_URL: ${OPENJDK_URL}"
 echo -e "\tCOMPRESSION: ${COMPRESSION}"
 echo -e "\tFILE_NAME_ROOT: ${FILE_NAME_ROOT}"
 echo -e "\tREPO_ROOT: ${REPO_ROOT}"
-echo -e "\tPR3822: ${PR3822}"
 echo -e "\tJCONSOLE_JS_PATCH: ${JCONSOLE_JS_PATCH}"
 echo -e "\tBOOT_JDK: ${BOOT_JDK}"
 
@@ -162,28 +153,6 @@ if [ -d jdk ]; then
     # jconsole.js has a BSD license with a field-of-use restriction, making it non-Free
     echo "Removing jconsole-plugin file with non-Free license"
     rm -vf jdk/src/share/demo/scripting/jconsole-plugin/src/resources/jconsole.js
-    echo "Removing EC source code we don't build"
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2.h
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_163.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_193.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_233.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_aff.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ec2_mont.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_192.c
-    rm -vf jdk/src/share/native/sun/security/ec/impl/ecp_224.c
-
-    echo "Syncing EC list with NSS"
-    if [ "x$PR3822" = "x" ] ; then
-        # get pr3822.patch (from https://github.com/icedtea-git/icedtea) in the ${ICEDTEA_VERSION} branch
-        # Do not push it or publish it
-        wget -O pr3822.patch https://github.com/icedtea-git/icedtea/raw/${ICEDTEA_VERSION}/patches/pr3822-4curve.patch
-        echo "Applying ${PWD}/pr3822.patch"
-        git apply --stat --apply -v -p1 pr3822.patch
-        rm pr3822.patch
-    else
-        echo "Applying ${PR3822}"
-        git apply --stat --apply -v -p1 $PR3822
-    fi;
 fi
 
 echo "Patching out use of jconsole.js"
@@ -225,7 +194,7 @@ if [ "X$COMPRESSION" = "Xxz" ] ; then
 else
     SWITCH=czf
 fi
-TARBALL_NAME=${FILE_NAME_ROOT}-4curve.tar.${COMPRESSION}
+TARBALL_NAME=${FILE_NAME_ROOT}.tar.${COMPRESSION}
 tar --exclude-vcs -$SWITCH ${TARBALL_NAME} openjdk
 mv ${TARBALL_NAME} ..
 

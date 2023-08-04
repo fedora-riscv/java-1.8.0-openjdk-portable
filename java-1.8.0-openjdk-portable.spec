@@ -331,7 +331,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      12
+%global rpmrelease      13
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -491,7 +491,7 @@ URL:      http://openjdk.java.net/
 # FILE_NAME_ROOT=%%{shenandoah_project}-%%{shenandoah_repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://hg.openjdk.java.net/%%{project}/%%{repo}
-Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}-4curve.tar.xz
+Source0: %{shenandoah_project}-%{shenandoah_repo}-%{shenandoah_revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -1437,6 +1437,16 @@ done
 %license %{unpacked_licenses}/%{jdkportablesourcesarchiveForFiles}
 
 %changelog
+* Tue Aug 01 2023 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.372.b07-12
+- removed removal of EC curves
+- - regenerated source tarball as
+-  - OPENJDK_URL=ssh://h*****.com:/***/repos BOOT_JDK=/usr/lib/jvm/java-1.8.0-openjdk  PROJECT_NAME=upstream-repos REPO_NAME=ojdk8...pu VERSION=shenandoah-jdk8u372-b07  sh `pwd`/generate_source_tarball.sh
+- -with
+-  -REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}.git"
+-  +REPO_ROOT="${OPENJDK_URL}/${PROJECT_NAME}/${REPO_NAME}"
+-  - due to temporary location.
+- "Removed" unused and unmaintained generate_singlerepo_source_tarball.sh
+
 * Tue Aug 01 2023 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.372.b07-11
 - returned and applied patch12 jdk8186464-rh1433262-zip64_failure.patch
 
