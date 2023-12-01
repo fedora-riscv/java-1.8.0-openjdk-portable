@@ -4,7 +4,6 @@
 # Example:
 # When used from local repo set REPO_ROOT pointing to file:// with your repo
 # If your local repo follows upstream forests conventions, it may be enough to set OPENJDK_URL
-# If you want to use a local copy of patch PR3822, set the path to it in the PR3822 variable
 #
 # In any case you have to set PROJECT_NAME REPO_NAME and VERSION. eg:
 # PROJECT_NAME=openjdk
@@ -35,8 +34,6 @@ set -e
 
 OPENJDK_URL_DEFAULT=https://github.com
 COMPRESSION_DEFAULT=xz
-# Corresponding IcedTea version
-ICEDTEA_VERSION=3.0
 
 if [ "x$1" = "xhelp" ] ; then
     echo -e "Behaviour may be specified by setting the following variables:\n"
@@ -138,9 +135,9 @@ mkdir "${FILE_NAME_ROOT}"
 pushd "${FILE_NAME_ROOT}"
 
 echo "Cloning ${VERSION} root repository from ${REPO_ROOT}"
-git clone -b ${VERSION} ${REPO_ROOT} openjdk
+git clone -b ${VERSION} ${REPO_ROOT} ${VERSION}
 
-pushd openjdk
+pushd ${VERSION}
 
 # UnderlineTaglet.java has a BSD license with a field-of-use restriction, making it non-Free
 if [ -d langtools ] ; then
@@ -165,28 +162,28 @@ popd
 # Generate .src-rev so build has knowledge of the revision the tarball was created from
 mkdir build
 pushd build
-sh ${PWD}/../openjdk/configure --with-boot-jdk=${BOOT_JDK}
+sh ${PWD}/../${VERSION}/configure --with-boot-jdk=${BOOT_JDK}
 make store-source-revision
 popd
 rm -rf build
 
 # Remove commit checks
-echo "Removing $(find openjdk -name '.jcheck' -print)"
-find openjdk -name '.jcheck' -print0 | xargs -0 rm -r
+echo "Removing $(find ${VERSION} -name '.jcheck' -print)"
+find ${VERSION} -name '.jcheck' -print0 | xargs -0 rm -r
 
 # Remove history and GHA
-echo "find openjdk -name '.hgtags'"
-find openjdk -name '.hgtags' -exec rm -v '{}' '+'
-echo "find openjdk -name '.hgignore'"
-find openjdk -name '.hgignore' -exec rm -v '{}' '+'
-echo "find openjdk -name '.gitattributes'"
-find openjdk -name '.gitattributes' -exec rm -v '{}' '+'
-echo "find openjdk -name '.gitignore'"
-find openjdk -name '.gitignore' -exec rm -v '{}' '+'
-echo "find openjdk -name '.git'"
-find openjdk -name '.git' -exec rm -rv '{}' '+'
-echo "find openjdk -name '.github'"
-find openjdk -name '.github' -exec rm -rv '{}' '+'
+echo "find ${VERSION} -name '.hgtags'"
+find ${VERSION} -name '.hgtags' -exec rm -fv '{}' '+'
+echo "find ${VERSION} -name '.hgignore'"
+find ${VERSION} -name '.hgignore' -exec rm -fv '{}' '+'
+echo "find ${VERSION} -name '.gitattributes'"
+find ${VERSION} -name '.gitattributes' -exec rm -fv '{}' '+'
+echo "find ${VERSION} -name '.gitignore'"
+find ${VERSION} -name '.gitignore' -exec rm -fv '{}' '+'
+echo "find ${VERSION} -name '.git'"
+find ${VERSION} -name '.git' -exec rm -rfv '{}' '+'
+echo "find ${VERSION} -name '.github'"
+find ${VERSION} -name '.github' -exec rm -rfv '{}' '+'
 
 echo "Compressing remaining forest"
 if [ "X$COMPRESSION" = "Xxz" ] ; then
@@ -195,7 +192,7 @@ else
     SWITCH=czf
 fi
 TARBALL_NAME=${FILE_NAME_ROOT}.tar.${COMPRESSION}
-tar --exclude-vcs -$SWITCH ${TARBALL_NAME} openjdk
+tar --exclude-vcs -$SWITCH ${TARBALL_NAME} ${VERSION}
 mv ${TARBALL_NAME} ..
 
 popd

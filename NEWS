@@ -3,6 +3,152 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u392 (2023-10-17):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u392
+
+* CVEs
+  - CVE-2023-22067
+  - CVE-2023-22081
+* Security fixes
+  - JDK-8286503, JDK-8312367: Enhance security classes
+  - JDK-8297856: Improve handling of Bidi characters
+  - JDK-8303384: Improved communication in CORBA
+  - JDK-8305815, JDK-8307278: Update Libpng to 1.6.39
+  - JDK-8309966: Enhanced TLS connections
+* Other changes
+  - JDK-6722928: Provide a default native GSS-API library on Windows
+  - JDK-8040887: [TESTBUG] Remove test/runtime/6925573/SortMethodsTest.java
+  - JDK-8042726: [TESTBUG] TEST.groups file was not updated after runtime/6925573/SortMethodsTest.java removal
+  - JDK-8139348: Deprecate 3DES and RC4 in Kerberos
+  - JDK-8173072: zipfs fails to handle incorrect info-zip "extended timestamp extra field"
+  - JDK-8200468: Port the native GSS-API bridge to Windows
+  - JDK-8202952: C2: Unexpected dead nodes after matching
+  - JDK-8205399: Set node color on pinned HashMap.TreeNode deletion
+  - JDK-8209115: adjust libsplashscreen linux ppc64le builds for easier libpng update
+  - JDK-8214046: [macosx] Undecorated Frame does not Iconify when set to
+  - JDK-8219804: java/net/MulticastSocket/Promiscuous.java fails intermittently due to NumberFormatException
+  - JDK-8225687: Newly added sspi.cpp in JDK-6722928 still contains some small errors
+  - JDK-8232225: Rework the fix for JDK-8071483
+  - JDK-8242330: Arrays should be cloned in several JAAS Callback classes
+  - JDK-8253269: The CheckCommonColors test should provide more info on failure
+  - JDK-8283441: C2: segmentation fault in ciMethodBlocks::make_block_at(int)
+  - JDK-8284910: Buffer clean in PasswordCallback
+  - JDK-8287073: NPE from CgroupV2Subsystem.getInstance()
+  - JDK-8287663: Add a regression test for JDK-8287073
+  - JDK-8295685: Update Libpng to 1.6.38
+  - JDK-8295894: Remove SECOM certificate that is expiring in September 2023
+  - JDK-8308788: [8u] Remove duplicate HaricaCA.java test
+  - JDK-8309122: Bump update version of OpenJDK: 8u392
+  - JDK-8309143: [8u] fix archiving inconsistencies in GHA
+  - JDK-8310026: [8u] make java_lang_String::hash_code consistent across platforms
+  - JDK-8314960: Add Certigna Root CA - 2
+  - JDK-8315135: Memory leak in the native implementation of Pack200.Unpacker.unpack()
+  - JDK-8317040: Exclude cleaner test failing on older releases
+
+Notes on individual issues:
+===========================
+
+other-libs/corba:idl:
+
+8303384: Improved communication in CORBA
+========================================
+The JDK's CORBA implementation now provides the option to limit
+serialisation in stub objects to those with the "IOR:" prefix.  For
+ORB constrained stub classes:
+
+* _DynArrayStub
+* _DynEnumStub
+* _DynFixedStub
+* _DynSequenceStub
+* _DynStructStub
+* _DynUnionStub
+* _DynValueStub
+* _DynAnyStub
+* _DynAnyFactoryStub
+
+this is enabled by default and may be disabled by setting the system
+property org.omg.DynamicAny.disableIORCheck to 'true'.
+
+For remote service stub classes:
+
+* _NamingContextStub
+* _BindingIteratorStub
+* _NamingContextExtStub
+* _ServantActivatorStub
+* _ServantLocatorStub
+* _ServerManagerStub
+* _ActivatorStub
+* _RepositoryStub
+* _InitialNameServiceStub
+* _LocatorStub
+* _ServerStub
+
+it is disabled by default and may be enabled by setting the system
+property org.omg.CORBA.IDL.Stubs.enableIORCheck to 'true'.
+
+security-libs/org.ietf.jgss:
+
+JDK-6722928: Added a Default Native GSS-API Library on Windows
+==============================================================
+
+A native GSS-API library named `sspi_bridge.dll` has been added to the
+JDK on the Windows platform.  As with native GSS-API library provision
+on other operating systems, it will only be loaded when the
+`sun.security.jgss.native` system property is set to "true". A user
+can still load a third-party native GSS-API library instead by setting
+the `sun.security.jgss.lib` system property to the appropriate path.
+
+The library is client-side only and uses the default credentials.
+Native GSS support automatically uses cached credentials from the
+underlying operating system, so the
+`javax.security.auth.useSubjectCredsOnly` system property should be
+set to false.
+
+The `com.sun.security.auth.module.Krb5LoginModule` does not call
+native JGSS and so its use in your JAAS config should be avoided.
+
+security-libs/org.ietf.jgss:krb5:
+
+JDK-8139348: Deprecate 3DES and RC4 in Kerberos
+===============================================
+The `des3-hmac-sha1` and `rc4-hmac` Kerberos encryption types (etypes)
+are now deprecated and disabled by default.  To re-enable them, you
+can either enable all weak crypto (which also includes `des-cbc-crc`
+and `des-cbc-md5`) by setting `allow_weak_crypto = true` in the
+`krb5.conf` configuration file or explicitly list all the preferred
+encryption types using the `default_tkt_enctypes`,
+`default_tgs_enctypes`, or `permitted_enctypes` settings.
+
+security-libs/java.security:
+
+JDK-8295894: Removed SECOM Trust System's RootCA1 Root Certificate
+==================================================================
+The following root certificate from SECOM Trust System has been
+removed from the `cacerts` keystore:
+
+Alias Name: secomscrootca1 [jdk]
+Distinguished Name: OU=Security Communication RootCA1, O=SECOM Trust.net, C=JP
+
+JDK-8314960: Added Certigna Root CA Certificate
+===============================================
+The following root certificate has been added to the cacerts
+truststore:
+
+Name: Certigna (Dhimyotis)
+Alias Name: certignarootca
+Distinguished Name: CN=Certigna Root CA, OU=0002 48146308100036, O=Dhimyotis, C=FR
+
+security-libs/javax.security:
+
+JDK-8242330: Arrays should be cloned in several JAAS Callback classes
+=====================================================================
+In the JAAS classes, ChoiceCallback and ConfirmationCallback, arrays
+were not cloned when passed into a constructor or returned. This
+allowed an external program to get access to the internal fields of
+these classes. The classes have been updated to return cloned arrays.
+
 New in release OpenJDK 8u382 (2023-07-18):
 ===========================================
 Live versions of these release notes can be found at:
@@ -2521,4 +2667,3 @@ will be ignored if it is specified in the `mechanisms` argument of
 `Sasl.createSaslClient` or the `mechanism` argument of
 `Sasl.createSaslServer`. The default value for this security property
 is empty, which means that no mechanisms are disabled out-of-the-box.
-
