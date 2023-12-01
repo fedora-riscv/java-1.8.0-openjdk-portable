@@ -187,7 +187,7 @@
 # We replace it with -Wformat (required by -Werror=format-security) and -Wno-cpp to avoid FORTIFY_SOURCE warnings
 # We filter out -fexceptions as the HotSpot build explicitly does -fno-exceptions and it's otherwise the default for C++
 %global ourflags %(echo %optflags | sed -e 's|-Wall|-Wformat -Wno-cpp|' | sed -r -e 's|-O[0-9]*||')
-%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||' | sed -e 's|-fasynchronous-unwind-tables||' | sed -e 's|-g ||')
+%global ourcppflags %(echo %ourflags | sed -e 's|-fexceptions||')
 %global ourldflags %{__global_ldflags}
 
 # With disabled nss is NSS deactivated, so NSS_LIBDIR can contain the wrong path
@@ -958,7 +958,7 @@ export CFLAGS="$CFLAGS -mieee"
 # We use ourcppflags because the OpenJDK build seems to
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
 EXTRA_CFLAGS="%ourcppflags -Wno-error"
-EXTRA_CPP_FLAGS="%ourcppflags -fno-tree-vrp"
+EXTRA_CPP_FLAGS="%ourcppflags"
 %ifarch %{power64} ppc
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
 # fix rpmlint warnings
