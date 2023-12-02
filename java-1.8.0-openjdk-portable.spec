@@ -322,7 +322,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      1
+%global rpmrelease      2
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -1110,7 +1110,7 @@ function installjdk() {
     install -m 644 nss.fips.cfg ${jreimagepath}/lib/security/
 }
 
-tar -cJf  ../%{jdkportablesourcesarchive -- ""} --transform "s|^|%{jdkportablesourcesname -- ""}/|" openjdk nss*
+tar -cJf  ../%{jdkportablesourcesarchive -- ""} --transform "s|^|%{jdkportablesourcesname -- ""}/|" %{top_level_dir_name} nss*
 sha256sum ../%{jdkportablesourcesarchive -- ""} > ../%{jdkportablesourcesarchive -- ""}.sha256sum
 
 function genchecksum() {
@@ -1528,6 +1528,9 @@ done
 %endif
 
 %changelog
+* Wed Nov 22 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-2
+- fixed bug where were packed empty sources
+
 * Wed Nov 22 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-1
 - Updated to shenandoah-jdk8u392-b08 (GA)
 - adjsuted generate_source_tarball
