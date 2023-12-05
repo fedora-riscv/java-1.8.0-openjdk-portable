@@ -322,7 +322,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      3
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -637,13 +637,15 @@ Patch2000: jdk8312489-max_sig_default_increase.patch
 
 #############################################
 #
-# Patches appearing in 8u382
+# Patches appearing in 8u401
 #
 # This section includes patches which are present
 # in the listed OpenJDK 8u release and should be
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
+
+Patch2001: jdk8315506-C99_compatibility_issue_in_LinuxNativeDispatcher.patch
 
 #############################################
 #
@@ -912,6 +914,7 @@ pushd %{top_level_dir_name}
 %patch539 -p1
 # JDK-8312489 backport, proposed for 8u402: https://github.com/openjdk/jdk8u-dev/pull/381
 %patch2000 -p1
+%patch2001 -p1
 popd
 
 # RPM-only fixes
@@ -1528,6 +1531,9 @@ done
 %endif
 
 %changelog
+* Wed Nov 22 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-3
+- added and applied patch2001 jdk8315506-C99_compatibility_issue_in_LinuxNativeDispatcher.patch
+
 * Wed Nov 22 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-2
 - fixed bug where were packed empty sources
 
