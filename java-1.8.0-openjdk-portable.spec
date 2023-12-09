@@ -322,7 +322,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      3
+%global rpmrelease      4
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -350,7 +350,7 @@
 %global javaver         1.%{majorver}.0
 
 # parametrized macros are order-sensitive
-%global compatiblename  %{name}
+%global compatiblename  java-%{javaver}-%{origin}
 %global fullversion     %{compatiblename}-%{version}-%{release}
 # images directories from upstream build
 %global jdkimage       j2sdk-image
@@ -1531,6 +1531,10 @@ done
 %endif
 
 %changelog
+* Sat Dec 09 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-4
+- renamed outcomming tarball archives from java-1.8.0-openjdk-portable-1...tar.xz
+  to expected (as other jdks) java-1.8.0-openjdk-1...tar.xz
+
 * Wed Nov 22 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-3
 - added and applied patch2001 jdk8315506-C99_compatibility_issue_in_LinuxNativeDispatcher.patch
 
