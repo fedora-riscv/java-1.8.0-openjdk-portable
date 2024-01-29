@@ -1,0 +1,1805 @@
+diff --git a/hotspot/src/share/vm/c1/c1_RangeCheckElimination.cpp b/hotspot/src/share/vm/c1/c1_RangeCheckElimination.cpp
+index d17814e2af..397b88a08f 100644
+--- a/hotspot/src/share/vm/c1/c1_RangeCheckElimination.cpp
++++ b/hotspot/src/share/vm/c1/c1_RangeCheckElimination.cpp
+@@ -379,8 +379,11 @@ void RangeCheckEliminator::add_access_indexed_info(InstructionList &indices, int
+     aii->_max = idx;
+     aii->_list = new AccessIndexedList();
+   } else if (idx >= aii->_min && idx <= aii->_max) {
+-    remove_range_check(ai);
+-    return;
++    // Guard against underflow/overflow (see 'range_cond' check in RangeCheckEliminator::in_block_motion)
++    if (aii->_max < 0 || (aii->_max + min_jint) <= aii->_min) {
++      remove_range_check(ai);
++      return;
++    }
+   }
+   aii->_min = MIN2(aii->_min, idx);
+   aii->_max = MAX2(aii->_max, idx);
+@@ -423,9 +426,9 @@ void RangeCheckEliminator::in_block_motion(BlockBegin *block, AccessIndexedList
+           }
+         }
+       } else {
+-        int last_integer = 0;
++        jint last_integer = 0;
+         Instruction *last_instruction = index;
+-        int base = 0;
++        jint base = 0;
+         ArithmeticOp *ao = index->as_ArithmeticOp();
+ 
+         while (ao != NULL && (ao->x()->as_Constant() || ao->y()->as_Constant()) && (ao->op() == Bytecodes::_iadd || ao->op() == Bytecodes::_isub)) {
+@@ -437,12 +440,12 @@ void RangeCheckEliminator::in_block_motion(BlockBegin *block, AccessIndexedList
+           }
+ 
+           if (c) {
+-            int value = c->type()->as_IntConstant()->value();
++            jint value = c->type()->as_IntConstant()->value();
+             if (value != min_jint) {
+               if (ao->op() == Bytecodes::_isub) {
+                 value = -value;
+               }
+-              base += value;
++              base = java_add(base, value);
+               last_integer = base;
+               last_instruction = other;
+             }
+@@ -464,12 +467,12 @@ void RangeCheckEliminator::in_block_motion(BlockBegin *block, AccessIndexedList
+         assert(info != NULL, "Info must not be null");
+ 
+         // if idx < 0, max > 0, max + idx may fall between 0 and
+-        // length-1 and if min < 0, min + idx may overflow and be >=
++        // length-1 and if min < 0, min + idx may underflow/overflow and be >=
+         // 0. The predicate wouldn't trigger but some accesses could
+         // be with a negative index. This test guarantees that for the
+         // min and max value that are kept the predicate can't let
+         // some incorrect accesses happen.
+-        bool range_cond = (info->_max < 0 || info->_max + min_jint <= info->_min);
++        bool range_cond = (info->_max < 0 || (info->_max + min_jint) <= info->_min);
+ 
+         // Generate code only if more than 2 range checks can be eliminated because of that.
+         // 2 because at least 2 comparisons are done
+@@ -809,7 +812,7 @@ void RangeCheckEliminator::process_access_indexed(BlockBegin *loop_header, Block
+         );
+ 
+         remove_range_check(ai);
+-    } else if (_optimistic && loop_header) {
++    } else if (false && _optimistic && loop_header) {
+       assert(ai->array(), "Array must not be null!");
+       assert(ai->index(), "Index must not be null!");
+ 
+diff --git a/hotspot/src/share/vm/classfile/verifier.cpp b/hotspot/src/share/vm/classfile/verifier.cpp
+index c653e2b5a9..2dddd1fded 100644
+--- a/hotspot/src/share/vm/classfile/verifier.cpp
++++ b/hotspot/src/share/vm/classfile/verifier.cpp
+@@ -2081,11 +2081,12 @@ void ClassVerifier::verify_switch(
+           "low must be less than or equal to high in tableswitch");
+       return;
+     }
+-    keys = high - low + 1;
+-    if (keys < 0) {
++    int64_t keys64 = ((int64_t)high - low) + 1;
++    if (keys64 > 65535) {  // Max code length
+       verify_error(ErrorContext::bad_code(bci), "too many keys in tableswitch");
+       return;
+     }
++    keys = (int)keys64;
+     delta = 1;
+   } else {
+     keys = (int)Bytes::get_Java_u4(aligned_bcp + jintSize);
+diff --git a/hotspot/src/share/vm/interpreter/bytecodes.cpp b/hotspot/src/share/vm/interpreter/bytecodes.cpp
+index fdb880a3b3..ce5632ea19 100644
+--- a/hotspot/src/share/vm/interpreter/bytecodes.cpp
++++ b/hotspot/src/share/vm/interpreter/bytecodes.cpp
+@@ -114,12 +114,18 @@ int Bytecodes::special_length_at(Bytecodes::Code code, address bcp, address end)
+       if (end != NULL && aligned_bcp + 3*jintSize >= end) {
+         return -1; // don't read past end of code buffer
+       }
++      // Promote calculation to signed 64 bits to do range checks, used by the verifier.
+       jlong lo = (jint)Bytes::get_Java_u4(aligned_bcp + 1*jintSize);
+       jlong hi = (jint)Bytes::get_Java_u4(aligned_bcp + 2*jintSize);
+       jlong len = (aligned_bcp - bcp) + (3 + hi - lo + 1)*jintSize;
+-      // only return len if it can be represented as a positive int;
+-      // return -1 otherwise
+-      return (len > 0 && len == (int)len) ? len : -1;
++      // Only return len if it can be represented as a positive int and lo <= hi.
++      // The caller checks for bytecode stream overflow.
++      if (lo <= hi && len == (int)len) {
++        assert(len > 0, "must be");
++        return (int)len;
++      } else {
++        return -1;
++      }
+     }
+ 
+   case _lookupswitch:      // fall through
+@@ -131,9 +137,13 @@ int Bytecodes::special_length_at(Bytecodes::Code code, address bcp, address end)
+       }
+       jlong npairs = (jint)Bytes::get_Java_u4(aligned_bcp + jintSize);
+       jlong len = (aligned_bcp - bcp) + (2 + 2*npairs)*jintSize;
+-      // only return len if it can be represented as a positive int;
+-      // return -1 otherwise
+-      return (len > 0 && len == (int)len) ? len : -1;
++      // Only return len if it can be represented as a positive int and npairs >= 0.
++      if (npairs >= 0 && len == (int)len) {
++        assert(len > 0, "must be");
++        return (int)len;
++      } else {
++        return -1;
++      }
+     }
+   }
+   // Note: Length functions must return <=0 for invalid bytecodes.
+diff --git a/hotspot/src/share/vm/opto/ifnode.cpp b/hotspot/src/share/vm/opto/ifnode.cpp
+index 68f068d06e..51579032e3 100644
+--- a/hotspot/src/share/vm/opto/ifnode.cpp
++++ b/hotspot/src/share/vm/opto/ifnode.cpp
+@@ -882,6 +882,46 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+     // then we are guaranteed to fail, so just start interpreting there.
+     // We 'expand' the top 3 range checks to include all post-dominating
+     // checks.
++    //
++    // Example:
++    // a[i+x] // (1) 1 < x < 6
++    // a[i+3] // (2)
++    // a[i+4] // (3)
++    // a[i+6] // max = max of all constants
++    // a[i+2]
++    // a[i+1] // min = min of all constants
++    //
++    // If x < 3:
++    //   (1) a[i+x]: Leave unchanged
++    //   (2) a[i+3]: Replace with a[i+max] = a[i+6]: i+x < i+3 <= i+6  -> (2) is covered
++    //   (3) a[i+4]: Replace with a[i+min] = a[i+1]: i+1 < i+4 <= i+6  -> (3) and all following checks are covered
++    //   Remove all other a[i+c] checks
++    //
++    // If x >= 3:
++    //   (1) a[i+x]: Leave unchanged
++    //   (2) a[i+3]: Replace with a[i+min] = a[i+1]: i+1 < i+3 <= i+x  -> (2) is covered
++    //   (3) a[i+4]: Replace with a[i+max] = a[i+6]: i+1 < i+4 <= i+6  -> (3) and all following checks are covered
++    //   Remove all other a[i+c] checks
++    //
++    // We only need the top 2 range checks if x is the min or max of all constants.
++    //
++    // This, however, only works if the interval [i+min,i+max] is not larger than max_int (i.e. abs(max - min) < max_int):
++    // The theoretical max size of an array is max_int with:
++    // - Valid index space: [0,max_int-1]
++    // - Invalid index space: [max_int,-1] // max_int, min_int, min_int - 1 ..., -1
++    //
++    // The size of the consecutive valid index space is smaller than the size of the consecutive invalid index space.
++    // If we choose min and max in such a way that:
++    // - abs(max - min) < max_int
++    // - i+max and i+min are inside the valid index space
++    // then all indices [i+min,i+max] must be in the valid index space. Otherwise, the invalid index space must be
++    // smaller than the valid index space which is never the case for any array size.
++    //
++    // Choosing a smaller array size only makes the valid index space smaller and the invalid index space larger and
++    // the argument above still holds.
++    //
++    // Note that the same optimization with the same maximal accepted interval size can also be found in C1.
++    const jlong maximum_number_of_min_max_interval_indices = (jlong)max_jint;
+ 
+     // The top 3 range checks seen
+     const int NRC =3;
+@@ -915,13 +955,18 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
+             found_immediate_dominator = true;
+             break;
+           }
+-          // Gather expanded bounds
+-          off_lo = MIN2(off_lo,offset2);
+-          off_hi = MAX2(off_hi,offset2);
+-          // Record top NRC range checks
+-          prev_checks[nb_checks%NRC].ctl = prev_dom;
+-          prev_checks[nb_checks%NRC].off = offset2;
+-          nb_checks++;
++
++          // "x - y" -> must add one to the difference for number of elements in [x,y]
++          const jlong diff = (jlong)MIN2(offset2, off_lo) - (jlong)MAX2(offset2, off_hi);
++          if (ABS(diff) < maximum_number_of_min_max_interval_indices) {
++            // Gather expanded bounds
++            off_lo = MIN2(off_lo, offset2);
++            off_hi = MAX2(off_hi, offset2);
++            // Record top NRC range checks
++            prev_checks[nb_checks % NRC].ctl = prev_dom;
++            prev_checks[nb_checks % NRC].off = offset2;
++            nb_checks++;
++          }
+         }
+       }
+       prev_dom = dom;
+diff --git a/hotspot/src/share/vm/opto/loopnode.cpp b/hotspot/src/share/vm/opto/loopnode.cpp
+index 957929e5df..8103d5cd92 100644
+--- a/hotspot/src/share/vm/opto/loopnode.cpp
++++ b/hotspot/src/share/vm/opto/loopnode.cpp
+@@ -260,6 +260,49 @@ void PhaseIdealLoop::set_subtree_ctrl( Node *n ) {
+   set_early_ctrl( n );
+ }
+ 
++void PhaseIdealLoop::insert_loop_limit_check(ProjNode* limit_check_proj, Node* cmp_limit, Node* bol) {
++  Node* new_predicate_proj = create_new_if_for_predicate(limit_check_proj, NULL,
++                                                         Deoptimization::Reason_loop_limit_check);
++  Node* iff = new_predicate_proj->in(0);
++  assert(iff->Opcode() == Op_If, "bad graph shape");
++  Node* conv = iff->in(1);
++  assert(conv->Opcode() == Op_Conv2B, "bad graph shape");
++  Node* opaq = conv->in(1);
++  assert(opaq->Opcode() == Op_Opaque1, "bad graph shape");
++  cmp_limit = _igvn.register_new_node_with_optimizer(cmp_limit);
++  bol = _igvn.register_new_node_with_optimizer(bol);
++  set_subtree_ctrl(bol);
++  _igvn.replace_input_of(iff, 1, bol);
++
++#ifndef PRODUCT
++  // report that the loop predication has been actually performed
++  // for this loop
++  if (TraceLoopLimitCheck) {
++    tty->print_cr("Counted Loop Limit Check generated:");
++    debug_only( bol->dump(2); )
++  }
++#endif
++}
++
++static int check_stride_overflow(jlong final_correction, const TypeInt* limit_t) {
++  if (final_correction > 0) {
++    if (limit_t->_lo > (max_jint - final_correction)) {
++      return -1;
++    }
++    if (limit_t->_hi > (max_jint - final_correction)) {
++      return 1;
++    }
++  } else {
++    if (limit_t->_hi < (min_jint - final_correction)) {
++      return -1;
++    }
++    if (limit_t->_lo < (min_jint - final_correction)) {
++      return 1;
++    }
++  }
++  return 0;
++}
++
+ //------------------------------is_counted_loop--------------------------------
+ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+   PhaseGVN *gvn = &_igvn;
+@@ -463,51 +506,256 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+   assert(x->Opcode() == Op_Loop, "regular loops only");
+   C->print_method(PHASE_BEFORE_CLOOPS, 3);
+ 
+-  Node *hook = new (C) Node(6);
++  Node* adjusted_limit = limit;
+ 
+   if (LoopLimitCheck) {
+ 
+   // ===================================================
+-  // Generate loop limit check to avoid integer overflow
+-  // in cases like next (cyclic loops):
++  // We can only convert this loop to a counted loop if we can guarantee that the iv phi will never overflow at runtime.
++  // This is an implicit assumption taken by some loop optimizations. We therefore must ensure this property at all cost.
++  // At this point, we've already excluded some trivial cases where an overflow could have been proven statically.
++  // But even though we cannot prove that an overflow will *not* happen, we still want to speculatively convert this loop
++  // to a counted loop. This can be achieved by adding additional iv phi overflow checks before the loop. If they fail,
++  // we trap and resume execution before the loop without having executed any iteration of the loop, yet.
+   //
+-  // for (i=0; i <= max_jint; i++) {}
+-  // for (i=0; i <  max_jint; i+=2) {}
++  // These additional iv phi overflow checks can be inserted as Loop Limit Check Predicates above the Loop Limit Check
++  // Parse Predicate which captures a JVM state just before the entry of the loop. If there is no such Parse Predicate,
++  // we cannot generate a Loop Limit Check Predicate and thus cannot speculatively convert the loop to a counted loop.
+   //
++  // In the following, we only focus on int loops with stride > 0 to keep things simple. The argumentation and proof
++  // for stride < 0 is analogously. For long loops, we would replace max_int with max_long.
+   //
+-  // Limit check predicate depends on the loop test:
+   //
+-  // for(;i != limit; i++)       --> limit <= (max_jint)
+-  // for(;i <  limit; i+=stride) --> limit <= (max_jint - stride + 1)
+-  // for(;i <= limit; i+=stride) --> limit <= (max_jint - stride    )
++  // The loop to be converted does not always need to have the often used shape:
+   //
++  //                                                 i = init
++  //     i = init                                loop:
++  //     do {                                        ...
++  //         // ...               equivalent         i+=stride
++  //         i+=stride               <==>            if (i < limit)
++  //     } while (i < limit);                          goto loop
++  //                                             exit:
++  //                                                 ...
++  //
++  // where the loop exit check uses the post-incremented iv phi and a '<'-operator.
++  //
++  // We could also have '<='-operator (or '>='-operator for negative strides) or use the pre-incremented iv phi value
++  // in the loop exit check:
++  //
++  //         i = init
++  //     loop:
++  //         ...
++  //         if (i <= limit)
++  //             i+=stride
++  //             goto loop
++  //     exit:
++  //         ...
++  //
++  // Let's define the following terms:
++  // - iv_pre_i: The pre-incremented iv phi before the i-th iteration.
++  // - iv_post_i: The post-incremented iv phi after the i-th iteration.
++  //
++  // The iv_pre_i and iv_post_i have the following relation:
++  //      iv_pre_i + stride = iv_post_i
++  //
++  // When converting a loop to a counted loop, we want to have a canonicalized loop exit check of the form:
++  //     iv_post_i < adjusted_limit
++  //
++  // If that is not the case, we need to canonicalize the loop exit check by using different values for adjusted_limit:
++  // (LE1) iv_post_i < limit: Already canonicalized. We can directly use limit as adjusted_limit.
++  //           -> adjusted_limit = limit.
++  // (LE2) iv_post_i <= limit:
++  //           iv_post_i < limit + 1
++  //           -> adjusted limit = limit + 1
++  // (LE3) iv_pre_i < limit:
++  //           iv_pre_i + stride < limit + stride
++  //           iv_post_i < limit + stride
++  //           -> adjusted_limit = limit + stride
++  // (LE4) iv_pre_i <= limit:
++  //           iv_pre_i < limit + 1
++  //           iv_pre_i + stride < limit + stride + 1
++  //           iv_post_i < limit + stride + 1
++  //           -> adjusted_limit = limit + stride + 1
++  //
++  // Note that:
++  //     (AL) limit <= adjusted_limit.
++  //
++  // The following loop invariant has to hold for counted loops with n iterations (i.e. loop exit check true after n-th
++  // loop iteration) and a canonicalized loop exit check to guarantee that no iv_post_i over- or underflows:
++  // (INV) For i = 1..n, min_int <= iv_post_i <= max_int
++  //
++  // To prove (INV), we require the following two conditions/assumptions:
++  // (i): adjusted_limit - 1 + stride <= max_int
++  // (ii): init < limit
++  //
++  // If we can prove (INV), we know that there can be no over- or underflow of any iv phi value. We prove (INV) by
++  // induction by assuming (i) and (ii).
++  //
++  // Proof by Induction
++  // ------------------
++  // > Base case (i = 1): We show that (INV) holds after the first iteration:
++  //     min_int <= iv_post_1 = init + stride <= max_int
++  // Proof:
++  //     First, we note that (ii) implies
++  //         (iii) init <= limit - 1
++  //     max_int >= adjusted_limit - 1 + stride   [using (i)]
++  //             >= limit - 1 + stride            [using (AL)]
++  //             >= init + stride                 [using (iii)]
++  //             >= min_int                       [using stride > 0, no underflow]
++  // Thus, no overflow happens after the first iteration and (INV) holds for i = 1.
++  //
++  // Note that to prove the base case we need (i) and (ii).
++  //
++  // > Induction Hypothesis (i = j, j > 1): Assume that (INV) holds after the j-th iteration:
++  //     min_int <= iv_post_j <= max_int
++  // > Step case (i = j + 1): We show that (INV) also holds after the j+1-th iteration:
++  //     min_int <= iv_post_{j+1} = iv_post_j + stride <= max_int
++  // Proof:
++  // If iv_post_j >= adjusted_limit:
++  //     We exit the loop after the j-th iteration, and we don't execute the j+1-th iteration anymore. Thus, there is
++  //     also no iv_{j+1}. Since (INV) holds for iv_j, there is nothing left to prove.
++  // If iv_post_j < adjusted_limit:
++  //     First, we note that:
++  //         (iv) iv_post_j <= adjusted_limit - 1
++  //     max_int >= adjusted_limit - 1 + stride    [using (i)]
++  //             >= iv_post_j + stride             [using (iv)]
++  //             >= min_int                        [using stride > 0, no underflow]
++  //
++  // Note that to prove the step case we only need (i).
++  //
++  // Thus, by assuming (i) and (ii), we proved (INV).
++  //
++  //
++  // It is therefore enough to add the following two Loop Limit Check Predicates to check assumptions (i) and (ii):
++  //
++  // (1) Loop Limit Check Predicate for (i):
++  //     Using (i): adjusted_limit - 1 + stride <= max_int
++  //
++  //     This condition is now restated to use limit instead of adjusted_limit:
++  //
++  //     To prevent an overflow of adjusted_limit -1 + stride itself, we rewrite this check to
++  //         max_int - stride + 1 >= adjusted_limit
++  //     We can merge the two constants into
++  //         canonicalized_correction = stride - 1
++  //     which gives us
++  //        max_int - canonicalized_correction >= adjusted_limit
++  //
++  //     To directly use limit instead of adjusted_limit in the predicate condition, we split adjusted_limit into:
++  //         adjusted_limit = limit + limit_correction
++  //     Since stride > 0 and limit_correction <= stride + 1, we can restate this with no over- or underflow into:
++  //         max_int - canonicalized_correction - limit_correction >= limit
++  //     Since canonicalized_correction and limit_correction are both constants, we can replace them with a new constant:
++  //         final_correction = canonicalized_correction + limit_correction
++  //     which gives us:
++  //
++  //     Final predicate condition:
++  //         max_int - final_correction >= limit
++  //
++  // (2) Loop Limit Check Predicate for (ii):
++  //     Using (ii): init < limit
++  //
++  //     This Loop Limit Check Predicate is not required if we can prove at compile time that either:
++  //        (2.1) type(init) < type(limit)
++  //             In this case, we know:
++  //                 all possible values of init < all possible values of limit
++  //             and we can skip the predicate.
++  //
++  //        (2.2) init < limit is already checked before (i.e. found as a dominating check)
++  //            In this case, we do not need to re-check the condition and can skip the predicate.
++  //            This is often found for while- and for-loops which have the following shape:
++  //
++  //                if (init < limit) { // Dominating test. Do not need the Loop Limit Check Predicate below.
++  //                    i = init;
++  //                    if (init >= limit) { trap(); } // Here we would insert the Loop Limit Check Predicate
++  //                    do {
++  //                        i += stride;
++  //                    } while (i < limit);
++  //                }
++  //
++  //        (2.3) init + stride <= max_int
++  //            In this case, there is no overflow of the iv phi after the first loop iteration.
++  //            In the proof of the base case above we showed that init + stride <= max_int by using assumption (ii):
++  //                init < limit
++  //            In the proof of the step case above, we did not need (ii) anymore. Therefore, if we already know at
++  //            compile time that init + stride <= max_int then we have trivially proven the base case and that
++  //            there is no overflow of the iv phi after the first iteration. In this case, we don't need to check (ii)
++  //            again and can skip the predicate.
++
++
++  // Accounting for (LE3) and (LE4) where we use pre-incremented phis in the loop exit check.
++  const jlong limit_correction_for_pre_iv_exit_check = (phi_incr != NULL) ? stride_con : 0;
++
++  // Accounting for (LE2) and (LE4) where we use <= or >= in the loop exit check.
++  const bool includes_limit = (bt == BoolTest::le || bt == BoolTest::ge);
++  const jlong limit_correction_for_le_ge_exit_check = (includes_limit ? (stride_con > 0 ? 1 : -1) : 0);
++
++  const jlong limit_correction = limit_correction_for_pre_iv_exit_check + limit_correction_for_le_ge_exit_check;
++  const jlong canonicalized_correction = stride_con + (stride_con > 0 ? -1 : 1);
++  const jlong final_correction = canonicalized_correction + limit_correction;
++
++  int sov = check_stride_overflow(final_correction, limit_t);
++
++  // If sov==0, limit's type always satisfies the condition, for
++  // example, when it is an array length.
++  if (sov != 0) {
++    if (sov < 0) {
++      return false;  // Bailout: integer overflow is certain.
++    }
++    // (1) Loop Limit Check Predicate is required because we could not statically prove that
++    //     limit + final_correction = adjusted_limit - 1 + stride <= max_int
++    ProjNode *limit_check_proj = find_predicate_insertion_point(init_control, Deoptimization::Reason_loop_limit_check);
++    if (!limit_check_proj) {
++      // The Loop Limit Check Parse Predicate is not generated if this method trapped here before.
++#ifdef ASSERT
++      if (TraceLoopLimitCheck) {
++        tty->print("missing loop limit check:");
++        loop->dump_head();
++        x->dump(1);
++      }
++#endif
++      return false;
++    }
+ 
+-  // Check if limit is excluded to do more precise int overflow check.
+-  bool incl_limit = (bt == BoolTest::le || bt == BoolTest::ge);
+-  int stride_m  = stride_con - (incl_limit ? 0 : (stride_con > 0 ? 1 : -1));
+-
+-  // If compare points directly to the phi we need to adjust
+-  // the compare so that it points to the incr. Limit have
+-  // to be adjusted to keep trip count the same and the
+-  // adjusted limit should be checked for int overflow.
+-  if (phi_incr != NULL) {
+-    stride_m  += stride_con;
+-  }
++    IfNode* check_iff = limit_check_proj->in(0)->as_If();
+ 
+-  if (limit->is_Con()) {
+-    int limit_con = limit->get_int();
+-    if ((stride_con > 0 && limit_con > (max_jint - stride_m)) ||
+-        (stride_con < 0 && limit_con < (min_jint - stride_m))) {
+-      // Bailout: it could be integer overflow.
++    if (!is_dominator(get_ctrl(limit), check_iff->in(0))) {
+       return false;
+     }
+-  } else if ((stride_con > 0 && limit_t->_hi <= (max_jint - stride_m)) ||
+-             (stride_con < 0 && limit_t->_lo >= (min_jint - stride_m))) {
+-      // Limit's type may satisfy the condition, for example,
+-      // when it is an array length.
+-  } else {
+-    // Generate loop's limit check.
+-    // Loop limit check predicate should be near the loop.
++
++    Node* cmp_limit;
++    Node* bol;
++
++    if (stride_con > 0) {
++      cmp_limit = new (C) CmpINode(limit, _igvn.intcon(max_jint - final_correction));
++      bol = new (C) BoolNode(cmp_limit, BoolTest::le);
++    } else {
++      cmp_limit = new (C) CmpINode(limit, _igvn.intcon(min_jint - final_correction));
++      bol = new (C) BoolNode(cmp_limit, BoolTest::ge);
++    }
++
++    insert_loop_limit_check(limit_check_proj, cmp_limit, bol);
++  }
++
++  // (2.3)
++  const bool init_plus_stride_could_overflow =
++          (stride_con > 0 && init_t->_hi > max_jint - stride_con) ||
++          (stride_con < 0 && init_t->_lo < min_jint - stride_con);
++  // (2.1)
++  const bool init_gte_limit = (stride_con > 0 && init_t->_hi >= limit_t->_lo) ||
++                              (stride_con < 0 && init_t->_lo <= limit_t->_hi);
++
++  if (init_gte_limit && // (2.1)
++     ((bt == BoolTest::ne || init_plus_stride_could_overflow) && // (2.3)
++      !has_dominating_loop_limit_check(init_trip, limit, stride_con, init_control))) { // (2.2)
++    // (2) Iteration Loop Limit Check Predicate is required because neither (2.1), (2.2), nor (2.3) holds.
++    // We use the following condition:
++    // - stride > 0: init < limit
++    // - stride < 0: init > limit
++    //
++    // This predicate is always required if we have a non-equal-operator in the loop exit check (where stride = 1 is
++    // a requirement). We transform the loop exit check by using a less-than-operator. By doing so, we must always
++    // check that init < limit. Otherwise, we could have a different number of iterations at runtime.
++
+     ProjNode *limit_check_proj = find_predicate_insertion_point(init_control, Deoptimization::Reason_loop_limit_check);
+     if (!limit_check_proj) {
+       // The limit check predicate is not generated if this method trapped here before.
+@@ -520,41 +768,38 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+ #endif
+       return false;
+     }
+-
+     IfNode* check_iff = limit_check_proj->in(0)->as_If();
++
++    if (!is_dominator(get_ctrl(limit), check_iff->in(0)) ||
++        !is_dominator(get_ctrl(init_trip), check_iff->in(0))) {
++      return false;
++    }
++
+     Node* cmp_limit;
+     Node* bol;
+ 
+     if (stride_con > 0) {
+-      cmp_limit = new (C) CmpINode(limit, _igvn.intcon(max_jint - stride_m));
+-      bol = new (C) BoolNode(cmp_limit, BoolTest::le);
++      cmp_limit = new (C) CmpINode(init_trip, limit);
++      bol = new (C) BoolNode(cmp_limit, BoolTest::lt);
+     } else {
+-      cmp_limit = new (C) CmpINode(limit, _igvn.intcon(min_jint - stride_m));
+-      bol = new (C) BoolNode(cmp_limit, BoolTest::ge);
++      cmp_limit = new (C) CmpINode(init_trip, limit);
++      bol = new (C) BoolNode(cmp_limit, BoolTest::gt);
+     }
+-    cmp_limit = _igvn.register_new_node_with_optimizer(cmp_limit);
+-    bol = _igvn.register_new_node_with_optimizer(bol);
+-    set_subtree_ctrl(bol);
+-
+-    // Replace condition in original predicate but preserve Opaque node
+-    // so that previous predicates could be found.
+-    assert(check_iff->in(1)->Opcode() == Op_Conv2B &&
+-           check_iff->in(1)->in(1)->Opcode() == Op_Opaque1, "");
+-    Node* opq = check_iff->in(1)->in(1);
+-    _igvn.hash_delete(opq);
+-    opq->set_req(1, bol);
+-    // Update ctrl.
+-    set_ctrl(opq, check_iff->in(0));
+-    set_ctrl(check_iff->in(1), check_iff->in(0));
+ 
+-#ifndef PRODUCT
+-    // report that the loop predication has been actually performed
+-    // for this loop
+-    if (TraceLoopLimitCheck) {
+-      tty->print_cr("Counted Loop Limit Check generated:");
+-      debug_only( bol->dump(2); )
++    insert_loop_limit_check(limit_check_proj, cmp_limit, bol);
++  }
++
++  if (bt == BoolTest::ne) {
++    // Now we need to canonicalize the loop condition if it is 'ne'.
++    assert(stride_con == 1 || stride_con == -1, "simple increment only - checked before");
++    if (stride_con > 0) {
++      // 'ne' can be replaced with 'lt' only when init < limit. This is ensured by the inserted predicate above.
++      bt = BoolTest::lt;
++    } else {
++      assert(stride_con < 0, "must be");
++      // 'ne' can be replaced with 'gt' only when init > limit. This is ensured by the inserted predicate above.
++      bt = BoolTest::gt;
+     }
+-#endif
+   }
+ 
+   if (phi_incr != NULL) {
+@@ -567,26 +812,15 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+     // is converted to
+     //   i = init; do {} while(++i < limit+1);
+     //
+-    limit = gvn->transform(new (C) AddINode(limit, stride));
+-  }
+-
+-  // Now we need to canonicalize loop condition.
+-  if (bt == BoolTest::ne) {
+-    assert(stride_con == 1 || stride_con == -1, "simple increment only");
+-    // 'ne' can be replaced with 'lt' only when init < limit.
+-    if (stride_con > 0 && init_t->_hi < limit_t->_lo)
+-      bt = BoolTest::lt;
+-    // 'ne' can be replaced with 'gt' only when init > limit.
+-    if (stride_con < 0 && init_t->_lo > limit_t->_hi)
+-      bt = BoolTest::gt;
++    adjusted_limit = gvn->transform(new (C) AddINode(limit, stride));
+   }
+ 
+-  if (incl_limit) {
++  if (includes_limit) {
+     // The limit check guaranties that 'limit <= (max_jint - stride)' so
+     // we can convert 'i <= limit' to 'i < limit+1' since stride != 0.
+     //
+     Node* one = (stride_con > 0) ? gvn->intcon( 1) : gvn->intcon(-1);
+-    limit = gvn->transform(new (C) AddINode(limit, one));
++    adjusted_limit = gvn->transform(new (C) AddINode(adjusted_limit, one));
+     if (bt == BoolTest::le)
+       bt = BoolTest::lt;
+     else if (bt == BoolTest::ge)
+@@ -594,10 +828,11 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+     else
+       ShouldNotReachHere();
+   }
+-  set_subtree_ctrl( limit );
++  set_subtree_ctrl(adjusted_limit);
+ 
+   } else { // LoopLimitCheck
+ 
++  Node *hook = new (C) Node(6);
+   // If compare points to incr, we are ok.  Otherwise the compare
+   // can directly point to the phi; in this case adjust the compare so that
+   // it points to the incr by adjusting the limit.
+@@ -691,6 +926,11 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+   limit = gvn->transform(new (C) AddINode(span,init_trip));
+   set_subtree_ctrl( limit );
+ 
++  adjusted_limit = limit;
++
++  // Free up intermediate goo
++  _igvn.remove_dead_node(hook);
++
+   } // LoopLimitCheck
+ 
+   if (!UseCountedLoopSafepoints) {
+@@ -728,7 +968,7 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+   }
+   cmp = cmp->clone();
+   cmp->set_req(1,incr);
+-  cmp->set_req(2,limit);
++  cmp->set_req(2, adjusted_limit);
+   cmp = _igvn.register_new_node_with_optimizer(cmp);
+   set_ctrl(cmp, iff->in(0));
+ 
+@@ -802,9 +1042,6 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+     }
+   }
+ 
+-  // Free up intermediate goo
+-  _igvn.remove_dead_node(hook);
+-
+ #ifdef ASSERT
+   assert(l->is_valid_counted_loop(), "counted loop shape is messed up");
+   assert(l == loop->_head && l->phi() == phi && l->loopexit() == lex, "" );
+@@ -821,6 +1058,37 @@ bool PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
+   return true;
+ }
+ 
++// Check if there is a dominating loop limit check of the form 'init < limit' starting at the loop entry.
++// If there is one, then we do not need to create an additional Loop Limit Check Predicate.
++bool PhaseIdealLoop::has_dominating_loop_limit_check(Node* init_trip, Node* limit, const int stride_con,
++                                                     Node* loop_entry) {
++  // Eagerly call transform() on the Cmp and Bool node to common them up if possible. This is required in order to
++  // successfully find a dominated test with the If node below.
++  Node* cmp_limit;
++  Node* bol;
++  if (stride_con > 0) {
++    cmp_limit = _igvn.transform(new (C) CmpINode(init_trip, limit));
++    bol = _igvn.transform(new (C) BoolNode(cmp_limit, BoolTest::lt));
++  } else {
++    cmp_limit = _igvn.transform(new (C) CmpINode(init_trip, limit));
++    bol = _igvn.transform(new (C) BoolNode(cmp_limit, BoolTest::gt));
++  }
++
++  // Check if there is already a dominating init < limit check. If so, we do not need a Loop Limit Check Predicate.
++  IfNode* iff = new (C) IfNode(loop_entry, bol, PROB_MIN, COUNT_UNKNOWN);
++  // Also add fake IfProj nodes in order to call transform() on the newly created IfNode.
++  IfFalseNode* if_false = new (C) IfFalseNode(iff);
++  IfTrueNode* if_true = new (C) IfTrueNode(iff);
++  Node* dominated_iff = _igvn.transform(iff);
++  // ConI node? Found dominating test (IfNode::dominated_by() returns a ConI node).
++  const bool found_dominating_test = dominated_iff != NULL && dominated_iff->Opcode() == Op_ConI;
++
++  // Kill the If with its projections again in the next IGVN round by cutting it off from the graph.
++  _igvn.replace_input_of(iff, 0, C->top());
++  _igvn.replace_input_of(iff, 1, C->top());
++  return found_dominating_test;
++}
++
+ //----------------------exact_limit-------------------------------------------
+ Node* PhaseIdealLoop::exact_limit( IdealLoopTree *loop ) {
+   assert(loop->_head->is_CountedLoop(), "");
+diff --git a/hotspot/src/share/vm/opto/loopnode.hpp b/hotspot/src/share/vm/opto/loopnode.hpp
+index fa874a4c19..10f9694fe5 100644
+--- a/hotspot/src/share/vm/opto/loopnode.hpp
++++ b/hotspot/src/share/vm/opto/loopnode.hpp
+@@ -896,6 +896,10 @@ public:
+   // Create a new if above the uncommon_trap_if_pattern for the predicate to be promoted
+   ProjNode* create_new_if_for_predicate(ProjNode* cont_proj, Node* new_entry,
+                                         Deoptimization::DeoptReason reason);
++  void insert_loop_limit_check(ProjNode* limit_check_proj, Node* cmp_limit, Node* bol);
++  bool has_dominating_loop_limit_check(Node* init_trip, Node* limit, int stride_con,
++                                       Node* loop_entry);
++
+   void register_control(Node* n, IdealLoopTree *loop, Node* pred);
+ 
+   // Clone loop predicates to cloned loops (peeled, unswitched)
+diff --git a/hotspot/src/share/vm/opto/phaseX.hpp b/hotspot/src/share/vm/opto/phaseX.hpp
+index 332b1175d1..25f9edd1b7 100644
+--- a/hotspot/src/share/vm/opto/phaseX.hpp
++++ b/hotspot/src/share/vm/opto/phaseX.hpp
+@@ -433,9 +433,6 @@ private:
+ 
+ protected:
+ 
+-  // Idealize new Node 'n' with respect to its inputs and its value
+-  virtual Node *transform( Node *a_node );
+-
+   // Warm up hash table, type table and initial worklist
+   void init_worklist( Node *a_root );
+ 
+@@ -449,6 +446,9 @@ public:
+   PhaseIterGVN( PhaseGVN *gvn ); // Used after Parser
+   PhaseIterGVN( PhaseIterGVN *igvn, const char *dummy ); // Used after +VerifyOpto
+ 
++  // Idealize new Node 'n' with respect to its inputs and its value
++  virtual Node *transform( Node *a_node );
++
+   virtual PhaseIterGVN *is_IterGVN() { return this; }
+ 
+   Unique_Node_List _worklist;       // Iterative worklist
+diff --git a/jdk/src/share/classes/com/sun/crypto/provider/RSACipher.java b/jdk/src/share/classes/com/sun/crypto/provider/RSACipher.java
+index 9c57bb0c06..c90f7efcbd 100644
+--- a/jdk/src/share/classes/com/sun/crypto/provider/RSACipher.java
++++ b/jdk/src/share/classes/com/sun/crypto/provider/RSACipher.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -98,6 +98,7 @@ public final class RSACipher extends CipherSpi {
+ 
+     // cipher parameter for OAEP padding and TLS RSA premaster secret
+     private AlgorithmParameterSpec spec = null;
++    private boolean forTlsPremasterSecret = false;
+ 
+     // buffer for the data
+     private byte[] buffer;
+@@ -290,6 +291,7 @@ public final class RSACipher extends CipherSpi {
+                 }
+ 
+                 spec = params;
++                forTlsPremasterSecret = true;
+                 this.random = random;   // for TLS RSA premaster secret
+             }
+             int blockType = (mode <= MODE_DECRYPT) ? RSAPadding.PAD_BLOCKTYPE_2
+@@ -353,21 +355,38 @@ public final class RSACipher extends CipherSpi {
+             switch (mode) {
+             case MODE_SIGN:
+                 paddingCopy = padding.pad(buffer, 0, bufOfs);
+-                result = RSACore.rsa(paddingCopy, privateKey, true);
++                if (paddingCopy != null) {
++                    result = RSACore.rsa(paddingCopy, privateKey, true);
++                } else {
++                    throw new BadPaddingException("Padding error in signing");
++                }
+                 break;
+             case MODE_VERIFY:
+                 byte[] verifyBuffer = RSACore.convert(buffer, 0, bufOfs);
+                 paddingCopy = RSACore.rsa(verifyBuffer, publicKey);
+                 result = padding.unpad(paddingCopy);
++                if (result == null) {
++                    throw new BadPaddingException
++                            ("Padding error in verification");
++                }
+                 break;
+             case MODE_ENCRYPT:
+                 paddingCopy = padding.pad(buffer, 0, bufOfs);
+-                result = RSACore.rsa(paddingCopy, publicKey);
++                if (paddingCopy != null) {
++                    result = RSACore.rsa(paddingCopy, publicKey);
++                } else {
++                    throw new BadPaddingException
++                            ("Padding error in encryption");
++                }
+                 break;
+             case MODE_DECRYPT:
+                 byte[] decryptBuffer = RSACore.convert(buffer, 0, bufOfs);
+                 paddingCopy = RSACore.rsa(decryptBuffer, privateKey, false);
+                 result = padding.unpad(paddingCopy);
++                if (result == null && !forTlsPremasterSecret) {
++                    throw new BadPaddingException
++                            ("Padding error in decryption");
++                }
+                 break;
+             default:
+                 throw new AssertionError("Internal error");
+@@ -376,9 +395,9 @@ public final class RSACipher extends CipherSpi {
+         } finally {
+             Arrays.fill(buffer, 0, bufOfs, (byte)0);
+             bufOfs = 0;
+-            if (paddingCopy != null             // will not happen
++            if (paddingCopy != null
+                     && paddingCopy != buffer    // already cleaned
+-                    && paddingCopy != result) { // DO NOT CLEAN, THIS IS RESULT!
++                    && paddingCopy != result) { // DO NOT CLEAN, THIS IS RESULT
+                 Arrays.fill(paddingCopy, (byte)0);
+             }
+         }
+@@ -452,26 +471,22 @@ public final class RSACipher extends CipherSpi {
+ 
+         boolean isTlsRsaPremasterSecret =
+                 algorithm.equals("TlsRsaPremasterSecret");
+-        Exception failover = null;
+         byte[] encoded = null;
+ 
+         update(wrappedKey, 0, wrappedKey.length);
+         try {
+             encoded = doFinal();
+-        } catch (BadPaddingException e) {
+-            if (isTlsRsaPremasterSecret) {
+-                failover = e;
+-            } else {
+-                throw new InvalidKeyException("Unwrapping failed", e);
+-            }
+-        } catch (IllegalBlockSizeException e) {
+-            // should not occur, handled with length check above
++        } catch (BadPaddingException | IllegalBlockSizeException e) {
++            // BadPaddingException cannot happen for TLS RSA unwrap.
++            // In that case, padding error is indicated by returning null.
++            // IllegalBlockSizeException cannot happen in any case,
++            // because of the length check above.
+             throw new InvalidKeyException("Unwrapping failed", e);
+         }
+ 
+         try {
+             if (isTlsRsaPremasterSecret) {
+-                if (!(spec instanceof TlsRsaPremasterSecretParameterSpec)) {
++                if (!forTlsPremasterSecret) {
+                     throw new IllegalStateException(
+                             "No TlsRsaPremasterSecretParameterSpec specified");
+                 }
+@@ -480,7 +495,7 @@ public final class RSACipher extends CipherSpi {
+                 encoded = KeyUtil.checkTlsPreMasterSecretKey(
+                         ((TlsRsaPremasterSecretParameterSpec) spec).getClientVersion(),
+                         ((TlsRsaPremasterSecretParameterSpec) spec).getServerVersion(),
+-                        random, encoded, (failover != null));
++                        random, encoded, encoded == null);
+             }
+ 
+             return ConstructKeys.constructKey(encoded, algorithm, type);
+diff --git a/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMSignatureMethod.java b/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMSignatureMethod.java
+index b3da7acaad..4bb7b278f2 100644
+--- a/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMSignatureMethod.java
++++ b/jdk/src/share/classes/org/jcp/xml/dsig/internal/dom/DOMSignatureMethod.java
+@@ -312,7 +312,6 @@ public abstract class DOMSignatureMethod extends AbstractDOMSignatureMethod {
+         }
+         signature.initSign((PrivateKey)key);
+         LOG.debug("Signature provider: {}", signature.getProvider());
+-        LOG.debug("Signing with key: {}", key);
+         LOG.debug("JCA Algorithm: {}", getJCAAlgorithm());
+ 
+         try (SignerOutputStream outputStream = new SignerOutputStream(signature)) {
+diff --git a/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java b/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
+index 2841ae82eb..7260c0bebf 100644
+--- a/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
++++ b/jdk/src/share/classes/sun/security/pkcs11/P11Signature.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2021, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -728,9 +728,12 @@ final class P11Signature extends SignatureSpi {
+             int len = (p11Key.length() + 7) >> 3;
+             RSAPadding padding = RSAPadding.getInstance
+                                         (RSAPadding.PAD_BLOCKTYPE_1, len);
+-            byte[] padded = padding.pad(data);
+-            return padded;
+-        } catch (GeneralSecurityException e) {
++            byte[] result = padding.pad(data);
++            if (result == null) {
++                throw new ProviderException("Error padding data");
++            }
++            return result;
++        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+             throw new ProviderException(e);
+         }
+     }
+diff --git a/jdk/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java b/jdk/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java
+index 0035164734..83f61823ed 100644
+--- a/jdk/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java
++++ b/jdk/src/share/classes/sun/security/provider/certpath/ForwardBuilder.java
+@@ -336,8 +336,11 @@ class ForwardBuilder extends Builder {
+         }
+     }
+ 
++    // Thread-local gate to prevent recursive provider lookups
++    private static ThreadLocal<Object> gate = new ThreadLocal<>();
++
+     /**
+-     * Download Certificates from the given AIA and add them to the
++     * Download certificates from the given AIA and add them to the
+      * specified Collection.
+      */
+     // cs.getCertificates(caSelector) returns a collection of X509Certificate's
+@@ -349,32 +352,47 @@ class ForwardBuilder extends Builder {
+         if (Builder.USE_AIA == false) {
+             return false;
+         }
++
+         List<AccessDescription> adList = aiaExt.getAccessDescriptions();
+         if (adList == null || adList.isEmpty()) {
+             return false;
+         }
+ 
+-        boolean add = false;
+-        for (AccessDescription ad : adList) {
+-            CertStore cs = URICertStore.getInstance(ad);
+-            if (cs != null) {
+-                try {
+-                    if (certs.addAll((Collection<X509Certificate>)
+-                        cs.getCertificates(caSelector))) {
+-                        add = true;
+-                        if (!searchAllCertStores) {
+-                            return true;
++        if (gate.get() != null) {
++            // Avoid recursive fetching of certificates
++            if (debug != null) {
++                debug.println("Recursive fetching of certs via the AIA " +
++                    "extension detected");
++            }
++            return false;
++        }
++
++        gate.set(gate);
++        try {
++            boolean add = false;
++            for (AccessDescription ad : adList) {
++                CertStore cs = URICertStore.getInstance(ad);
++                if (cs != null) {
++                    try {
++                        if (certs.addAll((Collection<X509Certificate>)
++                            cs.getCertificates(caSelector))) {
++                            add = true;
++                            if (!searchAllCertStores) {
++                                return true;
++                            }
++                        }
++                    } catch (CertStoreException cse) {
++                        if (debug != null) {
++                            debug.println("exception getting certs from CertStore:");
++                            cse.printStackTrace();
+                         }
+-                    }
+-                } catch (CertStoreException cse) {
+-                    if (debug != null) {
+-                        debug.println("exception getting certs from CertStore:");
+-                        cse.printStackTrace();
+                     }
+                 }
+             }
++            return add;
++        } finally {
++            gate.set(null);
+         }
+-        return add;
+     }
+ 
+     /**
+diff --git a/jdk/src/share/classes/sun/security/rsa/RSAPadding.java b/jdk/src/share/classes/sun/security/rsa/RSAPadding.java
+index 908cefadec..d0a00c5a90 100644
+--- a/jdk/src/share/classes/sun/security/rsa/RSAPadding.java
++++ b/jdk/src/share/classes/sun/security/rsa/RSAPadding.java
+@@ -30,7 +30,6 @@ import java.util.*;
+ import java.security.*;
+ import java.security.spec.*;
+ 
+-import javax.crypto.BadPaddingException;
+ import javax.crypto.spec.PSource;
+ import javax.crypto.spec.OAEPParameterSpec;
+ 
+@@ -236,24 +235,22 @@ public final class RSAPadding {
+     }
+ 
+     /**
+-     * Pad the data and return the padded block.
++     * Pad the data and return the result or null if error occurred.
+      */
+-    public byte[] pad(byte[] data) throws BadPaddingException {
++    public byte[] pad(byte[] data) {
+         return pad(data, 0, data.length);
+     }
+ 
+     /**
+-     * Pad the data and return the padded block.
++     * Pad the data and return the result or null if error occurred.
+      */
+-    public byte[] pad(byte[] data, int ofs, int len)
+-            throws BadPaddingException {
++    public byte[] pad(byte[] data, int ofs, int len) {
+         if (len > maxDataSize) {
+-            throw new BadPaddingException("Data must be shorter than "
+-                + (maxDataSize + 1) + " bytes but received "
+-                + len + " bytes.");
++            return null;
+         }
+         switch (type) {
+         case PAD_NONE:
++            // assert len == paddedSize and data.length - ofs > len?
+             return RSACore.convert(data, ofs, len);
+         case PAD_BLOCKTYPE_1:
+         case PAD_BLOCKTYPE_2:
+@@ -266,31 +263,30 @@ public final class RSAPadding {
+     }
+ 
+     /**
+-     * Unpad the padded block and return the data.
++     * Unpad the padded block and return the result or null if error occurred.
+      */
+-    public byte[] unpad(byte[] padded) throws BadPaddingException {
+-        if (padded.length != paddedSize) {
+-            throw new BadPaddingException("Decryption error." +
+-                "The padded array length (" + padded.length +
+-                ") is not the specified padded size (" + paddedSize + ")");
+-        }
+-        switch (type) {
+-        case PAD_NONE:
+-            return padded;
+-        case PAD_BLOCKTYPE_1:
+-        case PAD_BLOCKTYPE_2:
+-            return unpadV15(padded);
+-        case PAD_OAEP_MGF1:
+-            return unpadOAEP(padded);
+-        default:
+-            throw new AssertionError();
++    public byte[] unpad(byte[] padded) {
++        if (padded.length == paddedSize) {
++            switch (type) {
++            case PAD_NONE:
++                return padded;
++            case PAD_BLOCKTYPE_1:
++            case PAD_BLOCKTYPE_2:
++                return unpadV15(padded);
++            case PAD_OAEP_MGF1:
++                return unpadOAEP(padded);
++            default:
++                throw new AssertionError();
++            }
++        } else {
++            return null;
+         }
+     }
+ 
+     /**
+      * PKCS#1 v1.5 padding (blocktype 1 and 2).
+      */
+-    private byte[] padV15(byte[] data, int ofs, int len) throws BadPaddingException {
++    private byte[] padV15(byte[] data, int ofs, int len) {
+         byte[] padded = new byte[paddedSize];
+         System.arraycopy(data, ofs, padded, paddedSize - len, len);
+         int psSize = paddedSize - 3 - len;
+@@ -328,10 +324,10 @@ public final class RSAPadding {
+ 
+     /**
+      * PKCS#1 v1.5 unpadding (blocktype 1 (signature) and 2 (encryption)).
+-     *
++     * Return the result or null if error occurred.
+      * Note that we want to make it a constant-time operation
+      */
+-    private byte[] unpadV15(byte[] padded) throws BadPaddingException {
++    private byte[] unpadV15(byte[] padded) {
+         int k = 0;
+         boolean bp = false;
+ 
+@@ -367,10 +363,8 @@ public final class RSAPadding {
+         byte[] data = new byte[n];
+         System.arraycopy(padded, p, data, 0, n);
+ 
+-        BadPaddingException bpe = new BadPaddingException("Decryption error");
+-
+         if (bp) {
+-            throw bpe;
++            return null;
+         } else {
+             return data;
+         }
+@@ -379,8 +373,9 @@ public final class RSAPadding {
+     /**
+      * PKCS#1 v2.0 OAEP padding (MGF1).
+      * Paragraph references refer to PKCS#1 v2.1 (June 14, 2002)
++     * Return the result or null if error occurred.
+      */
+-    private byte[] padOAEP(byte[] M, int ofs, int len) throws BadPaddingException {
++    private byte[] padOAEP(byte[] M, int ofs, int len) {
+         if (random == null) {
+             random = JCAUtil.getSecureRandom();
+         }
+@@ -429,8 +424,9 @@ public final class RSAPadding {
+ 
+     /**
+      * PKCS#1 v2.1 OAEP unpadding (MGF1).
++     * Return the result or null if error occurred.
+      */
+-    private byte[] unpadOAEP(byte[] padded) throws BadPaddingException {
++    private byte[] unpadOAEP(byte[] padded) {
+         byte[] EM = padded;
+         boolean bp = false;
+         int hLen = lHash.length;
+@@ -486,12 +482,6 @@ public final class RSAPadding {
+         byte [] m = new byte[EM.length - mStart];
+         System.arraycopy(EM, mStart, m, 0, m.length);
+ 
+-        BadPaddingException bpe = new BadPaddingException("Decryption error");
+-
+-        if (bp) {
+-            throw bpe;
+-        } else {
+-            return m;
+-        }
++        return (bp? null : m);
+     }
+ }
+diff --git a/jdk/src/share/classes/sun/security/rsa/RSASignature.java b/jdk/src/share/classes/sun/security/rsa/RSASignature.java
+index 0e719e806e..43e150073e 100644
+--- a/jdk/src/share/classes/sun/security/rsa/RSASignature.java
++++ b/jdk/src/share/classes/sun/security/rsa/RSASignature.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2003, 2020, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2003, 2023, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -189,13 +189,15 @@ public abstract class RSASignature extends SignatureSpi {
+         try {
+             byte[] encoded = encodeSignature(digestOID, digest);
+             byte[] padded = padding.pad(encoded);
+-            byte[] encrypted = RSACore.rsa(padded, privateKey, true);
+-            return encrypted;
++            if (padded != null) {
++                return RSACore.rsa(padded, privateKey, true);
++            }
+         } catch (GeneralSecurityException e) {
+             throw new SignatureException("Could not sign data", e);
+         } catch (IOException e) {
+             throw new SignatureException("Could not encode data", e);
+         }
++        throw new SignatureException("Could not sign data");
+     }
+ 
+     // verify the data and return the result. See JCA doc
+@@ -206,21 +208,30 @@ public abstract class RSASignature extends SignatureSpi {
+         }
+ 
+         if (sigBytes.length != RSACore.getByteLength(publicKey)) {
+-            throw new SignatureException("Signature length not correct: got " +
++            throw new SignatureException("Bad signature length: got " +
+                     sigBytes.length + " but was expecting " +
+                     RSACore.getByteLength(publicKey));
+         }
+-        byte[] digest = getDigestValue();
++
+         try {
++            // https://www.rfc-editor.org/rfc/rfc8017.html#section-8.2.2
++            // Step 4 suggests comparing the encoded message
+             byte[] decrypted = RSACore.rsa(sigBytes, publicKey);
+-            byte[] unpadded = padding.unpad(decrypted);
+-            byte[] decodedDigest = decodeSignature(digestOID, unpadded);
+-            return MessageDigest.isEqual(digest, decodedDigest);
++
++            byte[] digest = getDigestValue();
++
++            byte[] encoded = encodeSignature(digestOID, digest);
++            byte[] padded = padding.pad(encoded);
++            if (MessageDigest.isEqual(padded, decrypted)) {
++                return true;
++            }
++
++            // Some vendors might omit the NULL params in digest algorithm
++            // identifier. Try again.
++            encoded = encodeSignatureWithoutNULL(digestOID, digest);
++            padded = padding.pad(encoded);
++            return MessageDigest.isEqual(padded, decrypted);
+         } catch (javax.crypto.BadPaddingException e) {
+-            // occurs if the app has used the wrong RSA public key
+-            // or if sigBytes is invalid
+-            // return false rather than propagating the exception for
+-            // compatibility/ease of use
+             return false;
+         } catch (IOException e) {
+             throw new SignatureException("Signature encoding error", e);
+@@ -242,27 +253,19 @@ public abstract class RSASignature extends SignatureSpi {
+     }
+ 
+     /**
+-     * Decode the signature data. Verify that the object identifier matches
+-     * and return the message digest.
++     * Encode the digest without the NULL params, return the to-be-signed data.
++     * This is only used by SunRsaSign.
+      */
+-    public static byte[] decodeSignature(ObjectIdentifier oid, byte[] sig)
++    static byte[] encodeSignatureWithoutNULL(ObjectIdentifier oid, byte[] digest)
+             throws IOException {
+-        // Enforce strict DER checking for signatures
+-        DerInputStream in = new DerInputStream(sig, 0, sig.length, false);
+-        DerValue[] values = in.getSequence(2);
+-        if ((values.length != 2) || (in.available() != 0)) {
+-            throw new IOException("SEQUENCE length error");
+-        }
+-        AlgorithmId algId = AlgorithmId.parse(values[0]);
+-        if (algId.getOID().equals((Object)oid) == false) {
+-            throw new IOException("ObjectIdentifier mismatch: "
+-                + algId.getOID());
+-        }
+-        if (algId.getEncodedParams() != null) {
+-            throw new IOException("Unexpected AlgorithmId parameters");
+-        }
+-        byte[] digest = values[1].getOctetString();
+-        return digest;
++        DerOutputStream out = new DerOutputStream();
++        DerOutputStream oidout = new DerOutputStream();
++        oidout.putOID(oid);
++        out.write(DerValue.tag_Sequence, oidout);
++        out.putOctetString(digest);
++        DerValue result =
++                new DerValue(DerValue.tag_Sequence, out.toByteArray());
++        return result.toByteArray();
+     }
+ 
+     // set parameter, not supported. See JCA doc
+diff --git a/jdk/src/share/classes/sun/security/util/KeyUtil.java b/jdk/src/share/classes/sun/security/util/KeyUtil.java
+index 79361dc6b5..e4099b301f 100644
+--- a/jdk/src/share/classes/sun/security/util/KeyUtil.java
++++ b/jdk/src/share/classes/sun/security/util/KeyUtil.java
+@@ -253,13 +253,14 @@ public final class KeyUtil {
+      *         contains the lower of that suggested by the client in the client
+      *         hello and the highest supported by the server.
+      * @param  encoded the encoded key in its "RAW" encoding format
+-     * @param  isFailover whether or not the previous decryption of the
+-     *         encrypted PreMasterSecret message run into problem
++     * @param  failure true if encoded is incorrect according to previous checks
+      * @return the polished PreMasterSecret key in its "RAW" encoding format
+      */
+     public static byte[] checkTlsPreMasterSecretKey(
+             int clientVersion, int serverVersion, SecureRandom random,
+-            byte[] encoded, boolean isFailOver) {
++            byte[] encoded, boolean failure) {
++
++        byte[] tmp;
+ 
+         if (random == null) {
+             random = JCAUtil.getSecureRandom();
+@@ -267,30 +268,38 @@ public final class KeyUtil {
+         byte[] replacer = new byte[48];
+         random.nextBytes(replacer);
+ 
+-        if (!isFailOver && (encoded != null)) {
+-            // check the length
+-            if (encoded.length != 48) {
+-                // private, don't need to clone the byte array.
+-                return replacer;
+-            }
+-
+-            int encodedVersion =
+-                    ((encoded[0] & 0xFF) << 8) | (encoded[1] & 0xFF);
+-            if (clientVersion != encodedVersion) {
+-                if (clientVersion > 0x0301 ||               // 0x0301: TLSv1
+-                       serverVersion != encodedVersion) {
+-                    encoded = replacer;
+-                }   // Otherwise, For compatibility, we maintain the behavior
+-                    // that the version in pre_master_secret can be the
+-                    // negotiated version for TLS v1.0 and SSL v3.0.
+-            }
++        if (failure) {
++            tmp = replacer;
++        } else {
++            tmp = encoded;
++        }
+ 
++        if (tmp == null) {
++            encoded = replacer;
++        } else {
++            encoded = tmp;
++        }
++        // check the length
++        if (encoded.length != 48) {
+             // private, don't need to clone the byte array.
+-            return encoded;
++            tmp = replacer;
++        } else {
++            tmp = encoded;
+         }
+ 
+-        // private, don't need to clone the byte array.
+-        return replacer;
++        int encodedVersion =
++                ((tmp[0] & 0xFF) << 8) | (tmp[1] & 0xFF);
++        int check1 = 0;
++        int check2 = 0;
++        int check3 = 0;
++        if (clientVersion != encodedVersion) check1 = 1;
++        if (clientVersion > 0x0301) check2 = 1;
++        if (serverVersion != encodedVersion) check3 = 1;
++        if ((check1 & (check2 | check3)) == 1) {
++            return replacer;
++        } else {
++            return tmp;
++        }
+     }
+ 
+     /**
+diff --git a/jdk/src/share/native/common/check_code.c b/jdk/src/share/native/common/check_code.c
+index 9609172077..491b95cd21 100644
+--- a/jdk/src/share/native/common/check_code.c
++++ b/jdk/src/share/native/common/check_code.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 1994, 2014, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1994, 2023, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -84,6 +84,7 @@
+ #include <assert.h>
+ #include <limits.h>
+ #include <stdlib.h>
++#include <stdint.h>
+ 
+ #include "jni.h"
+ #include "jvm.h"
+@@ -1202,7 +1203,7 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
+             }
+         }
+         if (opcode == JVM_OPC_tableswitch) {
+-            keys = _ck_ntohl(lpc[2]) -  _ck_ntohl(lpc[1]) + 1;
++            keys = _ck_ntohl(lpc[2]) - _ck_ntohl(lpc[1]) + 1;
+             delta = 1;
+         } else {
+             keys = _ck_ntohl(lpc[1]); /* number of pairs */
+@@ -1682,11 +1683,13 @@ static int instruction_length(unsigned char *iptr, unsigned char *end)
+     switch (instruction) {
+         case JVM_OPC_tableswitch: {
+             int *lpc = (int *)UCALIGN(iptr + 1);
+-            int index;
+             if (lpc + 2 >= (int *)end) {
+                 return -1; /* do not read pass the end */
+             }
+-            index = _ck_ntohl(lpc[2]) - _ck_ntohl(lpc[1]);
++            int64_t low  = _ck_ntohl(lpc[1]);
++            int64_t high = _ck_ntohl(lpc[2]);
++            int64_t index = high - low;
++            // The value of low must be less than or equal to high - i.e. index >= 0
+             if ((index < 0) || (index > 65535)) {
+                 return -1;      /* illegal */
+             } else {
+diff --git a/jdk/src/windows/classes/sun/security/mscapi/CRSACipher.java b/jdk/src/windows/classes/sun/security/mscapi/CRSACipher.java
+index 95f6cbf80e..d68fd6861a 100644
+--- a/jdk/src/windows/classes/sun/security/mscapi/CRSACipher.java
++++ b/jdk/src/windows/classes/sun/security/mscapi/CRSACipher.java
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2005, 2020, Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2005, 2023, Oracle and/or its affiliates. All rights reserved.
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+  *
+  * This code is free software; you can redistribute it and/or modify it
+@@ -30,6 +30,7 @@ import java.security.*;
+ import java.security.Key;
+ import java.security.interfaces.*;
+ import java.security.spec.*;
++import java.util.Arrays;
+ 
+ import javax.crypto.*;
+ import javax.crypto.spec.*;
+@@ -61,6 +62,9 @@ import sun.security.util.KeyUtil;
+  */
+ public final class CRSACipher extends CipherSpi {
+ 
++    private static final int ERROR_INVALID_PARAMETER = 0x57;
++    private static final int NTE_INVALID_PARAMETER = 0x80090027;
++
+     // constant for an empty byte array
+     private final static byte[] B0 = new byte[0];
+ 
+@@ -101,6 +105,8 @@ public final class CRSACipher extends CipherSpi {
+     // cipher parameter for TLS RSA premaster secret
+     private AlgorithmParameterSpec spec = null;
+ 
++    private boolean forTlsPremasterSecret = false;
++
+     // the source of randomness
+     private SecureRandom random;
+ 
+@@ -171,6 +177,9 @@ public final class CRSACipher extends CipherSpi {
+             }
+             spec = params;
+             this.random = random;   // for TLS RSA premaster secret
++            this.forTlsPremasterSecret = true;
++        } else {
++            this.forTlsPremasterSecret = false;
+         }
+         init(opmode, key);
+     }
+@@ -277,8 +286,7 @@ public final class CRSACipher extends CipherSpi {
+     }
+ 
+     // internal doFinal() method. Here we perform the actual RSA operation
+-    private byte[] doFinal() throws BadPaddingException,
+-            IllegalBlockSizeException {
++    private byte[] doFinal() throws IllegalBlockSizeException {
+         if (bufOfs > buffer.length) {
+             throw new IllegalBlockSizeException("Data must not be longer "
+                 + "than " + (buffer.length - paddingLength)  + " bytes");
+@@ -307,7 +315,7 @@ public final class CRSACipher extends CipherSpi {
+                 throw new AssertionError("Internal error");
+             }
+ 
+-        } catch (KeyException e) {
++        } catch (KeyException | BadPaddingException e) {
+             throw new ProviderException(e);
+ 
+         } finally {
+@@ -330,14 +338,14 @@ public final class CRSACipher extends CipherSpi {
+ 
+     // see JCE spec
+     protected byte[] engineDoFinal(byte[] in, int inOfs, int inLen)
+-            throws BadPaddingException, IllegalBlockSizeException {
++            throws IllegalBlockSizeException {
+         update(in, inOfs, inLen);
+         return doFinal();
+     }
+ 
+     // see JCE spec
+     protected int engineDoFinal(byte[] in, int inOfs, int inLen, byte[] out,
+-            int outOfs) throws ShortBufferException, BadPaddingException,
++            int outOfs) throws ShortBufferException,
+             IllegalBlockSizeException {
+         if (outputSize > out.length - outOfs) {
+             throw new ShortBufferException
+@@ -353,6 +361,7 @@ public final class CRSACipher extends CipherSpi {
+     // see JCE spec
+     protected byte[] engineWrap(Key key) throws InvalidKeyException,
+             IllegalBlockSizeException {
++
+         byte[] encoded = key.getEncoded(); // TODO - unextractable key
+         if ((encoded == null) || (encoded.length == 0)) {
+             throw new InvalidKeyException("Could not obtain encoded key");
+@@ -361,12 +370,7 @@ public final class CRSACipher extends CipherSpi {
+             throw new InvalidKeyException("Key is too long for wrapping");
+         }
+         update(encoded, 0, encoded.length);
+-        try {
+-            return doFinal();
+-        } catch (BadPaddingException e) {
+-            // should not occur
+-            throw new InvalidKeyException("Wrapping failed", e);
+-        }
++        return doFinal();
+     }
+ 
+     // see JCE spec
+@@ -387,31 +391,31 @@ public final class CRSACipher extends CipherSpi {
+         update(wrappedKey, 0, wrappedKey.length);
+         try {
+             encoded = doFinal();
+-        } catch (BadPaddingException e) {
+-            if (isTlsRsaPremasterSecret) {
+-                failover = e;
+-            } else {
+-                throw new InvalidKeyException("Unwrapping failed", e);
+-            }
+         } catch (IllegalBlockSizeException e) {
+             // should not occur, handled with length check above
+             throw new InvalidKeyException("Unwrapping failed", e);
+         }
+ 
+-        if (isTlsRsaPremasterSecret) {
+-            if (!(spec instanceof TlsRsaPremasterSecretParameterSpec)) {
+-                throw new IllegalStateException(
+-                        "No TlsRsaPremasterSecretParameterSpec specified");
++        try {
++            if (isTlsRsaPremasterSecret) {
++                if (!forTlsPremasterSecret) {
++                    throw new IllegalStateException(
++                            "No TlsRsaPremasterSecretParameterSpec specified");
++                }
++
++                // polish the TLS premaster secret
++                encoded = KeyUtil.checkTlsPreMasterSecretKey(
++                        ((TlsRsaPremasterSecretParameterSpec) spec).getClientVersion(),
++                        ((TlsRsaPremasterSecretParameterSpec) spec).getServerVersion(),
++                        random, encoded, encoded == null);
+             }
+ 
+-            // polish the TLS premaster secret
+-            encoded = KeyUtil.checkTlsPreMasterSecretKey(
+-                ((TlsRsaPremasterSecretParameterSpec)spec).getClientVersion(),
+-                ((TlsRsaPremasterSecretParameterSpec)spec).getServerVersion(),
+-                random, encoded, (failover != null));
++            return constructKey(encoded, algorithm, type);
++        } finally {
++            if (encoded != null) {
++                Arrays.fill(encoded, (byte) 0);
++            }
+         }
+-
+-        return constructKey(encoded, algorithm, type);
+     }
+ 
+     // see JCE spec
+@@ -495,7 +499,23 @@ public final class CRSACipher extends CipherSpi {
+      * Encrypt/decrypt a data buffer using Microsoft Crypto API with HCRYPTKEY.
+      * It expects and returns ciphertext data in big-endian form.
+      */
+-    private native static byte[] encryptDecrypt(byte[] data, int dataSize,
+-        long hCryptKey, boolean doEncrypt) throws KeyException;
++    private byte[] encryptDecrypt(byte[] data, int dataSize,
++        long hCryptKey, boolean doEncrypt) throws KeyException, BadPaddingException {
++        int[] returnStatus = new int[1];
++        byte[] result= encryptDecrypt(returnStatus, data, dataSize, hCryptKey, doEncrypt);
++        if ((returnStatus[0] == ERROR_INVALID_PARAMETER) || (returnStatus[0] == NTE_INVALID_PARAMETER)) {
++            if (forTlsPremasterSecret) {
++                result = null;
++            } else {
++                throw new BadPaddingException("Error " + returnStatus[0] + " returned by MSCAPI");
++            }
++        } else if (returnStatus[0] != 0) {
++            throw new KeyException("Error " + returnStatus[0] + " returned by MSCAPI");
++        }
++
++        return result;
++    }
++    private static native byte[] encryptDecrypt(int[] returnStatus, byte[] data, int dataSize,
++            long key, boolean doEncrypt) throws KeyException;
+ 
+ }
+diff --git a/jdk/src/windows/native/sun/security/mscapi/security.cpp b/jdk/src/windows/native/sun/security/mscapi/security.cpp
+index 8ba36f5c02..73488cbcc3 100644
+--- a/jdk/src/windows/native/sun/security/mscapi/security.cpp
++++ b/jdk/src/windows/native/sun/security/mscapi/security.cpp
+@@ -1832,18 +1832,25 @@ JNIEXPORT void JNICALL Java_sun_security_mscapi_CKeyStore_destroyKeyContainer
+ /*
+  * Class:     sun_security_mscapi_CRSACipher
+  * Method:    encryptDecrypt
+- * Signature: ([BIJZ)[B
++ * Signature: ([I[BIJZ)[B
+  */
+ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CRSACipher_encryptDecrypt
+-  (JNIEnv *env, jclass clazz, jbyteArray jData, jint jDataSize, jlong hKey,
++  (JNIEnv *env, jclass clazz, jintArray jResultStatus, jbyteArray jData, jint jDataSize, jlong hKey,
+    jboolean doEncrypt)
+ {
+     jbyteArray result = NULL;
+     jbyte* pData = NULL;
++    jbyte* resultData = NULL;
+     DWORD dwDataLen = jDataSize;
+     DWORD dwBufLen = env->GetArrayLength(jData);
+     DWORD i;
+     BYTE tmp;
++    BOOL success;
++    DWORD ss = ERROR_SUCCESS;
++    DWORD lastError = ERROR_SUCCESS;
++    DWORD resultLen = 0;
++    DWORD pmsLen = 48;
++    jbyte pmsArr[48] = {0};
+ 
+     __try
+     {
+@@ -1870,6 +1877,8 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CRSACipher_encryptDecrypt
+                 pData[i] = pData[dwBufLen - i -1];
+                 pData[dwBufLen - i - 1] = tmp;
+             }
++            resultData = pData;
++            resultLen = dwBufLen;
+         } else {
+             // convert to little-endian
+             for (i = 0; i < dwBufLen / 2; i++) {
+@@ -1879,21 +1888,28 @@ JNIEXPORT jbyteArray JNICALL Java_sun_security_mscapi_CRSACipher_encryptDecrypt
+             }
+ 
+             // decrypt
+-            if (! ::CryptDecrypt((HCRYPTKEY) hKey, 0, TRUE, 0, (BYTE *)pData, //deprecated
+-                &dwBufLen)) {
+-
+-                ThrowException(env, KEY_EXCEPTION, GetLastError());
+-                __leave;
++            success = ::CryptDecrypt((HCRYPTKEY) hKey, 0, TRUE, 0, (BYTE *)pData, //deprecated
++                &dwBufLen);
++            lastError = GetLastError();
++            if (success) {
++                ss = ERROR_SUCCESS;
++                resultData = pData;
++                resultLen = dwBufLen;
++            } else {
++                ss = lastError;
++                resultData = pmsArr;
++                resultLen = pmsLen;
+             }
++            env->SetIntArrayRegion(jResultStatus, 0, 1, (jint*) &ss);
+         }
+ 
+-        // Create new byte array
+-        if ((result = env->NewByteArray(dwBufLen)) == NULL) {
++            // Create new byte array
++        if ((result = env->NewByteArray(resultLen)) == NULL) {
+             __leave;
+         }
+ 
+         // Copy data from native buffer to Java buffer
+-        env->SetByteArrayRegion(result, 0, dwBufLen, (jbyte*) pData);
++        env->SetByteArrayRegion(result, 0, resultLen, (jbyte*) resultData);
+     }
+     __finally
+     {
+diff --git a/jdk/test/sun/security/rsa/RSAPaddingCheck.java b/jdk/test/sun/security/rsa/RSAPaddingCheck.java
+new file mode 100644
+index 0000000000..807e4e3bf4
+--- /dev/null
++++ b/jdk/test/sun/security/rsa/RSAPaddingCheck.java
+@@ -0,0 +1,63 @@
++/*
++ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++/*
++ * @test
++ * @bug 8302017
++ * @summary Ensure that RSAPadding class works as expected after refactoring
++ * @modules java.base/sun.security.rsa
++ */
++import java.util.Arrays;
++import sun.security.rsa.RSAPadding;
++
++public class RSAPaddingCheck {
++
++    private static int[] PADDING_TYPES =  {
++        RSAPadding.PAD_BLOCKTYPE_1,
++        RSAPadding.PAD_BLOCKTYPE_2,
++        RSAPadding.PAD_NONE,
++        RSAPadding.PAD_OAEP_MGF1,
++    };
++
++    public static void main(String[] args) throws Exception {
++        int size = 2048 >> 3;
++        byte[] testData = "This is some random to-be-padded Data".getBytes();
++        for (int type : PADDING_TYPES) {
++            byte[] data = (type == RSAPadding.PAD_NONE?
++                    Arrays.copyOf(testData, size) : testData);
++            System.out.println("Testing PaddingType: " + type);
++            RSAPadding padding = RSAPadding.getInstance(type, size);
++            byte[] paddedData = padding.pad(data);
++            if (paddedData == null) {
++                throw new RuntimeException("Unexpected padding op failure!");
++            }
++
++            byte[] data2 = padding.unpad(paddedData);
++            if (data2 == null) {
++                throw new RuntimeException("Unexpected unpadding op failure!");
++            }
++            if (!Arrays.equals(data, data2)) {
++                throw new RuntimeException("diff check failure!");
++            }
++        }
++    }
++}
+diff --git a/jdk/test/sun/security/rsa/WithoutNULL.java b/jdk/test/sun/security/rsa/WithoutNULL.java
+new file mode 100644
+index 0000000000..4a403c9394
+--- /dev/null
++++ b/jdk/test/sun/security/rsa/WithoutNULL.java
+@@ -0,0 +1,57 @@
++/*
++ * Copyright (c) 2023, Oracle and/or its affiliates. All rights reserved.
++ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
++ *
++ * This code is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License version 2 only, as
++ * published by the Free Software Foundation.
++ *
++ * This code is distributed in the hope that it will be useful, but WITHOUT
++ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
++ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
++ * version 2 for more details (a copy is included in the LICENSE file that
++ * accompanied this code).
++ *
++ * You should have received a copy of the GNU General Public License version
++ * 2 along with this work; if not, write to the Free Software Foundation,
++ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
++ *
++ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
++ * or visit www.oracle.com if you need additional information or have any
++ * questions.
++ */
++
++/**
++ * @test
++ * @bug 8320597
++ * @summary Verify RSA signature with omitted digest params (should be encoded as NULL)
++ * for backward compatibility
++ */
++import java.security.KeyFactory;
++import java.security.Signature;
++import java.security.spec.X509EncodedKeySpec;
++import java.util.Base64;
++
++public class WithoutNULL {
++    public static void main(String[] args) throws Exception {
++
++        // A 1024-bit RSA public key
++        byte[] key = Base64.getMimeDecoder().decode(
++                "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCrfTrEm4KvdFSpGAM7InrFEzALTKdphT9fK6Gu" +
++                "eVjHtKsuCSEaULCdjhJvPpFK40ONr1JEC1Ywp1UYrfBBdKunnbDZqNZL1cFv+IzF4Yj6JO6pOeHi" +
++                "1Zpur1GaQRRlYTvzmyWY/AATQDh8JfKObNnDVwXeezFODUG8h5+XL1ZXZQIDAQAB");
++
++        // A SHA1withRSA signature on an empty input where the digestAlgorithm
++        // inside DigestInfo does not have a parameters field.
++        byte[] sig = Base64.getMimeDecoder().decode(
++                "D1FpiT44WEXlDfYK880bdorLO+e9qJVXZWiBgqs9dfK7lYQwyEt9dL23mbUAKm5TVEj2ZxtHkEvk" +
++                "b8oaWkxk069jDTM1RhllPJZkAjeQRbw4gkg4N6wKZz9B/jdSRMNJg/b9QdRYZOHOBxsEHMbUREPV" +
++                "DoCOLaxB8eIXX0EWkiE=");
++
++        Signature s = Signature.getInstance("SHA1withRSA", "SunRsaSign");
++        s.initVerify(KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(key)));
++        if (!s.verify(sig)) {
++            throw new RuntimeException("Does not verify");
++        }
++    }
++}
+diff --git a/nashorn/src/jdk/nashorn/internal/objects/Global.java b/nashorn/src/jdk/nashorn/internal/objects/Global.java
+index 18505f00ea..b27d07615f 100644
+--- a/nashorn/src/jdk/nashorn/internal/objects/Global.java
++++ b/nashorn/src/jdk/nashorn/internal/objects/Global.java
+@@ -1430,9 +1430,11 @@ public final class Global extends Scope {
+         if ("context".equals(nameStr)) {
+             return sctxt;
+         } else if ("engine".equals(nameStr)) {
+-            // expose "engine" variable only when there is no security manager
+-            // or when no class filter is set.
+-            if (System.getSecurityManager() == null || global.getClassFilter() == null) {
++            // expose "engine" variable only when there is no security manager,
++            // or when no class filter is set and --no-java is not set
++            if (System.getSecurityManager() == null ||
++                    (global.getClassFilter() == null &&
++                    !global.getContext().getEnv()._no_java)) {
+                 return global.engine;
+             }
+         }

@@ -448,7 +448,7 @@ ExcludeArch: %{ix86}
 %define component %(echo %{name} | sed "s;-portable;;g")
 
 Name:    java-%{javaver}-%{origin}-portable
-Version: %{javaver}.%{updatever}.%{buildver}
+Version: %{javaver}.%{updatever}.b06
 Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
@@ -652,6 +652,9 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 Patch581: jdk8257794-remove_broken_assert.patch
 # JDK-8186464, RH1433262: ZipFile cannot read some InfoZip ZIP64 zip files
 Patch12: jdk8186464-rh1433262-zip64_failure.patch
+
+# no public forest contains jdk8u402-b06
+Patch666: jdk8u402-b06.patch
 
 #############################################
 #
@@ -953,6 +956,10 @@ popd
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
 %patch -P534
 %endif
+
+pushd %{top_level_dir_name}
+%patch -P666 -p1
+popd
 
 # Shenandoah patches
 
@@ -1564,6 +1571,10 @@ done
 %endif
 
 %changelog
+* Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.402.b06-1
+- added Patch666: jdk8u402-b06.patch as it is missing n public repos
+- hardcoded b06 to version to match build after above patch
+
 * Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.402.b05-1
 - updated to gnu-andrew-shenandoah-jdk8u402-b05-ea.tar.xz
 - updated news, moved to fork of https://github.com/gnu-andrew/shenandoah-jdk8u
