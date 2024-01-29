@@ -276,7 +276,7 @@
 # Define version of OpenJDK 8 used
 %global project openjdk
 %global repo shenandoah-jdk8u
-%global openjdk_revision jdk8u392-b08
+%global openjdk_revision jdk8u402-b05
 %global shenandoah_revision shenandoah-%{openjdk_revision}
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      3.15.0
@@ -342,7 +342,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      6
+%global rpmrelease      1
 # priority must be 7 digits in total; up to openjdk 1.8
 %if %is_system_jdk
 %global priority        1800%{updatever}
@@ -488,7 +488,7 @@ URL:      http://openjdk.java.net/
 # FILE_NAME_ROOT=%%{project}-%%{repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://github.com/%%{project}/%%{repo}
-Source0: %{project}-%{repo}-%{shenandoah_revision}.tar.xz
+Source0: gnu-andrew-%{shenandoah_revision}-ea.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -652,8 +652,6 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 Patch581: jdk8257794-remove_broken_assert.patch
 # JDK-8186464, RH1433262: ZipFile cannot read some InfoZip ZIP64 zip files
 Patch12: jdk8186464-rh1433262-zip64_failure.patch
-# JDK-8312489, OJ2095: Increase jdk.jar.maxSignatureFileSize default which is too low for JARs such as WhiteSource/Mend unified agent jar
-Patch2000: jdk8312489-max_sig_default_increase.patch
 
 #############################################
 #
@@ -664,8 +662,6 @@ Patch2000: jdk8312489-max_sig_default_increase.patch
 # able to be removed once that release is out
 # and used by this RPM.
 #############################################
-
-Patch2001: jdk8315506-C99_compatibility_issue_in_LinuxNativeDispatcher.patch
 
 #############################################
 #
@@ -947,9 +943,6 @@ pushd %{top_level_dir_name}
 %patch -P1000 -p1
 # system cacerts support
 %patch -P539 -p1
-# JDK-8312489 backport, proposed for 8u402: https://github.com/openjdk/jdk8u-dev/pull/381
-%patch -P2000 -p1
-%patch -P2001 -p1
 popd
 
 # RPM-only fixes
@@ -1571,6 +1564,13 @@ done
 %endif
 
 %changelog
+* Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.402.b05-1
+- updated to gnu-andrew-shenandoah-jdk8u402-b05-ea.tar.xz
+- updated news, moved to fork of https://github.com/gnu-andrew/shenandoah-jdk8u
+- dropped upstreamed:
+-- Patch2000: jdk8312489-max_sig_default_increase.patch
+-- Patch2001: jdk8315506-C99_compatibility_issue_in_LinuxNativeDispatcher.patch
+
 * Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-6
 - rewritten source generation (tfitzim)
 - used %patch -Pn instead of $patchN
