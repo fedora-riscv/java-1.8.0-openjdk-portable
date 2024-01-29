@@ -1,3 +1,11 @@
+%if (0%{?rhel} > 0 && 0%{?rhel} < 8)
+# portable jdk 17 specific bug, _jvmdir being missing
+%define _jvmdir /usr/lib/jvm
+%endif
+
+# debug_package %%{nil} is portable-jdks specific
+%define  debug_package %{nil}
+
 # RPM conditionals so as to be able to dynamically produce
 # slowdebug/release builds. See:
 # http://rpm.org/user_doc/conditional_builds.html
@@ -12,10 +20,7 @@
 #
 # Only produce a release build on x86_64:
 # $ fedpkg mockbuild --without slowdebug --without fastdebug
-#
-# Only produce a debug build on x86_64:
-# $ fedpkg local --without release
-#
+
 # Enable fastdebug builds by default on relevant arches.
 %bcond_without fastdebug
 # Enable slowdebug builds by default on relevant arches.
@@ -29,12 +34,6 @@
 # Build with system libraries
 %bcond_with system_libs
 
-# Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
-%if %{with fresh_libjvm}
-%global build_hotspot_first 1
-%else
-%global build_hotspot_first 0
-%endif
 
 %global is_system_jdk 0
 %if %{with system_libs}
@@ -47,8 +46,10 @@
 %global jpeg_lib |libjpeg[.]so.*
 %endif
 
-# Turn off the debug package as we just produce a bunch of tarballs
-%define debug_package %{nil}
+# The -g flag says to use strip -g instead of full strip on DSOs or EXEs.
+# This fixes detailed NMT and other tools which need minimal debug info.
+# See: https://bugzilla.redhat.com/show_bug.cgi?id=1520879
+%global _find_debuginfo_opts -g
 
 # note: parametrized macros are order-sensitive (unlike not-parametrized) even with normal macros
 # also necessary when passing it as parameter to other macros. If not macro, then it is considered a switch
@@ -104,6 +105,7 @@
 # Set of architectures which support class data sharing
 # See https://bugzilla.redhat.com/show_bug.cgi?id=513605
 # MetaspaceShared::generate_vtable_methods is not implemented for the PPC JIT
+%global shenandoah_arches x86_64 %{aarch64}
 %global share_arches    %{ix86} x86_64 sparcv9 sparc64 %{aarch64}
 # Set of architectures which support Java Flight Recorder (JFR)
 %global jfr_arches      %{jit_arches}
@@ -112,7 +114,7 @@
 # Set of architectures where we verify backtraces with gdb
 %global gdb_arches %{jit_arches} %{zero_arches}
 
-# By default, we build a debug build during main build on JIT architectures
+# By default, we build a slowdebug build during main build on JIT architectures
 %if %{with slowdebug}
 %ifarch %{debug_arches}
 %global include_debug_build 1
@@ -121,6 +123,13 @@
 %endif
 %else
 %global include_debug_build 0
+%endif
+
+# On certain architectures, we compile the Shenandoah GC
+%ifarch %{shenandoah_arches}
+%global use_shenandoah_hotspot 1
+%else
+%global use_shenandoah_hotspot 0
 %endif
 
 # By default, we build a fastdebug build during main build only on fastdebug architectures
@@ -148,7 +157,7 @@
 
 # If you disable all builds, then the build fails
 # Build and test slowdebug first as it provides the best diagnostics
-%global build_loop  %{slowdebug_build} %{fastdebug_build} %{normal_build}
+%global build_loop %{slowdebug_build} %{fastdebug_build} %{normal_build}
 
 %if 0%{?flatpak}
 %global bootstrap_build false
@@ -166,16 +175,6 @@
 %global debug_targets images
 # Target to use to just build HotSpot
 %global hotspot_target hotspot
-
-# JDK to use for bootstrapping
-# Use OpenJDK 7 where available (on RHEL) to avoid
-# having to use the rhel-7.x-java-unsafe-candidate hack
-%if ! 0%{?fedora} && 0%{?rhel} <= 7
-%global buildjdkver 1.7.0
-%else
-%global buildjdkver 1.8.0
-%endif
-%global bootjdk /usr/lib/jvm/java-%{buildjdkver}-openjdk
 
 # Disable LTO as this causes build failures at the moment.
 # See RHBZ#1861401
@@ -272,6 +271,7 @@
 %endif
 
 # New Version-String scheme-style defines
+%global featurever 1.8.0
 %global majorver 8
 # Define version of OpenJDK 8 used
 %global project openjdk
@@ -293,10 +293,28 @@
 # Settings for local security configuration
 %global security_file %{top_level_dir_name}/jdk/src/share/lib/security/java.security-%{_target_os}
 %global cacerts_file /etc/pki/java/cacerts
+# JDK to use for bootstrapping
+# Use OpenJDK 7 where available (on RHEL) to avoid
+# having to use the rhel-7.x-java-unsafe-candidate hack
+%if ! 0%{?fedora} && 0%{?rhel} <= 7
+%global buildjdkver 1.7.0
+%else
+%global buildjdkver 1.8.0
+%endif
+# JDK to use for bootstrapping
+%global bootjdk /usr/lib/jvm/java-%{buildjdkver}-openjdk
+# Define whether to use the bootstrap JDK directly or with a fresh libjvm.so
+# This will only work where the bootstrap JDK is the same major version
+# as the JDK being built
+%if %{with fresh_libjvm} && "%{buildjdkver}" == "%{featurever}"
+%global build_hotspot_first 1
+%else
+%global build_hotspot_first 0
+%endif
 
 # Define vendor information used by OpenJDK
 %global oj_vendor Red Hat, Inc.
-%global oj_vendor_url "https://www.redhat.com/"
+%global oj_vendor_url https://www.redhat.com/
 # Define what url should JVM offer in case of a crash report
 # order may be important, epel may have rhel declared
 %if 0%{?epel}
@@ -313,7 +331,9 @@
 %endif
 %endif
 %endif
+%global oj_vendor_version (Red_Hat-%{version}-%{rpmrelease})
 
+%global javaver         1.%{majorver}.0
 # e.g. aarch64-shenandoah-jdk8u212-b04-shenandoah-merge-2019-04-30 -> aarch64-shenandoah-jdk8u212-b04
 %global version_tag     %(VERSION=%{shenandoah_revision}; echo ${VERSION%%-shenandoah-merge*})
 # eg # jdk8u60-b27 -> jdk8u60 or # aarch64-jdk8u60-b27 -> aarch64-jdk8u60  (dont forget spec escape % by %%)
@@ -322,7 +342,14 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      5
+%global rpmrelease      6
+# priority must be 7 digits in total; up to openjdk 1.8
+%if %is_system_jdk
+%global priority        1800%{updatever}
+%else
+# for techpreview, using 1, so slowdebugs can have 0
+%global priority        0000001
+%endif
 # Define milestone (EA for pre-releases, GA ("fcs") for releases)
 # Release will be (where N is usually a number starting at 1):
 # - 0.N%%{?extraver}%%{?dist} for EA releases,
@@ -339,15 +366,6 @@
 %global extraver .%{milestone}
 %global eaprefix 0.
 %endif
-# priority must be 7 digits in total; up to openjdk 1.8
-%if %is_system_jdk
-%global priority        1800%{updatever}
-%else
-# for techpreview, using 1, so slowdebugs can have 0
-%global priority        0000001
-%endif
-
-%global javaver         1.%{majorver}.0
 
 # parametrized macros are order-sensitive
 %global compatiblename  java-%{javaver}-%{origin}
@@ -415,7 +433,6 @@
 %global alternatives_requires %{_sbindir}/alternatives
 %endif
 
-
 # x86 is no longer supported
 %if 0%{?java_arches:1}
 ExclusiveArch:  %{java_arches}
@@ -423,7 +440,7 @@ ExclusiveArch:  %{java_arches}
 ExcludeArch: %{ix86}
 %endif
 
-# Prevent brp-java-repack-jars from being run.
+# Prevent brp-java-repack-jars from being run
 %global __jar_repack 0
 
 # portables have grown out of its component, moving back to java-x-vendor
@@ -445,7 +462,10 @@ Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 
 Epoch:   1
 Summary: %{origin_nice} %{majorver} Runtime Environment portable edition
+# Groups are only used up to RHEL 8 and on Fedora versions prior to F30
+%if (0%{?rhel} > 0 && 0%{?rhel} <= 8) || (0%{?fedora} >= 0 && 0%{?fedora} < 30)
 Group:   Development/Languages
+%endif
 
 # HotSpot code is licensed under GPLv2
 # JDK library code is licensed under GPLv2 with the Classpath exception
@@ -473,8 +493,6 @@ Source0: %{project}-%{repo}-%{shenandoah_revision}.tar.xz
 # Custom README for -src subpackage
 Source2:  README.md
 
-# Release notes
-Source7: NEWS
 
 # Use 'icedtea_sync.sh' to update the following
 # They are based on code contained in the IcedTea project (3.x).
@@ -485,7 +503,9 @@ Source7: NEWS
 # Desktop files. Adapted from IcedTea
 # Disabled in portables
 #Source9: jconsole.desktop.in
-#Source10: policytool.desktop.in
+
+# Release notes
+Source10: NEWS
 
 # nss configuration file
 Source11: nss.cfg.in
@@ -693,6 +713,10 @@ BuildRequires: fontconfig-devel
 BuildRequires: freetype-devel
 BuildRequires: gcc-c++
 BuildRequires: gdb
+%if (0%{?rhel} > 0 && 0%{?rhel} < 8)
+# rhel7 only, portables only. Rhel8 have gtk3, rpms have runtime recommends of gtk
+BuildRequires: gtk2-devel
+%endif
 BuildRequires: libxslt
 BuildRequires: libX11-devel
 BuildRequires: libXext-devel
@@ -703,8 +727,8 @@ BuildRequires: libXt-devel
 BuildRequires: libXtst-devel
 # Requirement for setting up nss.cfg and nss.fips.cfg
 BuildRequires: nss-devel
-# Commented out for portable RHEL7 doesn't have this
 # Requirement for system security property test
+# N/A for portable. RHEL7 doesn't provide them
 #BuildRequires: crypto-policies
 BuildRequires: pkgconfig
 BuildRequires: xorg-x11-proto-devel
@@ -719,11 +743,11 @@ BuildRequires: libffi-devel
 %endif
 # 2023c required as of JDK-8305113
 BuildRequires: tzdata-java >= 2023c
+# cacerts build requirement in portable mode
+BuildRequires: ca-certificates
 # Earlier versions have a bug in tree vectorization on PPC
 BuildRequires: gcc >= 4.8.3-8
 
-# cacerts build requirement.
-BuildRequires: ca-certificates
 %if %{with_systemtap}
 BuildRequires: systemtap-sdt-devel
 %endif
@@ -818,6 +842,9 @@ Summary: %{origin_nice} %{majorver} full patched sources of portable JDK
 %description sources
 The %{origin_nice} %{majorver} full patched sources of portable JDK to build, attach to debuggers or for debuginfo
 %prep
+
+echo "Preparing %{oj_vendor_version}"
+
 if [ %{include_normal_build} -eq 0 -o  %{include_normal_build} -eq 1 ] ; then
   echo "include_normal_build is %{include_normal_build}"
 else
@@ -841,9 +868,15 @@ if [ %{include_debug_build} -eq 0 -a  %{include_normal_build} -eq 0 -a  %{includ
   exit 14
 fi
 
+%if %{with fresh_libjvm} && ! %{build_hotspot_first}
+echo "WARNING: The build of a fresh libjvm has been disabled due to a JDK version mismatch"
+echo "Build JDK version is %{buildjdkver}, feature JDK version is %{featurever}"
+%endif
+
 echo "Update version: %{updatever}"
 echo "Build number: %{buildver}"
 echo "Milestone: %{milestone}"
+
 %setup -q -c -n %{uniquesuffix ""} -T -a 0
 # https://bugzilla.redhat.com/show_bug.cgi?id=1189084
 prioritylength=`expr length %{priority}`
@@ -865,65 +898,67 @@ cp %{SOURCE100} %{top_level_dir_name}/common/autoconf/build-aux/
 cp %{SOURCE101} %{top_level_dir_name}/common/autoconf/build-aux/
 
 # OpenJDK patches
-
 %if %{system_libs}
 # Remove libraries that are linked
 sh %{SOURCE12}
 %endif
 
+# Patch the JDK
+# -P N: apply patch number N, same as passing N as a positional argument on rpm >= 4.18
+# -p N: strip N leading slashes from paths
 # Do not enable them with system_libs, they do not work properly with bundled option
 # System library fixes
 %if %{system_libs}
-%patch201
-%patch202
-%patch203
-%patch204
+%patch -P201
+%patch -P 202
+%patch -P 203
+%patch -P204
 %endif
 
-%patch1
-%patch5
+%patch -P1
+%patch -P5
 
 # s390 build fixes
-%patch102
-%patch103
-%patch107
+%patch -P102
+%patch -P103
+%patch -P107
 
 # AArch64 fixes
 
 # x86 fixes
-%patch105
+%patch -P105
 
 # Upstreamable fixes
-%patch502
-%patch512
-%patch523
-%patch528
-%patch571
-%patch574
-%patch112
-%patch581
-%patch541
-%patch12
+%patch -P502
+%patch -P512
+%patch -P523
+%patch -P528
+%patch -P571
+%patch -P574
+%patch -P112
+%patch -P581
+%patch -P541
+%patch -P12
 
 pushd %{top_level_dir_name}
 # Add crypto policy and FIPS support
-%patch1001 -p1
+%patch -P1001 -p1
 # nss.cfg PKCS11 support; must come last as it also alters java.security
-%patch1000 -p1
+%patch -P1000 -p1
 # system cacerts support
-%patch539 -p1
+%patch -P539 -p1
 # JDK-8312489 backport, proposed for 8u402: https://github.com/openjdk/jdk8u-dev/pull/381
-%patch2000 -p1
-%patch2001 -p1
+%patch -P2000 -p1
+%patch -P2001 -p1
 popd
 
 # RPM-only fixes
-%patch600
-%patch1003
+%patch -P600
+%patch -P1003
 
 # RHEL-only patches
 %if ! 0%{?fedora} && 0%{?rhel} <= 7
-%patch534
+%patch -P534
 %endif
 
 # Shenandoah patches
@@ -962,6 +997,7 @@ export CFLAGS="$CFLAGS -mieee"
 # pass EXTRA_CFLAGS to the HotSpot C++ compiler...
 EXTRA_CFLAGS="%ourcppflags -Wno-error"
 EXTRA_CPP_FLAGS="%ourcppflags"
+
 %ifarch %{power64} ppc
 EXTRA_CFLAGS="$EXTRA_CFLAGS -fno-tree-vectorize"
 # fix rpmlint warnings
@@ -994,6 +1030,7 @@ function buildjdk() {
         libc_link_opt="dynamic";
     fi
 
+    echo "Using output directory: ${outputdir}";
     echo "Checking build JDK ${buildjdk} is operational..."
     ${buildjdk}/bin/java -version
     echo "Using make targets: ${maketargets}"
@@ -1044,10 +1081,10 @@ function buildjdk() {
     cat hotspot-spec.gmk
 
     make \
-	JAVAC_FLAGS=-g \
-        LOG=trace \
-        SCTP_WERROR= \
-        ${maketargets} || ( pwd; find ${top_srcdir_abs_path} ${top_builddir_abs_path} -name "hs_err_pid*.log" | xargs cat && false )
+      JAVAC_FLAGS=-g \
+      LOG=trace \
+      SCTP_WERROR= \
+      $maketargets || ( pwd; find ${top_srcdir_abs_path} ${top_builddir_abs_path} -name "hs_err_pid*.log" | xargs cat && false )
 
     popd
 }
@@ -1091,7 +1128,7 @@ function installjdk() {
             find ${imagepath}/bin/ -exec chmod +x {} \;
 
             # Install local files which are distributed with the JDK
-            install -m 644 %{SOURCE7} ${imagepath}
+            install -m 644 %{SOURCE10} ${imagepath}
 
             # Create fake alt-java as a placeholder for future alt-java
             pushd ${imagepath}
@@ -1216,6 +1253,7 @@ function packagejdk() {
     mv ${jrename} %{jreimage}
 
     popd #images
+
 }
 
 %if %{build_hotspot_first}
@@ -1229,7 +1267,6 @@ function packagejdk() {
 %endif
 
 for suffix in %{build_loop} ; do
-
   if [ "x$suffix" = "x" ] ; then
       debugbuild=release
   else
@@ -1283,7 +1320,7 @@ for suffix in %{build_loop} ; do
 %endif
 
 # build cycles
-done
+done # end of release / debug cycle loop
 
 %check
 
@@ -1291,6 +1328,11 @@ done
 for suffix in %{build_loop} ; do
 
 export JAVA_HOME=$(pwd)/%{installoutputdir -- $suffix}/images/%{jdkimage}
+
+# Check Shenandoah is enabled
+%if %{use_shenandoah_hotspot}
+$JAVA_HOME/bin/java -XX:+UseShenandoahGC -version
+%endif
 
 # Check unlimited policy has been used
 $JAVA_HOME/bin/javac -d . %{SOURCE13}
@@ -1306,13 +1348,13 @@ $JAVA_HOME/bin/java $(echo $(basename %{SOURCE14})|sed "s|\.java||")
 $JAVA_HOME/bin/javac -d . %{SOURCE15}
 export PROG=$(echo $(basename %{SOURCE15})|sed "s|\.java||")
 export SEC_DEBUG="-Djava.security.debug=properties"
-# Portable specific: set false whereas its true for upstream
+# Specific to portable:System security properties to be off by default
 $JAVA_HOME/bin/java ${SEC_DEBUG} ${PROG} false
 $JAVA_HOME/bin/java ${SEC_DEBUG} -Djava.security.disableSystemPropertiesFile=true ${PROG} false
 
 # Check correct vendor values have been set
 $JAVA_HOME/bin/javac -d . %{SOURCE16}
-$JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" %{oj_vendor_url} %{oj_vendor_bug_url}
+$JAVA_HOME/bin/java $(echo $(basename %{SOURCE16})|sed "s|\.java||") "%{oj_vendor}" "%{oj_vendor_url}" "%{oj_vendor_bug_url}"
 
 # Check java launcher has no SSB mitigation
 if ! nm $JAVA_HOME/bin/java | grep set_speculation ; then true ; else false; fi
@@ -1334,7 +1376,6 @@ if [ "x$suffix" = "x" ] ; then
 else
   so_suffix="so"
 fi
-
 # Check debug symbols are present and can identify code
 find "$JAVA_HOME" -iname "*.$so_suffix" -print0 | while read -d $'\0' lib
 do
@@ -1355,9 +1396,9 @@ do
     IFS=$'\n'
     for line in $(eu-readelf -s "$lib" | grep "00000000      0 FILE    LOCAL  DEFAULT")
     do
-     # We expect to see .cpp files, except for architectures like aarch64 and
+     # We expect to see .cpp and .S files, except for architectures like aarch64 and
      # s390 where we expect .o and .oS files
-      echo "$line" | grep -E "ABS ((.*/)?[-_a-zA-Z0-9]+\.(c|cc|cpp|cxx|o|oS))?$"
+      echo "$line" | grep -E "ABS ((.*/)?[-_a-zA-Z0-9]+\.(c|cc|cpp|cxx|o|S|oS))?$"
     done
     IFS="$old_IFS"
 
@@ -1396,13 +1437,12 @@ quit
 end
 run -version
 EOF
-
 %ifarch %{gdb_arches}
 grep 'JavaCallWrapper::JavaCallWrapper' gdb.out
 %endif
 
 # Check src.zip has all sources. See RHBZ#1130490
-jar -tf $JAVA_HOME/src.zip | grep 'sun.misc.Unsafe'
+$JAVA_HOME/bin/jar -tf $JAVA_HOME/src.zip | grep 'sun.misc.Unsafe'
 
 # Check class files include useful debugging information
 $JAVA_HOME/bin/javap -l java.lang.Object | grep "Compiled from"
@@ -1531,6 +1571,12 @@ done
 %endif
 
 %changelog
+* Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-6
+- rewritten source generation (tfitzim)
+- used %patch -Pn instead of $patchN
+- reordered several lines
+- added test for shenandoah
+
 * Sat Dec 09 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-4
 - renamed outcomming tarball archives from java-1.8.0-openjdk-portable-1...tar.xz
   to expected (as other jdks) java-1.8.0-openjdk-1...tar.xz
