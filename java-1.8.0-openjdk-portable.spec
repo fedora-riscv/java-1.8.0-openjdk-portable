@@ -432,7 +432,7 @@ ExcludeArch: %{ix86}
 
 Name:    java-%{javaver}-%{origin}-portable
 Version: %{javaver}.%{updatever}.%{buildver}
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}.1
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1531,9 +1531,6 @@ done
 %endif
 
 %changelog
-* Sat Jan 20 2024 Fedora Release Engineering <releng@fedoraproject.org> - 1:1.8.0.392.b08-5.1
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
-
 * Sat Dec 09 2023 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.392.b08-4
 - renamed outcomming tarball archives from java-1.8.0-openjdk-portable-1...tar.xz
   to expected (as other jdks) java-1.8.0-openjdk-1...tar.xz
