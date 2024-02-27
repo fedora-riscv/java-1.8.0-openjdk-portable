@@ -449,7 +449,7 @@ ExcludeArch: %{ix86}
 
 Name:    java-%{javaver}-%{origin}-portable
 Version: %{javaver}.%{updatever}.b06
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}.1
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -1571,6 +1571,9 @@ done
 %endif
 
 %changelog
+* Tue Feb 27 2024 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.402.b06-1.1
+- Rebuilt for java-21-openjdk as system jdk
+
 * Mon Jan 29 2024 Jiri Vanek <jvanek@redhat.com> - 1:-1.8.0.402.b06-1
 - added Patch666: jdk8u402-b06.patch as it is missing n public repos
 - hardcoded b06 to version to match build after above patch
