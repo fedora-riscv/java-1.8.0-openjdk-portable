@@ -3,6 +3,123 @@ Key:
 JDK-X  - https://bugs.openjdk.java.net/browse/JDK-X
 CVE-XXXX-YYYY: https://cve.mitre.org/cgi-bin/cvename.cgi?name=XXXX-YYYY
 
+New in release OpenJDK 8u412 (2024-04-16):
+===========================================
+Live versions of these release notes can be found at:
+  * https://bit.ly/openjdk8u412
+
+* CVEs
+  - CVE-2024-21011
+  - CVE-2024-21085
+  - CVE-2024-21068
+  - CVE-2024-21094
+* Security fixes
+  - JDK-8317507, JDK-8325348: C2 compilation fails with "Exceeded _node_regs array"
+  - JDK-8318340: Improve RSA key implementations
+  - JDK-8319851: Improve exception logging
+  - JDK-8322114: Improve Pack 200 handling
+  - JDK-8322122: Enhance generation of addresses
+* Other changes
+  - JDK-8011180: Delete obsolete scripts
+  - JDK-8016451: Scary messages emitted by build.tools.generatenimbus.PainterGenerator during build
+  - JDK-8021961: setAlwaysOnTop doesn't behave correctly in Linux/Solaris under certain scenarios
+  - JDK-8023735: [TESTBUG][macosx] runtime/XCheckJniJsig/XCheckJSig.java fails on MacOS X
+  - JDK-8074860: Structured Exception Catcher missing around CreateJavaVM on Windows
+  - JDK-8079441: Intermittent failures on Windows with "Unexpected exit from test [exit code: 1080890248]" (0x406d1388)
+  - JDK-8155590: Dubious collection management in sun.net.www.http.KeepAliveCache
+  - JDK-8168518: rcache interop with krb5-1.15
+  - JDK-8183503: Update hotspot tests to allow for unique test classes directory
+  - JDK-8186095: upgrade to jtreg 4.2 b08
+  - JDK-8186199: [windows] JNI_DestroyJavaVM not covered by SEH
+  - JDK-8192931: Regression test java/awt/font/TextLayout/CombiningPerf.java fails
+  - JDK-8208655: use JTreg skipped status in hotspot tests
+  - JDK-8208701: Fix for JDK-8208655 causes test failures in CI tier1
+  - JDK-8208706: compiler/tiered/ConstantGettersTransitionsTest.java fails to compile
+  - JDK-8213410: UseCompressedOops requirement check fails fails on 32-bit system
+  - JDK-8222323: ChildAlwaysOnTopTest.java fails with "RuntimeException: Failed to unset alwaysOnTop"
+  - JDK-8224768: Test ActalisCA.java fails
+  - JDK-8251155: HostIdentifier fails to canonicalize hostnames starting with digits
+  - JDK-8251551: Use .md filename extension for README
+  - JDK-8268678: LetsEncryptCA.java test fails as Let’s Encrypt Authority X3 is retired
+  - JDK-8270280: security/infra/java/security/cert/CertPathValidator/certification/LetsEncryptCA.java  OCSP response error
+  - JDK-8270517: Add Zero support for LoongArch
+  - JDK-8272708: [Test]: Cleanup: test/jdk/security/infra/java/security/cert/CertPathValidator/certification/BuypassCA.java no longer needs ocspEnabled
+  - JDK-8276139: TestJpsHostName.java not reliable, better to expand HostIdentifierCreate.java test
+  - JDK-8288132: Update test artifacts in QuoVadis CA interop tests
+  - JDK-8297955: LDAP CertStore should use LdapName and not String for DNs
+  - JDK-8301310: The SendRawSysexMessage test may cause a JVM crash
+  - JDK-8308592: Framework for CA interoperability testing
+  - JDK-8312126: NullPointerException in CertStore.getCRLs after 8297955
+  - JDK-8315042: NPE in PKCS7.parseOldSignedData
+  - JDK-8315757: [8u] Add cacerts JTREG tests to GHA tier1 test set
+  - JDK-8320713: Bump update version of OpenJDK: 8u412
+  - JDK-8321060: [8u] hotspot needs to recognise VS2022
+  - JDK-8321408: Add Certainly roots R1 and E1
+  - JDK-8322725: (tz) Update Timezone Data to 2023d
+  - JDK-8322750: Test "api/java_awt/interactive/SystemTrayTests.html" failed because A blue ball icon is added outside of the system tray
+  - JDK-8323202: [8u] Remove get_source.sh and hgforest.sh
+  - JDK-8323640: [TESTBUG]testMemoryFailCount in jdk/internal/platform/docker/TestDockerMemoryMetrics.java always fail because OOM killed
+  - JDK-8324184: Windows VS2010 build failed with "error C2275: 'int64_t'"
+  - JDK-8324530: Build error with gcc 10
+  - JDK-8325150: (tz) Update Timezone Data to 2024a
+
+Notes on individual issues:
+===========================
+
+security-libs/org.ietf.jgss:krb5:
+
+JDK-8168518: rcache interop with krb5-1.15
+==========================================
+The hash algorithm used in the Kerberos 5 replay cache file (rcache)
+has been changed from MD5 to SHA256. This is the same algorithm used
+by MIT krb5-1.15 and is interoperable with earlier releases of MIT
+krb5.
+
+The MD5 algorithm can still be used by setting the new
+jdk.krb5.rcache.useMD5 property to 'true':
+
+java -Djdk.krb5.rcache.useMD5=true ...
+
+This is useful where either the system has a coarse clock and has to
+depend on hash values in replay attack detection, or interoperability
+with the rcache files in older versions of OpenJDK is required.
+
+client-libs/java.awt:
+
+JDK-8322750: AWT SystemTray API Is Not Supported on Most Linux Desktops
+=======================================================================
+The java.awt.SystemTray API is used to interact with the system's
+desktop taskbar to provide notifications and may include an icon
+representing an application. The GNOME desktop's support for taskbar
+icons has not worked properly for several years, due to a platform
+bug. This bug, in turn, affects the JDK's SystemTray support on GNOME
+desktops.
+
+Therefore, in accordance with the SystemTray API specification,
+java.awt.SystemTray.isSupported() will now return false on systems
+that exhibit this bug, which is assumed to be those running a version
+of GNOME Shell below 45.
+
+The impact of this change is likely to be minimal, as users of the
+SystemTray API should already be able to handle isSupported()
+returning false and the system tray on such platforms has already been
+unsupported for a number of years for all applications.
+
+security-libs/java.security:
+
+JDK-8321408: Added Certainly R1 and E1 Root Certificates
+========================================================
+The following root certificate has been added to the cacerts
+truststore:
+
+Name: Certainly
+Alias Name: certainlyrootr1
+Distinguished Name: CN=Certainly Root R1, O=Certainly, C=US
+
+Name: Certainly
+Alias Name: certainlyroote1
+Distinguished Name: CN=Certainly Root E1, O=Certainly, C=US
+
 New in release OpenJDK 8u402 (2024-01-16):
 ===========================================
 Live versions of these release notes can be found at:
@@ -2792,3 +2909,4 @@ will be ignored if it is specified in the `mechanisms` argument of
 `Sasl.createSaslClient` or the `mechanism` argument of
 `Sasl.createSaslServer`. The default value for this security property
 is empty, which means that no mechanisms are disabled out-of-the-box.
+
