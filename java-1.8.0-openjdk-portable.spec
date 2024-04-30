@@ -281,7 +281,7 @@
 # Define version of OpenJDK 8 used
 %global project openjdk
 %global repo shenandoah-jdk8u
-%global openjdk_revision jdk8u402-b05
+%global openjdk_revision jdk8u412-b08
 %global shenandoah_revision shenandoah-%{openjdk_revision}
 # Define IcedTea version used for SystemTap tapsets and desktop file
 %global icedteaver      3.15.0
@@ -347,7 +347,7 @@
 %global updatever       %(VERSION=%{whole_update}; echo ${VERSION##*u})
 # eg jdk8u60-b27 -> b27
 %global buildver        %(VERSION=%{version_tag}; echo ${VERSION##*-})
-%global rpmrelease      2
+%global rpmrelease      1
 # priority must be 7 digits in total; up to openjdk 1.8
 %if %is_system_jdk
 %global priority        1800%{updatever}
@@ -493,7 +493,7 @@ URL:      http://openjdk.java.net/
 # FILE_NAME_ROOT=%%{project}-%%{repo}-${VERSION}
 # REPO_ROOT=<path to checked-out repository> generate_source_tarball.sh
 # where the source is obtained from http://github.com/%%{project}/%%{repo}
-Source0: gnu-andrew-%{shenandoah_revision}-ea.tar.xz
+Source0: gnu-andrew-%{shenandoah_revision}.tar.xz
 
 # Custom README for -src subpackage
 Source2:  README.md
@@ -631,7 +631,7 @@ Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac
 Patch107: s390-8214206_fix.patch
 
 # Add support for RISC-V (riscv64)
-Patch130: java-1.8.0-riscv-1.patch
+#Patch130: java-1.8.0-riscv-1.patch
 
 
 #############################################
@@ -661,9 +661,6 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 Patch581: jdk8257794-remove_broken_assert.patch
 # JDK-8186464, RH1433262: ZipFile cannot read some InfoZip ZIP64 zip files
 Patch12: jdk8186464-rh1433262-zip64_failure.patch
-
-# no public forest contains jdk8u402-b06
-Patch666: jdk8u402-b06.patch
 
 #############################################
 #
@@ -934,7 +931,7 @@ sh %{SOURCE12}
 # AArch64 fixes
 
 # RISC-V (riscv64) fixes
-%patch -P130
+#%patch -P130
 
 # x86 fixes
 %patch -P105
@@ -970,7 +967,7 @@ popd
 %endif
 
 pushd %{top_level_dir_name}
-%patch -P666 -p1
+
 popd
 
 # Shenandoah patches
@@ -1590,6 +1587,13 @@ done
 %endif
 
 %changelog
+* Tue Apr 30 2024 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.412.b08-1
+- April CPU
+- manually renamed gnu-andrew-shenandoah8u412-b08-ea.tar.xz to gnu-andrew-shenandoah-jdk8u412-b08.tar.xz
+- manully renamed top level dir shenandoah8u412-b08 to shenandoah-jdk8u412-b08
+- removed patch666 jdk8u402-b06.patch
+- temporarily disabled patch130 java-1.8.0-riscv-1.patch (do not apply and not sure if jdk8 rischV usptream is live)
+
 * Sun Mar 03 2024 Liu Yang <Yang.Liu.sn@gmail.com> - 1:1.8.0.402.b06-2
 - Add riscv64 support.
 

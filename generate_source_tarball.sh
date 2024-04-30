@@ -21,7 +21,8 @@
 # https://github.com/gnu-andrew/shenandoah-jdk8u
 # PROJECT_NAME=gnu-andrew
 # REPO_NAME=shenandoah-jdk8u
-# VERSION=shenandoah-jdk8u402-b05
+# VERSION=shenandoah8u412-b08
+# BOOT_JDK=/usr/lib/jvm/java-1.8.0-openjdk
 #
 # or to e.g., prepare systemtap, icedtea7's jstack and other tapsets:
 #
