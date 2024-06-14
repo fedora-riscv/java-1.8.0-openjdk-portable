@@ -454,7 +454,7 @@ ExcludeArch: %{ix86}
 
 Name:    java-%{javaver}-%{origin}-portable
 Version: %{javaver}.%{updatever}.b06
-Release: %{?eaprefix}%{rpmrelease}%{?extraver}%{?dist}
+Release: %{?eaprefix}%{rpmrelease}%{?extraver}.rv64%{?dist}
 # java-1.5.0-ibm from jpackage.org set Epoch to 1 for unknown reasons
 # and this change was brought into RHEL-4. java-1.5.0-ibm packages
 # also included the epoch in their virtual provides. This created a
@@ -631,7 +631,7 @@ Patch105: jdk8199936-pr3533-enable_mstackrealign_on_x86_linux_as_well_as_x86_mac
 Patch107: s390-8214206_fix.patch
 
 # Add support for RISC-V (riscv64)
-#Patch130: java-1.8.0-riscv-1.patch
+Patch130: java-1.8.0-riscv-1.patch
 
 
 #############################################
@@ -931,7 +931,7 @@ sh %{SOURCE12}
 # AArch64 fixes
 
 # RISC-V (riscv64) fixes
-#%patch -P130
+%patch -P130
 
 # x86 fixes
 %patch -P105
@@ -1587,6 +1587,9 @@ done
 %endif
 
 %changelog
+* Fri Jun 14 2024 Liu Yang <yang.liu.sn@gmail.com> - 1:1.8.0.412.b08-1.rv64
+- Refine patch130 java-1.8.0-riscv-1.patch to support riscv64.
+
 * Tue Apr 30 2024 Jiri Vanek <jvanek@redhat.com> - 1:1.8.0.412.b08-1
 - April CPU
 - manually renamed gnu-andrew-shenandoah8u412-b08-ea.tar.xz to gnu-andrew-shenandoah-jdk8u412-b08.tar.xz
