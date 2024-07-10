@@ -661,6 +661,10 @@ Patch204: jdk8042159-allow_using_system_installed_lcms2-jdk.patch
 Patch581: jdk8257794-remove_broken_assert.patch
 # JDK-8186464, RH1433262: ZipFile cannot read some InfoZip ZIP64 zip files
 Patch12: jdk8186464-rh1433262-zip64_failure.patch
+# JDK-8074840: Resolve disabled warnings for libjli and libjli_static
+Patch10: jdk8074840-Fix-Wint-conversion.patch
+# JDK-8162545: Mac build failure
+Patch11: jdk8162545-Fix-Wincompatible-pointer-types.patch
 
 #############################################
 #
@@ -947,6 +951,8 @@ sh %{SOURCE12}
 %patch -P581
 %patch -P541
 %patch -P12
+%patch -P10
+%patch -P11
 
 pushd %{top_level_dir_name}
 # Add crypto policy and FIPS support
